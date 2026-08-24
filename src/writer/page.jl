@@ -87,12 +87,20 @@ function render_page(doc::Documenter.Document, settings::Material3,
     print(io, """
       <header class="md-navbar">
     """)
+    # Hamburger menu (mobile)
+    println(io, "    <button id=\"md-hamburger\" class=\"md-hamburger\" aria-label=\"Toggle navigation\" aria-expanded=\"false\">☰</button>")
+
     if settings.logo !== nothing
         logo_name = basename(settings.logo)
         println(io, "    <img class=\"md-navbar-logo\" src=\"$(root_prefix)assets/$logo_name\" alt=\"$sitename logo\" height=\"32\">")
     end
     println(io, "    <span class=\"md-navbar-title\">$sitename</span>")
     println(io, "    <span style=\"flex:1\"></span>")
+
+    # Search button
+    if settings.search
+        println(io, "    <button id=\"md-search-btn\" class=\"md-icon-btn\" title=\"Search (Ctrl+K)\" aria-label=\"Search documentation\">🔍</button>")
+    end
 
     # Theme toggle button
     if settings.dark_mode == :toggle

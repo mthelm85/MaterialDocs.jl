@@ -466,6 +466,18 @@ using JET
 
         # Responsive breakpoints
         @test contains(css, "@media (max-width:")
+
+        # Search overlay CSS (Phase 6)
+        @test contains(css, ".md-search-overlay")
+        @test contains(css, ".md-search-modal")
+        @test contains(css, ".md-search-input")
+        @test contains(css, ".md-search-item")
+        @test contains(css, ".md-search-selected")
+
+        # Sidebar collapse/mobile CSS (Phase 6)
+        @test contains(css, ".md-nav-collapsed")
+        @test contains(css, ".md-hamburger")
+        @test contains(css, ".md-sidebar-open")
     end
 
     @testset "CSS dark mode variants" begin
@@ -512,6 +524,33 @@ using JET
         m3_auto = Material3(dark_mode=:auto)
         js_auto = MaterialDocs.build_js(m3_auto)
         @test !contains(js_auto, "md-theme-toggle")
+
+        # All modes include sidebar, copy, toc modules (Phase 6)
+        for js in (js_toggle, js_auto)
+            @test contains(js, "sidebar.js")
+            @test contains(js, "copy.js")
+            @test contains(js, "toc.js")
+            @test contains(js, "md-nav-section-title")   # sidebar collapse
+            @test contains(js, "md-copy-btn")             # copy button
+            @test contains(js, "md-toc-link")             # TOC scroll spy
+            @test contains(js, "scrollIntoView")          # smooth scroll
+            @test contains(js, "requestAnimationFrame")   # throttled scroll
+            @test contains(js, "clipboard")               # clipboard API
+        end
+
+        # Search module — only when search=true (default)
+        m3_search = Material3(dark_mode=:auto, search=true)
+        js_search = MaterialDocs.build_js(m3_search)
+        @test contains(js_search, "search.js")
+        @test contains(js_search, "md-search-overlay")
+        @test contains(js_search, "search-index.json")
+        @test contains(js_search, "Ctrl")  # Cmd/Ctrl+K shortcut
+
+        # Search disabled
+        m3_nosearch = Material3(dark_mode=:auto, search=false)
+        js_nosearch = MaterialDocs.build_js(m3_nosearch)
+        @test !contains(js_nosearch, "search.js")
+        @test !contains(js_nosearch, "md-search-overlay")
     end
 
     @testset "NavItem and NavContext" begin
@@ -615,6 +654,8 @@ using JET
         @test contains(index_html, "class=\"md-navbar\"")
         @test contains(index_html, "md-navbar-title")
         @test contains(index_html, "md-theme-toggle")  # toggle mode
+        @test contains(index_html, "md-hamburger")      # mobile hamburger
+        @test contains(index_html, "md-search-btn")     # search button
 
         # Sidebar nav
         @test contains(index_html, "class=\"md-sidebar\"")

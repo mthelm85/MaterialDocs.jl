@@ -295,3 +295,80 @@ li p { margin-bottom: 0.25rem; }
 
 /* ── Strikethrough ── */
 del { color: var(--md-sys-color-on-surface-variant); }
+
+/* ── Search overlay ── */
+.md-search-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,0.5);
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+}
+.md-search-overlay.md-search-active {
+  display: flex;
+}
+.md-search-modal {
+  width: 90%;
+  max-width: 36rem;
+  background: var(--md-sys-color-surface);
+  border-radius: var(--md-sys-shape-corner-large);
+  box-shadow: var(--md-sys-elevation-3);
+  overflow: hidden;
+}
+.md-search-input {
+  width: 100%;
+  padding: 0.875rem 1.25rem;
+  font-size: 1rem;
+  font-family: var(--md-sys-typescale-body-large-font);
+  border: none;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  outline: none;
+  box-sizing: border-box;
+}
+.md-search-input::placeholder {
+  color: var(--md-sys-color-on-surface-variant);
+}
+.md-search-results {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.md-search-item {
+  display: block;
+  padding: 0.625rem 1.25rem;
+  text-decoration: none;
+  color: var(--md-sys-color-on-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  transition: background var(--md-sys-motion-duration-short1) var(--md-sys-motion-easing-standard);
+}
+.md-search-item:last-child { border-bottom: none; }
+.md-search-item:hover,
+.md-search-item.md-search-selected {
+  background: var(--md-sys-color-surface-container);
+}
+.md-search-item-title {
+  display: block;
+  font-weight: 500;
+}
+.md-search-item-section {
+  display: block;
+  font-size: var(--md-sys-typescale-body-small-size);
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: 0.125rem;
+}
+.md-search-empty {
+  padding: 1.25rem;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+}
+.md-search-hint {
+  padding: 0.5rem 1.25rem;
+  font-size: var(--md-sys-typescale-label-small-size);
+  color: var(--md-sys-color-on-surface-variant);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  text-align: center;
+}
