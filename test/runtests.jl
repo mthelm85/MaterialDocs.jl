@@ -1004,23 +1004,19 @@ using JET
     # Phase 8: Theme Editor
     # ─────────────────────────────────────────────────────────────────
 
-    @testset "Editor HTML generation" begin
+    @testset "Editor panel HTML" begin
         theme = resolve_theme(:ocean_depth)
-        html = MaterialDocs._generate_editor_html(theme)
-
-        # Should be valid HTML
-        @test contains(html, "<!doctype html>")
-        @test contains(html, "<title>MaterialDocs Theme Editor</title>")
+        html = MaterialDocs._editor_panel_html(theme)
 
         # Should contain editor UI elements
-        @test contains(html, "id=\"seed\"")
-        @test contains(html, "id=\"secondary\"")
-        @test contains(html, "id=\"tertiary\"")
-        @test contains(html, "id=\"display-font\"")
-        @test contains(html, "id=\"body-font\"")
-        @test contains(html, "id=\"code-font\"")
-        @test contains(html, "id=\"corner-radius\"")
-        @test contains(html, "id=\"toggle-dark\"")
+        @test contains(html, "id=\"ed-seed\"")
+        @test contains(html, "id=\"ed-secondary\"")
+        @test contains(html, "id=\"ed-tertiary\"")
+        @test contains(html, "id=\"ed-display-font\"")
+        @test contains(html, "id=\"ed-body-font\"")
+        @test contains(html, "id=\"ed-code-font\"")
+        @test contains(html, "id=\"ed-corner-radius\"")
+        @test contains(html, "id=\"ed-toggle-dark\"")
 
         # Should have initial theme values
         @test contains(html, theme.seed)
@@ -1029,26 +1025,54 @@ using JET
         @test contains(html, sec)
         @test contains(html, ter)
 
-        # Should contain preview components
-        @test contains(html, "pv-admonition")
-        @test contains(html, "pv-code")
-        @test contains(html, "pv-table")
-        @test contains(html, "pv-docstring")
-        @test contains(html, "pv-blockquote")
-        @test contains(html, "pv-navbar")
+        # Should contain export button and TOML preview
+        @test contains(html, "ed-copy-toml")
+        @test contains(html, "ed-toml-preview")
 
-        # Should contain export buttons
-        @test contains(html, "copy-toml")
-        @test contains(html, "download-toml")
+        # Panel structure
+        @test contains(html, "md-editor-panel")
+        @test contains(html, "md-editor-tab")
+        @test contains(html, "md-editor-body")
+    end
+
+    @testset "Editor panel JS" begin
+        theme = resolve_theme(:ocean_depth)
+        js = MaterialDocs._editor_panel_js(theme)
 
         # Should have JS color engine
-        @test contains(html, "hexToHSL")
-        @test contains(html, "generateScheme")
-        @test contains(html, "generateTOML")
+        @test contains(js, "hexToHSL")
+        @test contains(js, "generateScheme")
+        @test contains(js, "generateTOML")
+        @test contains(js, "applyTheme")
+        @test contains(js, "applyFonts")
+        @test contains(js, "applyShape")
 
-        # Should contain initial Julia-computed tokens
-        @test contains(html, "currentTokens")
-        @test contains(html, "md-sys-color-primary")
+        # Should contain theme seed values
+        @test contains(js, theme.seed)
+    end
+
+    @testset "Editor injection" begin
+        html = "<html><body><h1>Test</h1></body></html>"
+        panel_html = "<div>PANEL</div>"
+        injected = MaterialDocs._inject_editor(html, panel_html)
+
+        # Panel should be injected before </body>
+        @test contains(injected, "PANEL")
+        @test contains(injected, "__editor__.js")
+        # Original content preserved
+        @test contains(injected, "<h1>Test</h1>")
+    end
+
+    @testset "Editor MIME types" begin
+        @test contains(MaterialDocs._mime_type("style.css"), "text/css")
+        @test contains(MaterialDocs._mime_type("app.js"), "javascript")
+        @test MaterialDocs._mime_type("image.png") == "image/png"
+        @test MaterialDocs._mime_type("data.json") == "application/json; charset=utf-8"
+    end
+
+    @testset "Editor URL decode" begin
+        @test MaterialDocs._url_decode("/hello%20world") == "/hello world"
+        @test MaterialDocs._url_decode("/path/to/file") == "/path/to/file"
     end
 
     @testset "Editor font options" begin

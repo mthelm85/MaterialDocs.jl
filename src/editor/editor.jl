@@ -1,170 +1,324 @@
 #=
 Theme Editor — interactive browser-based theme configurator.
 
-`MaterialDocs.editor()` opens a standalone HTML page in the default browser
-with live preview of MD3 components. The editor uses a simplified HSL-based
-color approximation for instant preview; the actual build uses the full HCT
-engine for accurate Material Design 3 colors.
+`MaterialDocs.editor()` serves the actual built docs with a floating theme
+editor panel injected. Since all CSS uses `var(--md-sys-*)` tokens, changing
+the custom properties instantly re-themes the real documentation.
 =#
 
+import Sockets: listen, accept, IPv4, TCPSocket, getsockname
+
 """
-    editor(; theme::ThemeConfig = resolve_theme(:default), port::Nothing = nothing)
+    editor(; build="docs/build", port=0, theme=resolve_theme(:default))
 
-Launch the MaterialDocs theme editor in your default browser.
+Launch the MaterialDocs theme editor — a local server that serves your
+actual built documentation with a floating theme editor panel injected.
 
-Opens a self-contained HTML page with:
-- **Color pickers** for seed, secondary, and tertiary colors
-- **Font selectors** for display, body, and code fonts
-- **Shape controls** for corner radius
-- **Live preview** of MD3 components (headings, code blocks, admonitions, etc.)
-- **TOML export** — copy or download `.materialdocs.toml` configuration
+# Workflow
+1. Build your docs: `julia --project=docs docs/make.jl`
+2. Launch the editor: `MaterialDocs.editor(build="docs/build")`
+3. Tweak colors, fonts, and shape in the panel — changes apply live
+4. Click **Copy TOML** to export your configuration
 
-The preview uses approximate colors; the actual `makedocs` build computes
-precise Material Design 3 color schemes via the HCT engine.
+The editor modifies CSS custom properties on `:root`, which instantly
+re-themes every component since all styles use `var(--md-sys-*)` tokens.
+
+# Keywords
+- `build`: path to the built docs directory (default `"docs/build"`)
+- `port`: server port; `0` picks an available port automatically
+- `theme`: initial `ThemeConfig` for the editor panel defaults
 
 # Example
 ```julia
 using MaterialDocs
+
+# After running makedocs:
 MaterialDocs.editor()
 
-# Start with a specific theme
-MaterialDocs.editor(theme = resolve_theme(:ocean_depth))
+# Or with a specific build dir and theme:
+MaterialDocs.editor(build="docs/build", theme=resolve_theme(:ocean_depth))
 ```
-"""
-function editor(; theme::ThemeConfig = resolve_theme(:default))
-    html = _generate_editor_html(theme)
-    path = joinpath(tempdir(), "materialdocs-editor.html")
-    write(path, html)
-    _open_in_browser(path)
-    @info "MaterialDocs theme editor opened in your browser" path
-    path
-end
 
-"""Open a file in the default browser (cross-platform)."""
-function _open_in_browser(path::String)
-    if Sys.iswindows()
-        run(`cmd /c start "" "$path"`)
-    elseif Sys.isapple()
-        run(`open "$path"`)
-    else
-        run(`xdg-open "$path"`)
+Press Ctrl+C in the REPL to stop the server.
+"""
+function editor(; build::String="docs/build",
+                  port::Int=0,
+                  theme::ThemeConfig=resolve_theme(:default))
+    # Validate build directory
+    if !isdir(build)
+        error("Build directory not found: $(abspath(build))\n" *
+              "Run makedocs first, then call editor(build=\"path/to/build\")")
+    end
+    if !isfile(joinpath(build, "index.html"))
+        error("No index.html found in $(abspath(build))\n" *
+              "This doesn't look like a Documenter build directory.")
+    end
+
+    build_abs = abspath(build)
+    panel_html = _editor_panel_html(theme)
+    panel_js = _editor_panel_js(theme)
+
+    # Start server
+    server = listen(IPv4(0), port)
+    actual_port = Int(getsockname(server)[2])
+    url = "http://localhost:$actual_port"
+
+    @info "MaterialDocs theme editor" url build=build_abs
+    @info "Press Ctrl+C to stop"
+
+    _open_in_browser(url)
+
+    # Serve requests
+    try
+        while true
+            sock = accept(server)
+            @async _handle_request(sock, build_abs, panel_html, panel_js)
+        end
+    catch e
+        if !(e isa InterruptException)
+            rethrow(e)
+        end
+    finally
+        close(server)
+        @info "MaterialDocs editor stopped"
     end
 end
 
-"""Generate the self-contained editor HTML page."""
-function _generate_editor_html(theme::ThemeConfig)::String
-    # Pre-compute initial color scheme for defaults
-    light, dark = color_scheme_pair(theme.seed;
-        secondary = theme.secondary_seed,
-        tertiary = theme.tertiary_seed)
+"""Open a URL in the default browser (cross-platform)."""
+function _open_in_browser(url::String)
+    try
+        if Sys.iswindows()
+            run(`cmd /c start "" "$url"`)
+        elseif Sys.isapple()
+            run(`open "$url"`)
+        else
+            run(`xdg-open "$url"`)
+        end
+    catch
+        @warn "Could not open browser automatically. Open $url manually."
+    end
+end
 
-    # Build initial CSS tokens
-    initial_tokens = _editor_initial_tokens(light, theme)
+# ─────────────────────────────────────────────────────────────────────────────
+# HTTP server (minimal, stdlib-only)
+# ─────────────────────────────────────────────────────────────────────────────
 
-    # Resolve nothing seeds to the primary seed for display
+"""Handle one HTTP request."""
+function _handle_request(sock::TCPSocket, build_dir::String,
+                         panel_html::String, panel_js::String)
+    try
+        # Read request line
+        request_line = readline(sock)
+        isempty(request_line) && return close(sock)
+
+        # Parse method and path
+        parts = split(request_line)
+        length(parts) < 2 && return close(sock)
+        method = parts[1]
+        raw_path = parts[2]
+
+        # Read and discard headers
+        while true
+            line = readline(sock)
+            (isempty(line) || line == "\r") && break
+        end
+
+        # Only handle GET
+        if method != "GET"
+            _send_response(sock, 405, "text/plain", "Method Not Allowed")
+            return
+        end
+
+        # Decode path
+        path = _url_decode(split(raw_path, '?')[1])  # strip query string
+        path == "/" && (path = "/index.html")
+
+        # Security: prevent directory traversal
+        if contains(path, "..") || contains(path, "\\")
+            _send_response(sock, 403, "text/plain", "Forbidden")
+            return
+        end
+
+        # Special route: editor panel JS (served separately to keep injection small)
+        if path == "/__editor__.js"
+            _send_response(sock, 200, "application/javascript", panel_js)
+            return
+        end
+
+        # Resolve file
+        file_path = joinpath(build_dir, lstrip(path, '/'))
+        # If path is a directory, try index.html
+        if isdir(file_path)
+            file_path = joinpath(file_path, "index.html")
+        end
+
+        if !isfile(file_path)
+            _send_response(sock, 404, "text/plain", "Not Found: $path")
+            return
+        end
+
+        content_type = _mime_type(file_path)
+
+        if endswith(file_path, ".html")
+            # Inject editor panel into HTML pages
+            html = read(file_path, String)
+            html = _inject_editor(html, panel_html)
+            _send_response(sock, 200, content_type, html)
+        else
+            # Serve binary/text files as-is
+            _send_response(sock, 200, content_type, read(file_path))
+        end
+    catch e
+        e isa EOFError || @debug "Request handler error" exception=e
+    finally
+        try close(sock) catch end
+    end
+end
+
+"""Send an HTTP response."""
+function _send_response(sock::TCPSocket, status::Int, content_type::String,
+                        body::Union{String,Vector{UInt8}})
+    status_text = Dict(200=>"OK", 403=>"Forbidden", 404=>"Not Found",
+                       405=>"Method Not Allowed")
+    data = body isa String ? Vector{UInt8}(body) : body
+    write(sock, "HTTP/1.1 $status $(get(status_text, status, ""))\r\n")
+    write(sock, "Content-Type: $content_type\r\n")
+    write(sock, "Content-Length: $(length(data))\r\n")
+    write(sock, "Connection: close\r\n")
+    write(sock, "Cache-Control: no-cache\r\n")
+    write(sock, "\r\n")
+    write(sock, data)
+end
+
+"""URL-decode a path string."""
+function _url_decode(s::AbstractString)::String
+    replace(s, r"%([0-9A-Fa-f]{2})" => m -> Char(parse(UInt8, m[2:3]; base=16)))
+end
+
+"""Get MIME type from file extension."""
+function _mime_type(path::String)::String
+    ext = lowercase(splitext(path)[2])
+    types = Dict(
+        ".html" => "text/html; charset=utf-8",
+        ".css"  => "text/css; charset=utf-8",
+        ".js"   => "application/javascript; charset=utf-8",
+        ".json" => "application/json; charset=utf-8",
+        ".png"  => "image/png",
+        ".jpg"  => "image/jpeg",
+        ".jpeg" => "image/jpeg",
+        ".gif"  => "image/gif",
+        ".svg"  => "image/svg+xml",
+        ".ico"  => "image/x-icon",
+        ".woff" => "font/woff",
+        ".woff2"=> "font/woff2",
+        ".ttf"  => "font/ttf",
+    )
+    get(types, ext, "application/octet-stream")
+end
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Editor panel injection
+# ─────────────────────────────────────────────────────────────────────────────
+
+"""Inject the editor panel HTML + JS loader into an HTML page."""
+function _inject_editor(html::String, panel_html::String)::String
+    # Inject panel before </body>, and load the editor JS
+    injection = """
+    $panel_html
+    <script src="/__editor__.js"></script>
+    """
+    if contains(html, "</body>")
+        replace(html, "</body>" => injection * "\n</body>")
+    else
+        html * injection
+    end
+end
+
+"""Generate the floating editor panel HTML."""
+function _editor_panel_html(theme::ThemeConfig)::String
     sec_seed = something(theme.secondary_seed, theme.seed)
     ter_seed = something(theme.tertiary_seed, theme.seed)
 
     """
-    <!doctype html>
-    <html lang="en">
-    <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>MaterialDocs Theme Editor</title>
-    <style>
-    $(_editor_css())
-    </style>
-    </head>
-    <body>
-    <div class="ed-layout">
-      <div class="ed-panel">
-        <h1 class="ed-title">🎨 MaterialDocs Theme Editor</h1>
-
-        <section class="ed-section">
-          <h2 class="ed-section-title">Colors</h2>
-          <div class="ed-field">
-            <label for="seed">Seed Color</label>
-            <div class="ed-color-row">
-              <input type="color" id="seed" value="$(theme.seed)">
-              <input type="text" id="seed-hex" value="$(theme.seed)" class="ed-hex">
-            </div>
-          </div>
-          <div class="ed-field">
-            <label for="secondary">Secondary Seed</label>
-            <div class="ed-color-row">
-              <input type="color" id="secondary" value="$(sec_seed)">
-              <input type="text" id="secondary-hex" value="$(sec_seed)" class="ed-hex">
-            </div>
-          </div>
-          <div class="ed-field">
-            <label for="tertiary">Tertiary Seed</label>
-            <div class="ed-color-row">
-              <input type="color" id="tertiary" value="$(ter_seed)">
-              <input type="text" id="tertiary-hex" value="$(ter_seed)" class="ed-hex">
-            </div>
-          </div>
-        </section>
-
-        <section class="ed-section">
-          <h2 class="ed-section-title">Typography</h2>
-          <div class="ed-field">
-            <label for="display-font">Display Font</label>
-            <select id="display-font">
-              $(_font_options(theme.display_font, :display))
-            </select>
-          </div>
-          <div class="ed-field">
-            <label for="body-font">Body Font</label>
-            <select id="body-font">
-              $(_font_options(theme.body_font, :body))
-            </select>
-          </div>
-          <div class="ed-field">
-            <label for="code-font">Code Font</label>
-            <select id="code-font">
-              $(_font_options(theme.code_font, :code))
-            </select>
-          </div>
-        </section>
-
-        <section class="ed-section">
-          <h2 class="ed-section-title">Shape</h2>
-          <div class="ed-field">
-            <label for="corner-radius">Corner Radius</label>
-            <select id="corner-radius">
-              <option value="sharp"$(_sel(theme.corner_radius, :sharp))>Sharp</option>
-              <option value="default"$(_sel(theme.corner_radius, :default))>Default</option>
-              <option value="rounded"$(_sel(theme.corner_radius, :rounded))>Rounded</option>
-              <option value="pill"$(_sel(theme.corner_radius, :pill))>Pill</option>
-            </select>
-          </div>
-        </section>
-
-        <section class="ed-section">
-          <h2 class="ed-section-title">Export</h2>
-          <button id="copy-toml" class="ed-btn ed-btn-primary">📋 Copy TOML</button>
-          <button id="download-toml" class="ed-btn">💾 Download .materialdocs.toml</button>
-          <pre id="toml-preview" class="ed-toml-preview"></pre>
-        </section>
-      </div>
-
-      <div class="ed-preview" id="preview">
-        <div class="ed-preview-toolbar">
-          <span class="ed-preview-label">Live Preview</span>
-          <button id="toggle-dark" class="ed-btn-small">🌙 Dark</button>
+    <style>$(_editor_panel_css())</style>
+    <div id="md-editor-panel" class="md-editor-panel md-editor-collapsed">
+      <button id="md-editor-toggle" class="md-editor-tab" title="Theme Editor">🎨</button>
+      <div class="md-editor-body">
+        <div class="md-editor-header">
+          <h3>Theme Editor</h3>
+          <button id="md-editor-close" class="md-editor-close">✕</button>
         </div>
-        <div class="ed-preview-frame" id="preview-frame">
-          $(_preview_html())
+
+        <div class="md-editor-scroll">
+          <section class="md-editor-section">
+            <h4>Colors</h4>
+            <div class="md-editor-field">
+              <label>Seed</label>
+              <div class="md-editor-color-row">
+                <input type="color" id="ed-seed" value="$(theme.seed)">
+                <input type="text" id="ed-seed-hex" value="$(theme.seed)" class="md-editor-hex">
+              </div>
+            </div>
+            <div class="md-editor-field">
+              <label>Secondary</label>
+              <div class="md-editor-color-row">
+                <input type="color" id="ed-secondary" value="$(sec_seed)">
+                <input type="text" id="ed-secondary-hex" value="$(sec_seed)" class="md-editor-hex">
+              </div>
+            </div>
+            <div class="md-editor-field">
+              <label>Tertiary</label>
+              <div class="md-editor-color-row">
+                <input type="color" id="ed-tertiary" value="$(ter_seed)">
+                <input type="text" id="ed-tertiary-hex" value="$(ter_seed)" class="md-editor-hex">
+              </div>
+            </div>
+          </section>
+
+          <section class="md-editor-section">
+            <h4>Typography</h4>
+            <div class="md-editor-field">
+              <label>Display</label>
+              <select id="ed-display-font">$(_font_options(theme.display_font, :display))</select>
+            </div>
+            <div class="md-editor-field">
+              <label>Body</label>
+              <select id="ed-body-font">$(_font_options(theme.body_font, :body))</select>
+            </div>
+            <div class="md-editor-field">
+              <label>Code</label>
+              <select id="ed-code-font">$(_font_options(theme.code_font, :code))</select>
+            </div>
+          </section>
+
+          <section class="md-editor-section">
+            <h4>Shape</h4>
+            <div class="md-editor-field">
+              <label>Corners</label>
+              <select id="ed-corner-radius">
+                <option value="sharp"$(_sel(theme.corner_radius, :sharp))>Sharp</option>
+                <option value="default"$(_sel(theme.corner_radius, :default))>Default</option>
+                <option value="rounded"$(_sel(theme.corner_radius, :rounded))>Rounded</option>
+                <option value="pill"$(_sel(theme.corner_radius, :pill))>Pill</option>
+              </select>
+            </div>
+          </section>
+
+          <section class="md-editor-section">
+            <h4>Dark Mode</h4>
+            <div class="md-editor-field">
+              <button id="ed-toggle-dark" class="md-editor-btn">🌙 Toggle Dark</button>
+            </div>
+          </section>
+
+          <section class="md-editor-section">
+            <h4>Export</h4>
+            <button id="ed-copy-toml" class="md-editor-btn md-editor-btn-primary">📋 Copy TOML</button>
+            <pre id="ed-toml-preview" class="md-editor-toml"></pre>
+          </section>
         </div>
       </div>
     </div>
-
-    <script>
-    $(_editor_js(theme))
-    </script>
-    </body>
-    </html>
     """
 end
 
@@ -185,7 +339,6 @@ function _font_options(current::String, category::Symbol)::String
         ["Roboto", "Inter", "Open Sans", "Lato", "Noto Sans", "Source Sans 3",
          "IBM Plex Sans", "Nunito", "Literata", "Lora", "Crimson Text"]
     end
-    # Ensure current is in the list
     current in fonts || pushfirst!(fonts, current)
     io = IOBuffer()
     for f in fonts
@@ -195,380 +348,164 @@ function _font_options(current::String, category::Symbol)::String
     String(take!(io))
 end
 
-"""Build initial CSS tokens from the Julia-computed color scheme."""
-function _editor_initial_tokens(scheme::Dict{Symbol,String}, theme::ThemeConfig)::String
-    io = IOBuffer()
-    for (role, hex) in sort(collect(scheme); by=Base.first)
-        css_name = replace(string(role), '_' => '-')
-        println(io, "--md-sys-color-$css_name: $hex;")
-    end
-    String(take!(io))
-end
-
-"""Generate the editor panel CSS."""
-function _editor_css()::String
+"""CSS for the floating editor panel."""
+function _editor_panel_css()::String
     """
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #f5f5f5;
-      color: #1a1a1a;
-    }
-    .ed-layout {
-      display: grid;
-      grid-template-columns: 340px 1fr;
+    .md-editor-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
       height: 100vh;
+      z-index: 10000;
+      display: flex;
+      font-family: system-ui, -apple-system, sans-serif;
+      pointer-events: none;
     }
-    .ed-panel {
-      padding: 1.25rem;
-      overflow-y: auto;
-      background: #fff;
-      border-right: 1px solid #e0e0e0;
-    }
-    .ed-title {
+    .md-editor-panel > * { pointer-events: auto; }
+    .md-editor-tab {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%) translateX(0);
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 8px 0 0 8px;
+      padding: 0.75rem 0.5rem;
+      cursor: pointer;
       font-size: 1.25rem;
-      margin-bottom: 1.25rem;
-      padding-bottom: 0.75rem;
+      box-shadow: -2px 0 8px rgba(0,0,0,0.2);
+      z-index: 1;
+      transition: right 0.3s ease;
+    }
+    .md-editor-collapsed .md-editor-body { transform: translateX(100%); }
+    .md-editor-collapsed .md-editor-tab { right: 0; }
+    .md-editor-panel:not(.md-editor-collapsed) .md-editor-tab { right: 320px; }
+    .md-editor-body {
+      width: 320px;
+      height: 100vh;
+      background: #fff;
+      border-left: 1px solid #e0e0e0;
+      box-shadow: -4px 0 12px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease;
+      margin-left: auto;
+    }
+    .md-editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
       border-bottom: 1px solid #e0e0e0;
     }
-    .ed-section {
+    .md-editor-header h3 { font-size: 1rem; margin: 0; }
+    .md-editor-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.25rem;
+      color: #666;
+      padding: 0.25rem;
+    }
+    .md-editor-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+    .md-editor-section {
       margin-bottom: 1.25rem;
     }
-    .ed-section-title {
-      font-size: 0.8125rem;
+    .md-editor-section h4 {
+      font-size: 0.6875rem;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #666;
-      margin-bottom: 0.75rem;
+      letter-spacing: 0.06em;
+      color: #888;
+      margin: 0 0 0.5rem 0;
     }
-    .ed-field {
-      margin-bottom: 0.75rem;
+    .md-editor-field {
+      margin-bottom: 0.5rem;
     }
-    .ed-field label {
+    .md-editor-field label {
       display: block;
-      font-size: 0.8125rem;
+      font-size: 0.75rem;
       font-weight: 500;
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.125rem;
+      color: #555;
     }
-    .ed-field select, .ed-field input[type="text"] {
+    .md-editor-field select {
+      width: 100%;
+      padding: 0.3rem 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.8125rem;
+      background: #fff;
+    }
+    .md-editor-color-row {
+      display: flex;
+      gap: 0.375rem;
+      align-items: center;
+    }
+    .md-editor-color-row input[type="color"] {
+      width: 32px;
+      height: 28px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 1px;
+      cursor: pointer;
+    }
+    .md-editor-hex {
+      flex: 1;
+      font-family: monospace;
+      font-size: 0.8125rem;
+      padding: 0.25rem 0.375rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .md-editor-btn {
+      display: block;
       width: 100%;
       padding: 0.375rem 0.5rem;
       border: 1px solid #ccc;
       border-radius: 6px;
-      font-size: 0.875rem;
-      background: #fff;
-    }
-    .ed-color-row {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-    .ed-color-row input[type="color"] {
-      width: 40px;
-      height: 32px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      padding: 2px;
-      cursor: pointer;
-    }
-    .ed-hex {
-      flex: 1;
-      font-family: monospace;
-    }
-    .ed-btn {
-      display: block;
-      width: 100%;
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
       background: #fff;
       cursor: pointer;
-      font-size: 0.875rem;
-      margin-bottom: 0.5rem;
-      transition: background 0.15s;
+      font-size: 0.8125rem;
+      margin-bottom: 0.375rem;
     }
-    .ed-btn:hover { background: #f0f0f0; }
-    .ed-btn-primary {
+    .md-editor-btn:hover { background: #f5f5f5; }
+    .md-editor-btn-primary {
       background: #1a73e8;
       color: #fff;
       border-color: #1a73e8;
     }
-    .ed-btn-primary:hover { background: #1557b0; }
-    .ed-btn-small {
-      padding: 0.25rem 0.75rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      background: #fff;
-      cursor: pointer;
-      font-size: 0.8125rem;
-    }
-    .ed-toml-preview {
-      margin-top: 0.5rem;
-      padding: 0.75rem;
+    .md-editor-btn-primary:hover { background: #1557b0; }
+    .md-editor-toml {
+      margin-top: 0.375rem;
+      padding: 0.5rem;
       background: #f5f5f5;
-      border-radius: 8px;
+      border-radius: 4px;
       font-family: monospace;
-      font-size: 0.75rem;
-      line-height: 1.5;
+      font-size: 0.6875rem;
+      line-height: 1.4;
       white-space: pre-wrap;
-      max-height: 200px;
+      max-height: 180px;
       overflow-y: auto;
-    }
-    .ed-preview {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .ed-preview-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.5rem 1rem;
-      background: #e8e8e8;
-      border-bottom: 1px solid #d0d0d0;
-    }
-    .ed-preview-label {
-      font-size: 0.8125rem;
-      font-weight: 600;
-      color: #666;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .ed-preview-frame {
-      flex: 1;
-      overflow-y: auto;
-      padding: 2rem;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    /* Preview component styles — use CSS variables */
-    .pv { --radius: 12px; }
-    .pv-surface { background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); padding: 1.5rem; border-radius: var(--radius); min-height: 100%; }
-    .pv h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
-    .pv h2 { font-size: 1.5rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: var(--md-sys-color-on-surface); }
-    .pv h3 { font-size: 1.125rem; font-weight: 600; margin: 1rem 0 0.375rem; }
-    .pv p { line-height: 1.6; margin-bottom: 0.75rem; color: var(--md-sys-color-on-surface); }
-    .pv a { color: var(--md-sys-color-primary); }
-    .pv-code {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8125rem;
-      background: var(--md-sys-color-surface-container);
-      border: 1px solid var(--md-sys-color-outline-variant);
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 0.75rem 0;
-      overflow-x: auto;
-      color: var(--md-sys-color-on-surface);
-    }
-    .pv-inline-code {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.875em;
-      background: var(--md-sys-color-surface-container-high);
-      padding: 0.125em 0.35em;
-      border-radius: 4px;
-    }
-    .pv-admonition {
-      border-radius: var(--radius);
-      border: 1px solid;
-      overflow: hidden;
-      margin: 0.75rem 0;
-    }
-    .pv-admonition-title { padding: 0.5rem 1rem; font-weight: 600; font-size: 0.875rem; }
-    .pv-admonition-body { padding: 0.75rem 1rem; font-size: 0.875rem; }
-    .pv-note { border-color: var(--md-sys-color-primary); }
-    .pv-note .pv-admonition-title { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
-    .pv-warning { border-color: var(--md-sys-color-secondary); }
-    .pv-warning .pv-admonition-title { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
-    .pv-tip { border-color: var(--md-sys-color-tertiary); }
-    .pv-tip .pv-admonition-title { background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); }
-    .pv-danger { border-color: var(--md-sys-color-error); }
-    .pv-danger .pv-admonition-title { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
-    .pv-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.875rem;
-      border: 1px solid var(--md-sys-color-outline-variant);
-      border-radius: var(--radius);
-      overflow: hidden;
-      margin: 0.75rem 0;
-    }
-    .pv-table th {
-      text-align: left;
-      padding: 0.5rem 1rem;
-      background: var(--md-sys-color-surface-container);
-      font-weight: 600;
-      color: var(--md-sys-color-on-surface);
-      border-bottom: 2px solid var(--md-sys-color-outline-variant);
-    }
-    .pv-table td {
-      padding: 0.5rem 1rem;
-      border-bottom: 1px solid var(--md-sys-color-outline-variant);
-      color: var(--md-sys-color-on-surface);
-    }
-    .pv-blockquote {
-      border-left: 3px solid var(--md-sys-color-outline);
-      background: var(--md-sys-color-surface-container-lowest);
-      padding: 0.75rem 1.25rem;
-      border-radius: 0 8px 8px 0;
-      margin: 0.75rem 0;
-      color: var(--md-sys-color-on-surface-variant);
-    }
-    .pv-navbar {
-      background: var(--md-sys-color-surface);
-      border-bottom: 1px solid var(--md-sys-color-outline-variant);
-      padding: 0.625rem 1.25rem;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      border-radius: var(--radius) var(--radius) 0 0;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-    }
-    .pv-navbar-title { font-weight: 600; font-size: 1.125rem; color: var(--md-sys-color-on-surface); }
-    .pv-chip {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 16px;
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-    .pv-chip-primary { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
-    .pv-chip-secondary { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
-    .pv-chip-tertiary { background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); }
-    .pv-swatch-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.75rem 0; }
-    .pv-swatch {
-      width: 3rem; height: 3rem;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.6rem;
-      font-weight: 600;
-    }
-    .pv-docstring {
-      background: var(--md-sys-color-surface-container-lowest);
-      border: 1px solid var(--md-sys-color-outline-variant);
-      border-radius: var(--radius);
-      padding: 1rem;
-      margin: 0.75rem 0;
-    }
-    .pv-docstring-binding {
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 600;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--md-sys-color-outline-variant);
-      margin-bottom: 0.5rem;
-    }
-    .pv-docstring-binding code {
-      background: var(--md-sys-color-primary-container);
-      color: var(--md-sys-color-on-primary-container);
-      padding: 0.125em 0.4em;
-      border-radius: 4px;
+      color: #333;
     }
     """
 end
 
-"""Generate preview HTML showing sample components."""
-function _preview_html()::String
-    """
-    <div class="pv">
-      <div class="pv-surface">
-        <div class="pv-navbar">
-          <span class="pv-navbar-title">📦 MyPackage.jl</span>
-          <span style="flex:1"></span>
-          <span style="color:var(--md-sys-color-on-surface-variant);font-size:0.875rem">🔍</span>
-          <span style="color:var(--md-sys-color-on-surface-variant);font-size:0.875rem">🌙</span>
-        </div>
+# ─────────────────────────────────────────────────────────────────────────────
+# Editor panel JavaScript
+# ─────────────────────────────────────────────────────────────────────────────
 
-        <div style="padding:1.25rem">
-          <h1>Welcome to MyPackage.jl</h1>
-          <p>A powerful Julia package for <span class="pv-inline-code">doing things</span> efficiently.
-          Check out the <a href="#">API Reference</a> for details.</p>
-
-          <div class="pv-swatch-row">
-            <div class="pv-swatch" style="background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary)">P</div>
-            <div class="pv-swatch" style="background:var(--md-sys-color-secondary);color:var(--md-sys-color-on-secondary)">S</div>
-            <div class="pv-swatch" style="background:var(--md-sys-color-tertiary);color:var(--md-sys-color-on-tertiary)">T</div>
-            <div class="pv-swatch" style="background:var(--md-sys-color-error);color:var(--md-sys-color-on-error)">E</div>
-            <div class="pv-swatch" style="background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container)">PC</div>
-            <div class="pv-swatch" style="background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)">SC</div>
-            <div class="pv-swatch" style="background:var(--md-sys-color-tertiary-container);color:var(--md-sys-color-on-tertiary-container)">TC</div>
-            <div class="pv-swatch" style="background:var(--md-sys-color-error-container);color:var(--md-sys-color-on-error-container)">EC</div>
-          </div>
-
-          <div style="display:flex;gap:0.5rem;margin:0.75rem 0">
-            <span class="pv-chip pv-chip-primary">Primary</span>
-            <span class="pv-chip pv-chip-secondary">Secondary</span>
-            <span class="pv-chip pv-chip-tertiary">Tertiary</span>
-          </div>
-
-          <h2>Getting Started</h2>
-          <p>Install the package and start using it right away:</p>
-
-          <div class="pv-code"><span style="color:var(--md-sys-color-primary)">using</span> MyPackage
-
-result = compute(data;
-    method = <span style="color:var(--md-sys-color-tertiary)">:fast</span>,
-    verbose = <span style="color:var(--md-sys-color-secondary)">true</span>
-)</div>
-
-          <div class="pv-admonition pv-note">
-            <div class="pv-admonition-title">📘 Note</div>
-            <div class="pv-admonition-body">This function requires Julia 1.10 or later. See compatibility notes below.</div>
-          </div>
-
-          <div class="pv-admonition pv-warning">
-            <div class="pv-admonition-title">⚠️ Warning</div>
-            <div class="pv-admonition-body">Large datasets may require significant memory. Consider using the streaming API for files over 1GB.</div>
-          </div>
-
-          <div class="pv-admonition pv-tip">
-            <div class="pv-admonition-title">💡 Tip</div>
-            <div class="pv-admonition-body">For best performance, pre-allocate output arrays with <span class="pv-inline-code">similar(data)</span>.</div>
-          </div>
-
-          <div class="pv-admonition pv-danger">
-            <div class="pv-admonition-title">🔴 Danger</div>
-            <div class="pv-admonition-body">This operation modifies data in-place. Make a copy first if you need the original.</div>
-          </div>
-
-          <h2>API Reference</h2>
-
-          <div class="pv-docstring">
-            <div class="pv-docstring-binding"><code>compute(data; method, verbose)</code></div>
-            <p>Compute the result from <span class="pv-inline-code">data</span> using the specified method.</p>
-            <p><strong>Arguments</strong></p>
-            <ul style="margin:0.5rem 0;padding-left:1.5rem">
-              <li><span class="pv-inline-code">data</span> — input data array</li>
-              <li><span class="pv-inline-code">method</span> — algorithm to use (<span class="pv-inline-code">:fast</span> or <span class="pv-inline-code">:accurate</span>)</li>
-            </ul>
-          </div>
-
-          <h3>Data Table</h3>
-          <table class="pv-table">
-            <thead><tr><th>Method</th><th>Speed</th><th>Accuracy</th></tr></thead>
-            <tbody>
-              <tr><td><span class="pv-inline-code">:fast</span></td><td>~2ms</td><td>99.1%</td></tr>
-              <tr><td><span class="pv-inline-code">:accurate</span></td><td>~15ms</td><td>99.97%</td></tr>
-            </tbody>
-          </table>
-
-          <div class="pv-blockquote">
-            <p>"Simplicity is the ultimate sophistication." — Leonardo da Vinci</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    """
-end
-
-"""Generate the editor JavaScript."""
-function _editor_js(theme::ThemeConfig)::String
-    # Pre-compute initial colors
+"""Generate the editor panel JavaScript (served as /__editor__.js)."""
+function _editor_panel_js(theme::ThemeConfig)::String
+    # Pre-compute initial color tokens via the real HCT engine
     light, _ = color_scheme_pair(theme.seed;
         secondary = theme.secondary_seed,
         tertiary = theme.tertiary_seed)
-
-    # Build initial token JS object
     initial_tokens_js = _scheme_to_js_object(light)
 
     sec_seed = something(theme.secondary_seed, theme.seed)
@@ -576,11 +513,21 @@ function _editor_js(theme::ThemeConfig)::String
 
     """
     (function() {
+      'use strict';
+      // ── Panel toggle ──
+      var panel = document.getElementById('md-editor-panel');
+      document.getElementById('md-editor-toggle').addEventListener('click', function() {
+        panel.classList.toggle('md-editor-collapsed');
+      });
+      document.getElementById('md-editor-close').addEventListener('click', function() {
+        panel.classList.add('md-editor-collapsed');
+      });
+
       // ── State ──
       var state = {
         seed: '$(theme.seed)',
-        secondary: '$(sec_seed)',
-        tertiary: '$(ter_seed)',
+        secondary: '$sec_seed',
+        tertiary: '$ter_seed',
         displayFont: '$(theme.display_font)',
         bodyFont: '$(theme.body_font)',
         codeFont: '$(theme.code_font)',
@@ -588,76 +535,60 @@ function _editor_js(theme::ThemeConfig)::String
         darkMode: false
       };
 
-      // Initial tokens from Julia's HCT engine
-      var currentTokens = $initial_tokens_js;
-
-      // ── DOM refs ──
-      var frame = document.getElementById('preview-frame');
-      var tomlPreview = document.getElementById('toml-preview');
-
-      // ── Color sync ──
+      // ── Color pickers ──
       ['seed', 'secondary', 'tertiary'].forEach(function(name) {
-        var picker = document.getElementById(name);
-        var hex = document.getElementById(name + '-hex');
+        var picker = document.getElementById('ed-' + name);
+        var hex = document.getElementById('ed-' + name + '-hex');
         picker.addEventListener('input', function() {
           hex.value = picker.value;
           state[name] = picker.value;
-          updatePreview();
+          applyTheme();
         });
         hex.addEventListener('change', function() {
-          if (/^#[0-9a-fA-F]{6}\$/.test(hex.value)) {
+          if (/^#[0-9a-fA-F]{6}/.test(hex.value)) {
             picker.value = hex.value;
             state[name] = hex.value;
-            updatePreview();
+            applyTheme();
           }
         });
       });
 
-      // ── Font sync ──
-      document.getElementById('display-font').addEventListener('change', function(e) {
-        state.displayFont = e.target.value; updatePreview();
-      });
-      document.getElementById('body-font').addEventListener('change', function(e) {
-        state.bodyFont = e.target.value; updatePreview();
-      });
-      document.getElementById('code-font').addEventListener('change', function(e) {
-        state.codeFont = e.target.value; updatePreview();
-      });
-
-      // ── Shape sync ──
-      document.getElementById('corner-radius').addEventListener('change', function(e) {
-        state.cornerRadius = e.target.value; updatePreview();
+      // ── Fonts ──
+      ['display', 'body', 'code'].forEach(function(cat) {
+        var key = cat + 'Font';
+        document.getElementById('ed-' + cat + '-font').addEventListener('change', function(e) {
+          state[key] = e.target.value;
+          applyFonts();
+          updateTOML();
+        });
       });
 
-      // ── Dark mode toggle ──
-      document.getElementById('toggle-dark').addEventListener('click', function() {
+      // ── Shape ──
+      document.getElementById('ed-corner-radius').addEventListener('change', function(e) {
+        state.cornerRadius = e.target.value;
+        applyShape();
+        updateTOML();
+      });
+
+      // ── Dark mode ──
+      document.getElementById('ed-toggle-dark').addEventListener('click', function() {
         state.darkMode = !state.darkMode;
-        this.textContent = state.darkMode ? '☀️ Light' : '🌙 Dark';
-        updatePreview();
+        this.textContent = state.darkMode ? '☀️ Toggle Light' : '🌙 Toggle Dark';
+        document.documentElement.setAttribute('data-theme', state.darkMode ? 'dark' : 'light');
+        applyTheme();
       });
 
       // ── Export ──
-      document.getElementById('copy-toml').addEventListener('click', function() {
+      document.getElementById('ed-copy-toml').addEventListener('click', function() {
         var toml = generateTOML();
         navigator.clipboard.writeText(toml).then(function() {
-          var btn = document.getElementById('copy-toml');
+          var btn = document.getElementById('ed-copy-toml');
           btn.textContent = '✅ Copied!';
           setTimeout(function() { btn.textContent = '📋 Copy TOML'; }, 1500);
         });
       });
 
-      document.getElementById('download-toml').addEventListener('click', function() {
-        var toml = generateTOML();
-        var blob = new Blob([toml], { type: 'text/plain' });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = '.materialdocs.toml';
-        a.click();
-        URL.revokeObjectURL(url);
-      });
-
-      // ── Simplified HSL color engine for preview ──
+      // ── HSL color engine (approximate preview) ──
       function hexToHSL(hex) {
         var r = parseInt(hex.slice(1,3), 16) / 255;
         var g = parseInt(hex.slice(3,5), 16) / 255;
@@ -689,101 +620,116 @@ function _editor_js(theme::ThemeConfig)::String
         else if (h < 240) { r = 0; g = x; b = c; }
         else if (h < 300) { r = x; g = 0; b = c; }
         else { r = c; g = 0; b = x; }
-        var toHex = function(v) { var h = Math.round((v + m) * 255).toString(16); return h.length === 1 ? '0' + h : h; };
+        var toHex = function(v) {
+          var hx = Math.round((v + m) * 255).toString(16);
+          return hx.length === 1 ? '0' + hx : hx;
+        };
         return '#' + toHex(r) + toHex(g) + toHex(b);
       }
 
-      function generateScheme(seedHex, isDark) {
-        var hsl = hexToHSL(seedHex);
-        var h = hsl[0], s = hsl[1];
-        var scheme = {};
+      function makeRoles(h, s, isDark) {
+        var roles = {};
         if (isDark) {
-          scheme.primary = hslToHex(h, s * 0.8, 70);
-          scheme['on-primary'] = hslToHex(h, s * 0.5, 15);
-          scheme['primary-container'] = hslToHex(h, s * 0.7, 25);
-          scheme['on-primary-container'] = hslToHex(h, s * 0.6, 85);
-          scheme.surface = hslToHex(h, s * 0.15, 10);
-          scheme['on-surface'] = hslToHex(h, s * 0.08, 90);
-          scheme['surface-container'] = hslToHex(h, s * 0.12, 15);
-          scheme['surface-container-high'] = hslToHex(h, s * 0.1, 20);
-          scheme['surface-container-highest'] = hslToHex(h, s * 0.08, 25);
-          scheme['surface-container-low'] = hslToHex(h, s * 0.12, 12);
-          scheme['surface-container-lowest'] = hslToHex(h, s * 0.1, 6);
-          scheme['on-surface-variant'] = hslToHex(h, s * 0.1, 70);
-          scheme.outline = hslToHex(h, s * 0.15, 50);
-          scheme['outline-variant'] = hslToHex(h, s * 0.1, 30);
+          roles.main = hslToHex(h, s * 0.8, 70);
+          roles.on = hslToHex(h, s * 0.5, 15);
+          roles.container = hslToHex(h, s * 0.7, 25);
+          roles.onContainer = hslToHex(h, s * 0.6, 85);
         } else {
-          scheme.primary = hslToHex(h, s * 0.8, 40);
-          scheme['on-primary'] = '#ffffff';
-          scheme['primary-container'] = hslToHex(h, s * 0.6, 90);
-          scheme['on-primary-container'] = hslToHex(h, s * 0.7, 15);
-          scheme.surface = hslToHex(h, s * 0.05, 98);
-          scheme['on-surface'] = hslToHex(h, s * 0.08, 12);
-          scheme['surface-container'] = hslToHex(h, s * 0.08, 94);
-          scheme['surface-container-high'] = hslToHex(h, s * 0.06, 91);
-          scheme['surface-container-highest'] = hslToHex(h, s * 0.05, 88);
-          scheme['surface-container-low'] = hslToHex(h, s * 0.06, 96);
+          roles.main = hslToHex(h, s * 0.8, 40);
+          roles.on = '#ffffff';
+          roles.container = hslToHex(h, s * 0.6, 90);
+          roles.onContainer = hslToHex(h, s * 0.7, 15);
+        }
+        return roles;
+      }
+
+      function generateScheme(isDark) {
+        var p = hexToHSL(state.seed), s = hexToHSL(state.secondary), t = hexToHSL(state.tertiary);
+        var pri = makeRoles(p[0], p[1], isDark);
+        var sec = makeRoles(s[0], s[1], isDark);
+        var ter = makeRoles(t[0], t[1], isDark);
+        var h = p[0], sat = p[1];
+        var scheme = {
+          'primary': pri.main, 'on-primary': pri.on,
+          'primary-container': pri.container, 'on-primary-container': pri.onContainer,
+          'secondary': sec.main, 'on-secondary': sec.on,
+          'secondary-container': sec.container, 'on-secondary-container': sec.onContainer,
+          'tertiary': ter.main, 'on-tertiary': ter.on,
+          'tertiary-container': ter.container, 'on-tertiary-container': ter.onContainer,
+        };
+        if (isDark) {
+          scheme['surface'] = hslToHex(h, sat * 0.15, 10);
+          scheme['on-surface'] = hslToHex(h, sat * 0.08, 90);
+          scheme['surface-container'] = hslToHex(h, sat * 0.12, 15);
+          scheme['surface-container-high'] = hslToHex(h, sat * 0.1, 20);
+          scheme['surface-container-highest'] = hslToHex(h, sat * 0.08, 25);
+          scheme['surface-container-low'] = hslToHex(h, sat * 0.12, 12);
+          scheme['surface-container-lowest'] = hslToHex(h, sat * 0.1, 6);
+          scheme['on-surface-variant'] = hslToHex(h, sat * 0.1, 70);
+          scheme['outline'] = hslToHex(h, sat * 0.15, 50);
+          scheme['outline-variant'] = hslToHex(h, sat * 0.1, 30);
+          scheme['error'] = '#ffb4ab'; scheme['on-error'] = '#690005';
+          scheme['error-container'] = '#93000a'; scheme['on-error-container'] = '#ffdad6';
+        } else {
+          scheme['surface'] = hslToHex(h, sat * 0.05, 98);
+          scheme['on-surface'] = hslToHex(h, sat * 0.08, 12);
+          scheme['surface-container'] = hslToHex(h, sat * 0.08, 94);
+          scheme['surface-container-high'] = hslToHex(h, sat * 0.06, 91);
+          scheme['surface-container-highest'] = hslToHex(h, sat * 0.05, 88);
+          scheme['surface-container-low'] = hslToHex(h, sat * 0.06, 96);
           scheme['surface-container-lowest'] = '#ffffff';
-          scheme['on-surface-variant'] = hslToHex(h, s * 0.1, 35);
-          scheme.outline = hslToHex(h, s * 0.15, 55);
-          scheme['outline-variant'] = hslToHex(h, s * 0.1, 80);
+          scheme['on-surface-variant'] = hslToHex(h, sat * 0.1, 35);
+          scheme['outline'] = hslToHex(h, sat * 0.15, 55);
+          scheme['outline-variant'] = hslToHex(h, sat * 0.1, 80);
+          scheme['error'] = '#ba1a1a'; scheme['on-error'] = '#ffffff';
+          scheme['error-container'] = '#ffdad6'; scheme['on-error-container'] = '#410002';
         }
         return scheme;
       }
 
-      function generateFullScheme(isDark) {
-        var primary = generateScheme(state.seed, isDark);
-        var sec = hexToHSL(state.secondary);
-        var ter = hexToHSL(state.tertiary);
-        var sH = sec[0], sS = sec[1];
-        var tH = ter[0], tS = ter[1];
-
-        if (isDark) {
-          primary.secondary = hslToHex(sH, sS * 0.7, 70);
-          primary['on-secondary'] = hslToHex(sH, sS * 0.5, 15);
-          primary['secondary-container'] = hslToHex(sH, sS * 0.6, 25);
-          primary['on-secondary-container'] = hslToHex(sH, sS * 0.5, 85);
-          primary.tertiary = hslToHex(tH, tS * 0.7, 70);
-          primary['on-tertiary'] = hslToHex(tH, tS * 0.5, 15);
-          primary['tertiary-container'] = hslToHex(tH, tS * 0.6, 25);
-          primary['on-tertiary-container'] = hslToHex(tH, tS * 0.5, 85);
-          primary.error = '#ffb4ab';
-          primary['on-error'] = '#690005';
-          primary['error-container'] = '#93000a';
-          primary['on-error-container'] = '#ffdad6';
-        } else {
-          primary.secondary = hslToHex(sH, sS * 0.7, 40);
-          primary['on-secondary'] = '#ffffff';
-          primary['secondary-container'] = hslToHex(sH, sS * 0.5, 90);
-          primary['on-secondary-container'] = hslToHex(sH, sS * 0.6, 15);
-          primary.tertiary = hslToHex(tH, tS * 0.7, 40);
-          primary['on-tertiary'] = '#ffffff';
-          primary['tertiary-container'] = hslToHex(tH, tS * 0.5, 90);
-          primary['on-tertiary-container'] = hslToHex(tH, tS * 0.6, 15);
-          primary.error = '#ba1a1a';
-          primary['on-error'] = '#ffffff';
-          primary['error-container'] = '#ffdad6';
-          primary['on-error-container'] = '#410002';
-        }
-        return primary;
-      }
-
-      function updatePreview() {
-        var scheme = generateFullScheme(state.darkMode);
-        var style = frame.style;
+      // ── Apply changes to the live page ──
+      function applyTheme() {
+        var scheme = generateScheme(state.darkMode);
+        var root = document.documentElement;
         for (var key in scheme) {
-          frame.style.setProperty('--md-sys-color-' + key, scheme[key]);
+          root.style.setProperty('--md-sys-color-' + key, scheme[key]);
         }
-
-        // Corner radius
-        var radii = { sharp: '4px', 'default': '12px', rounded: '20px', pill: '28px' };
-        frame.querySelector('.pv').style.setProperty('--radius', radii[state.cornerRadius] || '12px');
-
         updateTOML();
       }
 
+      function applyFonts() {
+        var root = document.documentElement;
+        var displayStack = "'" + state.displayFont + "', system-ui, sans-serif";
+        var bodyStack = "'" + state.bodyFont + "', system-ui, sans-serif";
+        var codeStack = "'" + state.codeFont + "', 'Menlo', monospace";
+        // Update all typescale font tokens
+        var cats = ['display-large','display-medium','display-small',
+                    'headline-large','headline-medium','headline-small'];
+        cats.forEach(function(c) { root.style.setProperty('--md-sys-typescale-'+c+'-font', displayStack); });
+        var bodyCats = ['title-large','title-medium','title-small',
+                        'body-large','body-medium','body-small',
+                        'label-large','label-medium','label-small'];
+        bodyCats.forEach(function(c) { root.style.setProperty('--md-sys-typescale-'+c+'-font', bodyStack); });
+        root.style.setProperty('--md-sys-typescale-body-large-code-font', codeStack);
+      }
+
+      function applyShape() {
+        var root = document.documentElement;
+        var radii = {
+          sharp:   [0, 2, 4, 8, 12, 16],
+          'default': [4, 8, 12, 16, 28, 9999],
+          rounded: [8, 12, 20, 28, 36, 9999],
+          pill:    [12, 16, 28, 36, 44, 9999]
+        };
+        var names = ['extra-small','small','medium','large','extra-large','full'];
+        var r = radii[state.cornerRadius] || radii['default'];
+        names.forEach(function(n, i) {
+          root.style.setProperty('--md-sys-shape-corner-' + n, r[i] + 'px');
+        });
+      }
+
       function generateTOML() {
-        var lines = [
+        return [
           '# MaterialDocs theme configuration',
           '# Generated by MaterialDocs.editor()',
           '',
@@ -795,19 +741,14 @@ function _editor_js(theme::ThemeConfig)::String
           'body_font = "' + state.bodyFont + '"',
           'code_font = "' + state.codeFont + '"',
           'corner_radius = "' + state.cornerRadius + '"',
-        ];
-        return lines.join('\\n') + '\\n';
+        ].join('\\n') + '\\n';
       }
 
       function updateTOML() {
-        tomlPreview.textContent = generateTOML();
+        var pre = document.getElementById('ed-toml-preview');
+        if (pre) pre.textContent = generateTOML();
       }
 
-      // ── Initial render ──
-      // Apply Julia-computed tokens for accurate initial preview
-      for (var key in currentTokens) {
-        frame.style.setProperty('--md-sys-color-' + key, currentTokens[key]);
-      }
       updateTOML();
     })();
     """
