@@ -19,6 +19,7 @@ include("color/contrast.jl")
 
 include("themes/theme_config.jl")
 include("themes/builtin.jl")
+include("themes/toml.jl")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Writer (Phase 2)
@@ -46,5 +47,6 @@ export lighter_tone, darker_tone
 
 # Theme functions
 export resolve_theme, BUILTIN_THEMES
+export load_theme, save_theme, find_theme_toml
 
 end
