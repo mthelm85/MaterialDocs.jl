@@ -1,0 +1,7 @@
+name = "MaterialDocs"
+uuid = "10bdffc8-969c-4dd4-83f3-742518eccd6b"
+authors = ["mthelm85"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.10"
