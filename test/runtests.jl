@@ -999,4 +999,76 @@ using JET
             end
         end
     end
+
+    # ─────────────────────────────────────────────────────────────────
+    # Phase 8: Theme Editor
+    # ─────────────────────────────────────────────────────────────────
+
+    @testset "Editor HTML generation" begin
+        theme = resolve_theme(:ocean_depth)
+        html = MaterialDocs._generate_editor_html(theme)
+
+        # Should be valid HTML
+        @test contains(html, "<!doctype html>")
+        @test contains(html, "<title>MaterialDocs Theme Editor</title>")
+
+        # Should contain editor UI elements
+        @test contains(html, "id=\"seed\"")
+        @test contains(html, "id=\"secondary\"")
+        @test contains(html, "id=\"tertiary\"")
+        @test contains(html, "id=\"display-font\"")
+        @test contains(html, "id=\"body-font\"")
+        @test contains(html, "id=\"code-font\"")
+        @test contains(html, "id=\"corner-radius\"")
+        @test contains(html, "id=\"toggle-dark\"")
+
+        # Should have initial theme values
+        @test contains(html, theme.seed)
+        sec = something(theme.secondary_seed, theme.seed)
+        ter = something(theme.tertiary_seed, theme.seed)
+        @test contains(html, sec)
+        @test contains(html, ter)
+
+        # Should contain preview components
+        @test contains(html, "pv-admonition")
+        @test contains(html, "pv-code")
+        @test contains(html, "pv-table")
+        @test contains(html, "pv-docstring")
+        @test contains(html, "pv-blockquote")
+        @test contains(html, "pv-navbar")
+
+        # Should contain export buttons
+        @test contains(html, "copy-toml")
+        @test contains(html, "download-toml")
+
+        # Should have JS color engine
+        @test contains(html, "hexToHSL")
+        @test contains(html, "generateScheme")
+        @test contains(html, "generateTOML")
+
+        # Should contain initial Julia-computed tokens
+        @test contains(html, "currentTokens")
+        @test contains(html, "md-sys-color-primary")
+    end
+
+    @testset "Editor font options" begin
+        opts = MaterialDocs._font_options("Inter", :display)
+        @test contains(opts, "selected")
+        @test contains(opts, "Inter")
+        @test contains(opts, "Roboto")
+
+        # Custom font gets added
+        opts_custom = MaterialDocs._font_options("CustomFont", :body)
+        @test contains(opts_custom, "CustomFont")
+        @test contains(opts_custom, "selected")
+    end
+
+    @testset "Editor scheme to JS" begin
+        scheme = Dict(:primary => "#FF0000", :on_primary => "#FFFFFF")
+        js = MaterialDocs._scheme_to_js_object(scheme)
+        @test contains(js, "\"on-primary\":\"#FFFFFF\"")
+        @test contains(js, "\"primary\":\"#FF0000\"")
+        @test startswith(js, "{")
+        @test endswith(js, "}")
+    end
 end

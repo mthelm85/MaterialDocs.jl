@@ -32,6 +32,12 @@ include("writer/page.jl")
 include("writer/render.jl")
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Theme Editor (Phase 8)
+# ─────────────────────────────────────────────────────────────────────────────
+
+include("editor/editor.jl")
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -48,5 +54,8 @@ export lighter_tone, darker_tone
 # Theme functions
 export resolve_theme, BUILTIN_THEMES
 export load_theme, save_theme, find_theme_toml
+
+# Editor
+export editor
 
 end
