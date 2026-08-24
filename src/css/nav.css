@@ -1,0 +1,152 @@
+/* ── MaterialDocs: Navigation ──
+   Navbar, sidebar, and right-rail TOC — all token-driven. */
+
+/* ── Navbar ── */
+.md-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--md-sys-color-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding: 0.625rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: var(--md-sys-elevation-1);
+}
+.md-navbar-logo {
+  height: 32px;
+  width: auto;
+}
+.md-navbar-title {
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-weight: var(--md-sys-typescale-title-large-weight);
+  font-size: var(--md-sys-typescale-title-large-size);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Theme toggle button */
+.md-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.375rem;
+  border-radius: var(--md-sys-shape-corner-full);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+.md-icon-btn:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+/* ── Sidebar ── */
+.md-sidebar {
+  padding: 1.25rem 0.75rem;
+  border-right: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface);
+  overflow-y: auto;
+  height: calc(100vh - 3.5rem);
+  position: sticky;
+  top: 3.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--md-sys-color-outline-variant) transparent;
+}
+.md-sidebar a {
+  display: block;
+  padding: 0.375rem 0.75rem;
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+  color: var(--md-sys-color-on-surface-variant);
+  text-decoration: none;
+  border-radius: var(--md-sys-shape-corner-small);
+  transition: background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
+              color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+.md-sidebar a:hover {
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+  text-decoration: none;
+}
+.md-sidebar a.md-nav-active {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font-weight: 600;
+}
+
+/* Nav sections */
+.md-nav-section {
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+}
+.md-nav-section-title {
+  display: block;
+  padding: 0.25rem 0.75rem;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ── TOC (right rail) ── */
+.md-toc {
+  padding: 1.25rem 0.75rem;
+  border-left: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface);
+  overflow-y: auto;
+  height: calc(100vh - 3.5rem);
+  position: sticky;
+  top: 3.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--md-sys-color-outline-variant) transparent;
+}
+.md-toc-inner { /* wrapper for content */ }
+.md-toc-title {
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: 0.5rem;
+  padding-left: 0.5rem;
+}
+.md-toc-link {
+  display: block;
+  padding: 0.25rem 0.5rem;
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  color: var(--md-sys-color-on-surface-variant);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
+              border-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+.md-toc-link:hover {
+  color: var(--md-sys-color-on-surface);
+  text-decoration: none;
+}
+.md-toc-link.active {
+  color: var(--md-sys-color-primary);
+  border-left-color: var(--md-sys-color-primary);
+  font-weight: 500;
+}
+/* Indent levels */
+.md-toc-h3 { padding-left: 1.25rem; }
+.md-toc-h4 { padding-left: 2rem; }
+
+/* ── Footer ── */
+.md-footer {
+  padding: 1.5rem;
+  text-align: center;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-body-small-size);
+}
+.md-footer a { color: var(--md-sys-color-primary); }

@@ -1,0 +1,43 @@
+/* ── MaterialDocs: Print Styles ── */
+@media print {
+  .md-navbar,
+  .md-sidebar,
+  .md-toc,
+  .md-footer,
+  .md-copy-btn,
+  .md-theme-toggle,
+  .md-heading-anchor {
+    display: none !important;
+  }
+
+  .md-layout {
+    display: block !important;
+  }
+
+  .md-content {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  a { color: inherit !important; text-decoration: underline; }
+  a[href]::after { content: " (" attr(href) ")"; font-size: 0.8em; color: #666; }
+  a[href^="#"]::after { content: ""; }
+
+  pre, .md-code-block pre {
+    border: 1px solid #ccc !important;
+    background: #f8f8f8 !important;
+    page-break-inside: avoid;
+  }
+
+  .md-admonition { page-break-inside: avoid; }
+  .md-docstring { page-break-inside: avoid; }
+
+  h1, h2, h3, h4 { page-break-after: avoid; }
+  img { page-break-inside: avoid; }
+}

@@ -72,71 +72,25 @@ end
 # CSS generation
 # ─────────────────────────────────────────────────────────────────────────────
 
-"""Build the complete CSS string: token block + static styles."""
+"""Build the complete CSS string: generated token block + static stylesheets."""
 function build_css(theme::ThemeConfig, light::Dict{Symbol,String},
                    dark::Dict{Symbol,String}, settings::Material3)::String
     io = IOBuffer()
 
     # CSS custom property tokens (light, dark via media query, dark via toggle)
     _write_css_tokens(io, theme, light, dark, settings)
+    println(io)
 
-    # Static component styles will be added in Phase 5
-    # For now, include a minimal reset
-    print(io, """
-
-/* ── Reset & Base ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 16px; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
-body {
-    font-family: var(--md-sys-typescale-body-large-font);
-    font-size: var(--md-sys-typescale-body-large-size);
-    line-height: var(--md-sys-typescale-body-large-line-height);
-    background: var(--md-sys-color-surface);
-    color: var(--md-sys-color-on-surface);
-}
-a { color: var(--md-sys-color-primary); text-decoration: none; }
-a:hover { text-decoration: underline; }
-code, pre { font-family: var(--md-sys-typescale-body-large-code-font); }
-pre {
-    padding: 1rem;
-    border-radius: var(--md-sys-shape-corner-medium);
-    background: var(--md-sys-color-surface-container);
-    overflow-x: auto;
-}
-
-/* ── Layout ── */
-.md-layout {
-    display: grid;
-    grid-template-columns: 280px 1fr 220px;
-    min-height: 100vh;
-    max-width: 1440px;
-    margin: 0 auto;
-}
-.md-sidebar { padding: 1.5rem 1rem; border-right: 1px solid var(--md-sys-color-outline-variant); }
-.md-content { padding: 2rem 2.5rem; max-width: 52rem; }
-.md-toc { padding: 1.5rem 1rem; border-left: 1px solid var(--md-sys-color-outline-variant); }
-
-/* ── Navbar ── */
-.md-navbar {
-    position: sticky; top: 0; z-index: 100;
-    background: var(--md-sys-color-surface);
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
-    padding: 0.75rem 1.5rem;
-    display: flex; align-items: center; gap: 1rem;
-}
-.md-navbar-title {
-    font-family: var(--md-sys-typescale-title-large-font);
-    font-weight: var(--md-sys-typescale-title-large-weight);
-    font-size: var(--md-sys-typescale-title-large-size);
-    color: var(--md-sys-color-on-surface);
-}
-
-@media (max-width: 1024px) {
-    .md-layout { grid-template-columns: 1fr; }
-    .md-sidebar, .md-toc { display: none; }
-    .md-content { padding: 1.5rem 1rem; }
-}
-""")
+    # Static CSS files — read from src/css/ and concatenate
+    css_dir = joinpath(@__DIR__, "..", "css")
+    for file in ("base.css", "components.css", "nav.css", "print.css")
+        path = joinpath(css_dir, file)
+        if isfile(path)
+            println(io, "\n/* ── ", file, " ── */")
+            print(io, read(path, String))
+            println(io)
+        end
+    end
 
     String(take!(io))
 end

@@ -420,11 +420,52 @@ using JET
         @test contains(css, "[data-theme=\"dark\"]")
         @test contains(css, ":root:not([data-theme=\"light\"])")
 
-        # Layout
+        # Layout (from base.css)
         @test contains(css, ".md-layout")
         @test contains(css, ".md-sidebar")
         @test contains(css, ".md-content")
         @test contains(css, ".md-navbar")
+
+        # Components use tokens, not literal colors (Phase 5)
+        @test contains(css, "var(--md-sys-color-primary-container)")
+        @test contains(css, "var(--md-sys-color-on-primary-container)")
+        @test contains(css, "var(--md-sys-color-secondary-container)")
+        @test contains(css, "var(--md-sys-color-error-container)")
+        @test contains(css, "var(--md-sys-color-surface-container)")
+        @test contains(css, "var(--md-sys-shape-corner-medium)")
+        @test contains(css, "var(--md-sys-motion-easing-standard)")
+
+        # Static CSS file sections present
+        @test contains(css, "base.css")
+        @test contains(css, "components.css")
+        @test contains(css, "nav.css")
+        @test contains(css, "print.css")
+
+        # Component classes from static CSS
+        @test contains(css, ".md-code-block")
+        @test contains(css, ".md-code-inline")
+        @test contains(css, ".md-blockquote")
+        @test contains(css, ".md-admonition")
+        @test contains(css, ".md-admonition-note")
+        @test contains(css, ".md-admonition-warning")
+        @test contains(css, ".md-admonition-tip")
+        @test contains(css, ".md-admonition-danger")
+        @test contains(css, ".md-docstring")
+        @test contains(css, ".md-docstring-binding")
+        @test contains(css, ".md-table-wrap")
+        @test contains(css, ".md-copy-btn")
+        @test contains(css, ".md-footnote")
+        @test contains(css, ".md-math-display")
+        @test contains(css, ".md-figure")
+        @test contains(css, ".md-toc-link")
+        @test contains(css, ".md-footer")
+        @test contains(css, ".md-heading-anchor")
+
+        # Print styles
+        @test contains(css, "@media print")
+
+        # Responsive breakpoints
+        @test contains(css, "@media (max-width:")
     end
 
     @testset "CSS dark mode variants" begin
