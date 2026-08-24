@@ -1,8 +1,15 @@
 #=
 HCT (Hue, Chroma, Tone) color space implementation.
 
-Ported from Google's material-color-utilities (MIT License).
+Ported to Julia from Google's material-color-utilities.
+Copyright 2021 Google LLC. Licensed under the Apache License, Version 2.0.
 https://github.com/material-foundation/material-color-utilities
+
+See LICENSES_THIRD_PARTY.md for the full Apache 2.0 license text.
+
+This file has been substantially modified from the original TypeScript/Dart
+sources: rewritten in Julia with StaticArrays, adapted to Julia conventions,
+and restructured into the MaterialDocs.jl module.
 
 HCT combines CAM16's hue and chroma with CIELAB's L* (lightness) as the
 tone axis. This makes tone perceptually uniform — a tone-40 blue looks

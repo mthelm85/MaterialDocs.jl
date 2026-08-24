@@ -1,6 +1,11 @@
 #=
 Color Scheme — generates 29+ MD3 color roles from seed color(s).
 
+Based on the dynamic color algorithm from Google's material-color-utilities.
+Copyright 2021 Google LLC. Licensed under the Apache License, Version 2.0.
+https://github.com/material-foundation/material-color-utilities
+See LICENSES_THIRD_PARTY.md for the full license text.
+
 Implements the Material Design 3 dynamic color algorithm:
 1. Convert seed → HCT
 2. Derive five key palettes (Primary, Secondary, Tertiary, Neutral, Neutral-Variant)

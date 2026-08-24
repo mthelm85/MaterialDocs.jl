@@ -1,6 +1,11 @@
 #=
 Tonal Palette — a set of tones derived from a single hue/chroma pair.
 
+Based on the tonal palette concept from Google's material-color-utilities.
+Copyright 2021 Google LLC. Licensed under the Apache License, Version 2.0.
+https://github.com/material-foundation/material-color-utilities
+See LICENSES_THIRD_PARTY.md for the full license text.
+
 A TonalPalette maps tone values (0–100) to hex color strings by computing
 HCT(hue, chroma, tone) → sRGB for each requested tone. Results are cached
 for repeated lookups.
