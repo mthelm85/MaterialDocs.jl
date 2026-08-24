@@ -261,6 +261,273 @@ using JET
         @test isnan(darker_tone(1.0, 21.0))
     end
 
+    # ─────────────────────────────────────────────────────────────────
+    # Phase 2: Theme System & Writer Skeleton
+    # ─────────────────────────────────────────────────────────────────
+
+    @testset "ThemeConfig defaults" begin
+        tc = ThemeConfig()
+        @test tc.name == "custom"
+        @test tc.seed == "#6750A4"
+        @test tc.secondary_seed === nothing
+        @test tc.tertiary_seed === nothing
+        @test tc.display_font == "Roboto"
+        @test tc.body_font == "Roboto"
+        @test tc.code_font == "Roboto Mono"
+        @test tc.corner_radius == :rounded
+        @test isempty(tc.custom_colors)
+    end
+
+    @testset "ThemeConfig custom" begin
+        tc = ThemeConfig(
+            name="Test",
+            seed="#2E7D32",
+            secondary_seed="#006B5E",
+            tertiary_seed="#E65100",
+            display_font="Literata",
+            body_font="Source Serif 4",
+            code_font="Fira Code",
+            corner_radius=:slight,
+            custom_colors=Dict("primary" => "#112233"),
+        )
+        @test tc.name == "Test"
+        @test tc.seed == "#2E7D32"
+        @test tc.secondary_seed == "#006B5E"
+        @test tc.tertiary_seed == "#E65100"
+        @test tc.display_font == "Literata"
+        @test tc.corner_radius == :slight
+        @test tc.custom_colors["primary"] == "#112233"
+    end
+
+    @testset "ThemeConfig validation" begin
+        @test_throws ArgumentError ThemeConfig(corner_radius=:bad)
+    end
+
+    @testset "ThemeConfig show" begin
+        tc = ThemeConfig(name="Test", seed="#123456")
+        s = sprint(show, tc)
+        @test contains(s, "ThemeConfig")
+        @test contains(s, "Test")
+        @test contains(s, "#123456")
+    end
+
+    @testset "Corner radius presets" begin
+        @test haskey(MaterialDocs.CORNER_RADII, :sharp)
+        @test haskey(MaterialDocs.CORNER_RADII, :slight)
+        @test haskey(MaterialDocs.CORNER_RADII, :rounded)
+        @test haskey(MaterialDocs.CORNER_RADII, :full)
+        # Sharp is all zeros
+        @test all(r -> r == 0, MaterialDocs.CORNER_RADII[:sharp])
+        # Rounded should be increasing
+        r = collect(MaterialDocs.CORNER_RADII[:rounded])
+        @test issorted(r)
+    end
+
+    @testset "Built-in themes" begin
+        @test length(BUILTIN_THEMES) == 12
+        expected = [:default, :ocean_depth, :solar_flare, :midnight, :forest,
+                    :arctic, :rose_garden, :amber_workshop, :lavender,
+                    :sandstone, :neon_lab, :slate]
+        for name in expected
+            @test haskey(BUILTIN_THEMES, name)
+            tc = BUILTIN_THEMES[name]
+            @test tc isa ThemeConfig
+            @test startswith(tc.seed, "#")
+            @test length(tc.seed) == 7
+            @test !isempty(tc.display_font)
+        end
+    end
+
+    @testset "resolve_theme" begin
+        # Symbol → ThemeConfig
+        tc = resolve_theme(:default)
+        @test tc === BUILTIN_THEMES[:default]
+        @test tc.name == "Default"
+
+        # ThemeConfig passthrough
+        custom = ThemeConfig(seed="#FF0000")
+        @test resolve_theme(custom) === custom
+
+        # Unknown symbol
+        @test_throws ArgumentError resolve_theme(:nonexistent)
+    end
+
+    @testset "Material3 defaults" begin
+        m3 = Material3()
+        @test m3.theme === BUILTIN_THEMES[:default]
+        @test m3.dark_mode == :auto
+        @test m3.sidebar_collapsed == false
+        @test m3.toc_depth == 3
+        @test m3.search == true
+        @test m3.analytics === nothing
+        @test m3.logo === nothing
+        @test m3.favicon === nothing
+        @test m3.footer === nothing
+        @test isempty(m3.custom_css)
+        @test isempty(m3.custom_js)
+        @test m3.prettyurls == true
+    end
+
+    @testset "Material3 with symbol theme" begin
+        m3 = Material3(theme=:ocean_depth, dark_mode=:toggle, toc_depth=4)
+        @test m3.theme.name == "Ocean Depth"
+        @test m3.dark_mode == :toggle
+        @test m3.toc_depth == 4
+    end
+
+    @testset "Material3 with ThemeConfig" begin
+        tc = ThemeConfig(seed="#E65100", name="Custom Orange")
+        m3 = Material3(theme=tc, dark_mode=:light)
+        @test m3.theme === tc
+        @test m3.dark_mode == :light
+    end
+
+    @testset "Material3 validation" begin
+        @test_throws ArgumentError Material3(dark_mode=:bad)
+        @test_throws ArgumentError Material3(toc_depth=1)
+        @test_throws ArgumentError Material3(toc_depth=5)
+    end
+
+    @testset "Material3 show" begin
+        m3 = Material3(theme=:midnight, dark_mode=:toggle)
+        s = sprint(show, m3)
+        @test contains(s, "Material3")
+        @test contains(s, "Midnight")
+        @test contains(s, "toggle")
+    end
+
+    @testset "CSS generation" begin
+        m3 = Material3(theme=:ocean_depth, dark_mode=:toggle)
+        theme = m3.theme
+        light, dark = color_scheme_pair(theme.seed;
+            secondary=theme.secondary_seed, tertiary=theme.tertiary_seed)
+        css = MaterialDocs.build_css(theme, light, dark, m3)
+
+        # Should contain all token categories
+        @test contains(css, ":root {")
+        @test contains(css, "--md-sys-color-primary:")
+        @test contains(css, "--md-sys-color-on-primary:")
+        @test contains(css, "--md-sys-color-surface:")
+        @test contains(css, "--md-sys-typescale-display-large-font:")
+        @test contains(css, "--md-sys-typescale-body-large-size:")
+        @test contains(css, "--md-sys-shape-corner-medium:")
+        @test contains(css, "--md-sys-elevation-1:")
+        @test contains(css, "--md-sys-motion-easing-standard:")
+
+        # Dark mode blocks
+        @test contains(css, "@media (prefers-color-scheme: dark)")
+        @test contains(css, "[data-theme=\"dark\"]")
+        @test contains(css, ":root:not([data-theme=\"light\"])")
+
+        # Layout
+        @test contains(css, ".md-layout")
+        @test contains(css, ".md-sidebar")
+        @test contains(css, ".md-content")
+        @test contains(css, ".md-navbar")
+    end
+
+    @testset "CSS dark mode variants" begin
+        # :light mode should NOT have any dark blocks
+        m3_light = Material3(dark_mode=:light)
+        theme = m3_light.theme
+        light, dark = color_scheme_pair(theme.seed)
+        css_light = MaterialDocs.build_css(theme, light, dark, m3_light)
+        @test !contains(css_light, "@media (prefers-color-scheme: dark)")
+        @test !contains(css_light, "[data-theme=\"dark\"]")
+
+        # :dark mode has explicit dark toggle block but no media query
+        m3_dark = Material3(dark_mode=:dark)
+        css_dark = MaterialDocs.build_css(m3_dark.theme, light, dark, m3_dark)
+        @test !contains(css_dark, "@media (prefers-color-scheme: dark)")
+        @test contains(css_dark, "[data-theme=\"dark\"]")
+    end
+
+    @testset "CSS font stacks" begin
+        # Serif font detection
+        serif_stack = MaterialDocs._css_font_stack("Literata", :display)
+        @test contains(serif_stack, "serif")
+        @test contains(serif_stack, "'Literata'")
+
+        # Sans font
+        sans_stack = MaterialDocs._css_font_stack("Inter", :display)
+        @test contains(sans_stack, "sans-serif")
+
+        # Code font
+        code_stack = MaterialDocs._css_font_stack("JetBrains Mono", :code)
+        @test contains(code_stack, "monospace")
+        @test contains(code_stack, "'JetBrains Mono'")
+    end
+
+    @testset "JS generation" begin
+        # Toggle mode includes theme switch code
+        m3_toggle = Material3(dark_mode=:toggle)
+        js_toggle = MaterialDocs.build_js(m3_toggle)
+        @test contains(js_toggle, "md-theme-toggle")
+        @test contains(js_toggle, "localStorage")
+        @test contains(js_toggle, "data-theme")
+
+        # Auto mode has no toggle
+        m3_auto = Material3(dark_mode=:auto)
+        js_auto = MaterialDocs.build_js(m3_auto)
+        @test !contains(js_auto, "md-theme-toggle")
+    end
+
+    @testset "NavItem and NavContext" begin
+        # Basic construction
+        leaf = MaterialDocs.NavItem("Home", "index.html", MaterialDocs.NavItem[], true)
+        @test leaf.title == "Home"
+        @test leaf.path == "index.html"
+        @test isempty(leaf.children)
+        @test leaf.visible
+
+        # Section with children
+        child1 = MaterialDocs.NavItem("Guide", "guide.html", MaterialDocs.NavItem[], true)
+        child2 = MaterialDocs.NavItem("API", "api.html", MaterialDocs.NavItem[], true)
+        section = MaterialDocs.NavItem("Manual", nothing, [child1, child2], true)
+        @test section.path === nothing
+        @test length(section.children) == 2
+
+        # NavContext
+        ctx = MaterialDocs.NavContext([leaf, section])
+        @test length(ctx.items) == 2
+    end
+
+    @testset "Utility: _html_escape" begin
+        @test MaterialDocs._html_escape("a < b & c > d") == "a &lt; b &amp; c &gt; d"
+        @test MaterialDocs._html_escape("\"hello\"") == "&quot;hello&quot;"
+        @test MaterialDocs._html_escape("it's") == "it&#39;s"
+        @test MaterialDocs._html_escape("normal text") == "normal text"
+    end
+
+    @testset "Utility: _slugify" begin
+        @test MaterialDocs._slugify("Hello World") == "hello-world"
+        @test MaterialDocs._slugify("API Reference!") == "api-reference"
+        @test MaterialDocs._slugify("  spaced  out  ") == "spaced-out"
+        @test MaterialDocs._slugify("Under_scores") == "under-scores"
+    end
+
+    @testset "Utility: _relative_root" begin
+        @test MaterialDocs._relative_root("index.html") == ""
+        @test MaterialDocs._relative_root("guide/page.html") == "../"
+        @test MaterialDocs._relative_root("a/b/c.html") == "../../"
+    end
+
+    @testset "Utility: _google_fonts_link" begin
+        tc = ThemeConfig(display_font="Inter", body_font="Roboto", code_font="JetBrains Mono")
+        link = MaterialDocs._google_fonts_link(tc)
+        @test contains(link, "fonts.googleapis.com")
+        @test contains(link, "Inter")
+        @test contains(link, "Roboto")
+        @test contains(link, "JetBrains+Mono")
+        @test contains(link, "display=swap")
+
+        # Same display and body font should not duplicate
+        tc2 = ThemeConfig(display_font="Inter", body_font="Inter")
+        link2 = MaterialDocs._google_fonts_link(tc2)
+        # Count "family=Inter" occurrences
+        @test count("family=Inter", link2) == 1
+    end
+
     @testset "MD3 scheme meets WCAG AA" begin
         # All primary color role pairings should meet AA
         light, dark = color_scheme_pair("#6750A4")
