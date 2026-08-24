@@ -764,6 +764,55 @@ using JET
     end
 
     # ─────────────────────────────────────────────────────────────────
+    # Phase 7: Search Index
+    # ─────────────────────────────────────────────────────────────────
+
+    @testset "Integration: search index" begin
+        build_dir = joinpath(@__DIR__, "fixtures", "build")
+        index_path = joinpath(build_dir, "assets", "search-index.json")
+
+        # Search index file should exist
+        @test isfile(index_path)
+
+        index_json = read(index_path, String)
+
+        # Should be valid JSON array (starts with [ and ends with ])
+        @test startswith(index_json, "[")
+        @test endswith(index_json, "]")
+
+        # Should contain entries from our pages
+        @test contains(index_json, "\"title\":")
+        @test contains(index_json, "\"text\":")
+        @test contains(index_json, "\"href\":")
+        @test contains(index_json, "\"section\":")
+
+        # Index page content
+        @test contains(index_json, "Welcome to TestPackage.jl")
+
+        # API page content
+        @test contains(index_json, "API Reference")
+
+        # Hrefs should use prettyurl format
+        @test contains(index_json, "api/")
+    end
+
+    @testset "JSON escaping" begin
+        escaped = MaterialDocs._json_escape("hello \"world\"\nnewline\\slash")
+        @test escaped == "hello \\\"world\\\"\\nnewline\\\\slash"
+        @test !contains(escaped, "\n")  # actual newline
+    end
+
+    @testset "Text truncation" begin
+        short = "hello world"
+        @test MaterialDocs._truncate_text(short, 300) == short
+
+        long = "word " ^ 100  # 500 chars
+        truncated = MaterialDocs._truncate_text(long, 50)
+        @test length(truncated) <= 55  # 50 + "…" + some slack
+        @test endswith(truncated, "…")
+    end
+
+    # ─────────────────────────────────────────────────────────────────
     # Phase 4: Theme TOML Configuration
     # ─────────────────────────────────────────────────────────────────
 

@@ -325,11 +325,159 @@ function copy_assets(doc::Documenter.Document, settings::Material3,
 end
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Search index (scaffold)
+# Search index
 # ─────────────────────────────────────────────────────────────────────────────
 
-"""Build a JSON search index from all pages. Full implementation in Phase 7."""
+"""
+    build_search_index(doc::Documenter.Document) → String
+
+Build a JSON search index from all pages for client-side search.
+
+Each entry has:
+- `title`: heading text (or page title for the page-level entry)
+- `text`: plain text under that heading (truncated to ~300 chars)
+- `href`: relative URL to the page + anchor (prettyurl-aware)
+- `section`: parent page title (for sub-headings)
+"""
 function build_search_index(doc::Documenter.Document)::String
-    # Scaffold — returns empty array for now
-    "[]"
+    entries = Dict{String,Any}[]
+
+    for (src, page) in doc.blueprint.pages
+        page_title = _page_title_from_page(page)
+
+        # Compute page URL (relative to build root)
+        page_build_html = replace(page.build, r"\.md$" => ".html")
+        build_prefix = doc.user.build * (Sys.iswindows() ? "\\" : "/")
+        page_rel = startswith(page_build_html, build_prefix) ?
+            page_build_html[length(build_prefix)+1:end] : page_build_html
+        page_href = _nav_href(replace(page_rel, '\\' => '/'), true)  # always prettyurl for search
+
+        # Walk AST, splitting into sections by heading
+        sections = _split_page_sections(page)
+
+        for (i, sec) in enumerate(sections)
+            anchor = sec.slug
+            href = isempty(anchor) ? page_href : page_href * "#" * anchor
+            title = isempty(sec.title) ? page_title : sec.title
+            section_label = (i == 1 || isempty(sec.title)) ? "" : page_title
+
+            text = _truncate_text(sec.text, 300)
+            push!(entries, Dict{String,Any}(
+                "title" => title,
+                "text" => text,
+                "href" => href,
+                "section" => section_label,
+            ))
+        end
+    end
+
+    _entries_to_json(entries)
+end
+
+"""A section of a page: heading + body text."""
+struct SearchSection
+    title::String
+    slug::String
+    text::String
+end
+
+"""Split a page's AST into sections delimited by headings."""
+function _split_page_sections(page::Documenter.Page)::Vector{SearchSection}
+    sections = SearchSection[]
+    current_title = ""
+    current_slug = ""
+    buf = IOBuffer()
+
+    mdast = page.mdast
+    for child in mdast.children
+        heading_node, slug = _extract_heading(child)
+        if heading_node !== nothing
+            # Flush previous section
+            text = strip(String(take!(buf)))
+            if !isempty(current_title) || !isempty(text)
+                push!(sections, SearchSection(current_title, current_slug, text))
+            end
+            current_title = _collect_text(heading_node)
+            current_slug = slug
+            buf = IOBuffer()
+        else
+            # Accumulate plain text
+            _collect_plain_text(buf, child)
+            print(buf, ' ')
+        end
+    end
+
+    # Flush final section
+    text = strip(String(take!(buf)))
+    if !isempty(current_title) || !isempty(text)
+        push!(sections, SearchSection(current_title, current_slug, text))
+    end
+
+    # If no sections at all, create one from the page
+    if isempty(sections)
+        push!(sections, SearchSection("", "", ""))
+    end
+
+    sections
+end
+
+"""Recursively extract plain text from an AST node (no HTML)."""
+function _collect_plain_text(io::IO, node)
+    elem = node.element
+    if elem isa MarkdownAST.Text
+        print(io, elem.text)
+    elseif elem isa MarkdownAST.Code
+        print(io, elem.code)
+    elseif elem isa MarkdownAST.CodeBlock
+        print(io, elem.code)
+    elseif elem isa MarkdownAST.SoftBreak || elem isa MarkdownAST.LineBreak
+        print(io, ' ')
+    elseif elem isa MarkdownAST.ThematicBreak
+        # skip
+    else
+        # Recurse into children (paragraphs, emphasis, strong, lists, etc.)
+        for child in node.children
+            _collect_plain_text(io, child)
+        end
+    end
+end
+
+"""Truncate text to approximately n characters at a word boundary."""
+function _truncate_text(text::String, n::Int)::String
+    length(text) <= n && return text
+    # Find last space before the limit
+    idx = findprev(' ', text, n)
+    idx === nothing && (idx = n)
+    text[1:idx] * "…"
+end
+
+"""Serialize search entries to JSON (no external dependency)."""
+function _entries_to_json(entries::Vector{Dict{String,Any}})::String
+    io = IOBuffer()
+    print(io, '[')
+    for (i, entry) in enumerate(entries)
+        i > 1 && print(io, ',')
+        print(io, '{')
+        first_field = true
+        for key in ("title", "text", "href", "section")
+            val = get(entry, key, "")
+            !first_field && print(io, ',')
+            first_field = false
+            print(io, '"', key, '"', ':', '"', _json_escape(val), '"')
+        end
+        print(io, '}')
+    end
+    print(io, ']')
+    String(take!(io))
+end
+
+"""Escape a string for JSON output."""
+function _json_escape(s::AbstractString)::String
+    replace(s,
+        '\\' => "\\\\",
+        '"' => "\\\"",
+        '\n' => "\\n",
+        '\r' => "\\r",
+        '\t' => "\\t",
+    )
 end
