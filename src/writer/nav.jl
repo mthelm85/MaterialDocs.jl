@@ -63,11 +63,17 @@ end
 function _page_title(doc::Documenter.Document, pagepath::String)::String
     if haskey(doc.blueprint.pages, pagepath)
         page = doc.blueprint.pages[pagepath]
-        # Try to get title from the markdown AST
         mdast = page.mdast
         for child in mdast.children
+            # Handle both bare Heading and Documenter's AnchoredHeader wrapper
             if child.element isa MarkdownAST.Heading && child.element.level == 1
                 return _collect_text(child)
+            elseif child.element isa Documenter.AnchoredHeader
+                for inner in child.children
+                    if inner.element isa MarkdownAST.Heading && inner.element.level == 1
+                        return _collect_text(inner)
+                    end
+                end
             end
         end
     end

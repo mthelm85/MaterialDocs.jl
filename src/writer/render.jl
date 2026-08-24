@@ -25,8 +25,8 @@ Pipeline:
 function render(doc::Documenter.Document, settings::Material3)
     @info "MaterialDocs: rendering with theme \"$(settings.theme.name)\""
 
-    # Build directory
-    build_dir = doc.user.build
+    # Build directory (absolute path)
+    build_dir = joinpath(doc.user.root, doc.user.build)
 
     # 1. Generate color schemes from theme seed
     theme = settings.theme

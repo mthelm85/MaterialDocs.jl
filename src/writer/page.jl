@@ -2,7 +2,7 @@
 Page — renders individual documentation pages to HTML files.
 
 Generates the full HTML document: head, navbar, sidebar, content, TOC rail,
-footer. The content area calls domify() on each AST node (Phase 3).
+footer. The content area calls domify() on each AST node via DomifyContext.
 =#
 
 import Documenter
@@ -22,20 +22,27 @@ function render_page(doc::Documenter.Document, settings::Material3,
     # Compute page metadata
     page_title = _page_title_from_page(page)
     sitename = doc.user.sitename
-    build_dir = doc.user.build
+    root_dir = doc.user.root
 
-    # Determine output path
-    if settings.prettyurls && page.build != "index.html"
-        # page.build is like "page.html" → write to "page/index.html"
-        out_name = replace(page.build, r"\.html$" => "")
-        out_dir = joinpath(build_dir, out_name)
-        out_file = joinpath(out_dir, "index.html")
-        root_prefix = _relative_root(out_name)
+    # page.build is like "build/api.md" (relative to root, with .md extension)
+    # We need to: change .md → .html, and optionally apply prettyurls
+    page_build_html = replace(page.build, r"\.md$" => ".html")
+
+    # Get the portion after the build dir prefix for relative path calculations
+    build_prefix = doc.user.build * (Sys.iswindows() ? "\\" : "/")
+    page_rel = startswith(page_build_html, build_prefix) ?
+        page_build_html[length(build_prefix)+1:end] : page_build_html
+
+    if settings.prettyurls && page_rel != "index.html"
+        # "api.html" → "api/index.html"
+        out_name = replace(page_rel, r"\.html$" => "")
+        out_file = joinpath(root_dir, doc.user.build, out_name, "index.html")
+        root_prefix = _relative_root(out_name * "/index.html")
     else
-        out_dir = build_dir
-        out_file = joinpath(build_dir, page.build)
-        root_prefix = _relative_root(page.build)
+        out_file = joinpath(root_dir, doc.user.build, page_rel)
+        root_prefix = _relative_root(page_rel)
     end
+    out_dir = dirname(out_file)
     isdir(out_dir) || mkpath(out_dir)
 
     # Generate Google Fonts link
@@ -106,8 +113,8 @@ function render_page(doc::Documenter.Document, settings::Material3,
     println(io, "    <main class=\"md-content\">")
     println(io, "      <article class=\"md-article\">")
 
-    # Render page content — domify dispatch (scaffold for Phase 3)
-    _render_article_content(io, page, doc, root_prefix)
+    # Render page content via domify dispatch
+    _render_article_content(io, page, doc, root_prefix, settings)
 
     println(io, "      </article>")
     println(io, "    </main>")
@@ -148,18 +155,45 @@ end
 function _page_title_from_page(page::Documenter.Page)::String
     mdast = page.mdast
     for child in mdast.children
-        if child.element isa MarkdownAST.Heading && child.element.level == 1
-            return _collect_text(child)
+        heading_node, _ = _extract_heading(child)
+        if heading_node !== nothing && heading_node.element.level == 1
+            return _collect_text(heading_node)
         end
     end
     name = splitext(basename(page.build))[1]
     replace(titlecase(name), '-' => ' ', '_' => ' ')
 end
 
-"""Compute relative path prefix to reach the root from a page path."""
-function _relative_root(page_build::String)::String
-    depth = count('/', replace(page_build, '\\' => '/'))
-    depth == 0 ? "" : repeat("../", depth)
+"""
+    _extract_heading(node) → (heading_node, slug) or (nothing, "")
+
+Extract the heading node and its slug from a top-level AST node.
+Handles both bare `MarkdownAST.Heading` nodes and Documenter's
+`AnchoredHeader` wrapper.
+"""
+function _extract_heading(node)
+    elem = node.element
+    if elem isa MarkdownAST.Heading
+        text = _collect_text(node)
+        return (node, _slugify(text))
+    elseif elem isa Documenter.AnchoredHeader
+        slug = Documenter.anchor_label(elem.anchor)
+        # Find the Heading child inside the AnchoredHeader
+        for child in node.children
+            if child.element isa MarkdownAST.Heading
+                return (child, slug)
+            end
+        end
+    end
+    return (nothing, "")
+end
+
+"""Compute relative path prefix to reach the build root from a page path."""
+function _relative_root(page_rel::String)::String
+    # Count directory separators to determine depth
+    normalized = replace(page_rel, '\\' => '/')
+    depth = count('/', normalized)
+    depth == 0 ? "./" : repeat("../", depth)
 end
 
 """Generate a Google Fonts <link> tag from theme configuration."""
@@ -189,12 +223,13 @@ end
 function _render_nav(io::IO, nav_ctx::NavContext, current_page::String,
                      root_prefix::String, settings::Material3)
     for item in nav_ctx.items
-        _render_nav_item(io, item, current_page, root_prefix, 0)
+        _render_nav_item(io, item, current_page, root_prefix, 0, settings)
     end
 end
 
 function _render_nav_item(io::IO, item::NavItem, current_page::String,
-                          root_prefix::String, depth::Int)
+                          root_prefix::String, depth::Int,
+                          settings::Material3)
     item.visible || return
 
     indent = "      " * repeat("  ", depth)
@@ -202,7 +237,7 @@ function _render_nav_item(io::IO, item::NavItem, current_page::String,
     if item.path !== nothing
         is_active = item.path == current_page
         active_class = is_active ? " class=\"md-nav-active\"" : ""
-        href = root_prefix * item.path
+        href = root_prefix * _nav_href(item.path, settings.prettyurls)
         println(io, indent, "<a href=\"", href, "\"", active_class, ">", _html_escape(item.title), "</a>")
     elseif !isempty(item.children)
         # Section header
@@ -212,7 +247,7 @@ function _render_nav_item(io::IO, item::NavItem, current_page::String,
 
     if !isempty(item.children)
         for child in item.children
-            _render_nav_item(io, child, current_page, root_prefix, depth + 1)
+            _render_nav_item(io, child, current_page, root_prefix, depth + 1, settings)
         end
         if item.path === nothing
             println(io, indent, "</div>")
@@ -227,173 +262,49 @@ function _render_toc(io::IO, page::Documenter.Page, max_depth::Int)
 
     mdast = page.mdast
     for child in mdast.children
-        if child.element isa MarkdownAST.Heading
-            level = child.element.level
-            (level < 2 || level > max_depth) && continue
-            text = _collect_text(child)
-            slug = _slugify(text)
-            indent = repeat("  ", level - 1)
-            println(io, "        $indent<a class=\"md-toc-link md-toc-h$level\" href=\"#$slug\">", _html_escape(text), "</a>")
-        end
+        heading_node, slug = _extract_heading(child)
+        heading_node === nothing && continue
+        level = heading_node.element.level
+        (level < 2 || level > max_depth) && continue
+        text = _collect_text(heading_node)
+        indent = repeat("  ", level - 1)
+        println(io, "        $indent<a class=\"md-toc-link md-toc-h$level\" href=\"#$(_html_escape(slug))\">", _html_escape(text), "</a>")
     end
 
     println(io, "      </div>")
 end
 
-"""Render article content from page AST. Full domify dispatch in Phase 3."""
+"""Render article content from page AST via domify dispatch."""
 function _render_article_content(io::IO, page::Documenter.Page,
-                                 doc::Documenter.Document, root_prefix::String)
-    mdast = page.mdast
-    for child in mdast.children
-        _domify(io, child, doc, root_prefix)
-    end
+                                 doc::Documenter.Document, root_prefix::String,
+                                 settings::Material3)
+    buf = IOBuffer()
+    ctx = DomifyContext(buf, doc, page, root_prefix, settings)
+    domify(ctx, page.mdast)
+    write(io, take!(buf))
 end
 
-"""
-    _domify(io, node, doc, root_prefix)
 
-Render a single MarkdownAST node to HTML. This is the scaffold —
-Phase 3 will implement full dispatch for all node types.
-"""
-function _domify(io::IO, node, doc::Documenter.Document, root_prefix::String)
-    elem = node.element
-
-    if elem isa MarkdownAST.Heading
-        level = elem.level
-        text = _collect_text(node)
-        slug = _slugify(text)
-        println(io, "        <h$level id=\"$slug\">", _html_escape(text), "</h$level>")
-
-    elseif elem isa MarkdownAST.Paragraph
-        print(io, "        <p>")
-        for child in node.children
-            _domify_inline(io, child, doc, root_prefix)
-        end
-        println(io, "</p>")
-
-    elseif elem isa MarkdownAST.CodeBlock
-        lang = elem.info
-        lang_attr = isempty(lang) ? "" : " class=\"language-$lang\""
-        println(io, "        <pre><code$lang_attr>", _html_escape(elem.code), "</code></pre>")
-
-    elseif elem isa MarkdownAST.List
-        tag = elem.type === :ordered ? "ol" : "ul"
-        println(io, "        <$tag>")
-        for child in node.children
-            print(io, "          <li>")
-            for li_child in child.children
-                _domify(io, li_child, doc, root_prefix)
-            end
-            println(io, "</li>")
-        end
-        println(io, "        </$tag>")
-
-    elseif elem isa MarkdownAST.BlockQuote
-        println(io, "        <blockquote>")
-        for child in node.children
-            _domify(io, child, doc, root_prefix)
-        end
-        println(io, "        </blockquote>")
-
-    elseif elem isa MarkdownAST.ThematicBreak
-        println(io, "        <hr>")
-
-    elseif elem isa MarkdownAST.HTMLBlock
-        println(io, "        ", elem.html)
-
-    elseif elem isa Documenter.DocsNode
-        # API documentation block — render doc entries
-        for docstr in elem.docstr
-            println(io, "        <div class=\"md-docstring\">")
-            println(io, "          <div class=\"md-docstring-binding\"><code>", _html_escape(string(elem.object.binding)), "</code></div>")
-            # Render the docstring content
-            for part in docstr.text
-                if part isa MarkdownAST.Node
-                    for child in part.children
-                        _domify(io, child, doc, root_prefix)
-                    end
-                end
-            end
-            println(io, "        </div>")
-        end
-
-    elseif elem isa Documenter.AdmonitionNode || (hasproperty(elem, :category) && hasproperty(elem, :title))
-        # Admonition blocks
-        cat = hasproperty(elem, :category) ? elem.category : "note"
-        title = hasproperty(elem, :title) ? elem.title : titlecase(cat)
-        println(io, "        <div class=\"md-admonition md-admonition-$cat\">")
-        println(io, "          <p class=\"md-admonition-title\">$title</p>")
-        for child in node.children
-            _domify(io, child, doc, root_prefix)
-        end
-        println(io, "        </div>")
-
-    elseif elem isa MarkdownAST.Admonition
-        println(io, "        <div class=\"md-admonition md-admonition-$(elem.category)\">")
-        println(io, "          <p class=\"md-admonition-title\">", _html_escape(elem.title), "</p>")
-        for child in node.children
-            _domify(io, child, doc, root_prefix)
-        end
-        println(io, "        </div>")
-
-    elseif elem isa MarkdownAST.TableComponent
-        println(io, "        <div class=\"md-table-wrap\"><table>")
-        for child in node.children
-            _domify(io, child, doc, root_prefix)
-        end
-        println(io, "        </table></div>")
-
-    else
-        # Fallback: render children
-        for child in node.children
-            _domify(io, child, doc, root_prefix)
-        end
-    end
-end
-
-"""Render inline MarkdownAST nodes to HTML."""
-function _domify_inline(io::IO, node, doc::Documenter.Document, root_prefix::String)
-    elem = node.element
-
-    if elem isa MarkdownAST.Text
-        print(io, _html_escape(elem.text))
-    elseif elem isa MarkdownAST.Code
-        print(io, "<code>", _html_escape(elem.code), "</code>")
-    elseif elem isa MarkdownAST.Emph
-        print(io, "<em>")
-        for child in node.children
-            _domify_inline(io, child, doc, root_prefix)
-        end
-        print(io, "</em>")
-    elseif elem isa MarkdownAST.Strong
-        print(io, "<strong>")
-        for child in node.children
-            _domify_inline(io, child, doc, root_prefix)
-        end
-        print(io, "</strong>")
-    elseif elem isa MarkdownAST.Link
-        print(io, "<a href=\"", _html_escape(elem.destination), "\">")
-        for child in node.children
-            _domify_inline(io, child, doc, root_prefix)
-        end
-        print(io, "</a>")
-    elseif elem isa MarkdownAST.Image
-        print(io, "<img src=\"", _html_escape(elem.destination), "\" alt=\"", _html_escape(elem.description), "\">")
-    elseif elem isa MarkdownAST.HTMLInline
-        print(io, elem.html)
-    elseif elem isa MarkdownAST.LineBreak
-        print(io, "<br>")
-    else
-        # Fallback for unknown inline types
-        for child in node.children
-            _domify_inline(io, child, doc, root_prefix)
-        end
-    end
-end
+# NOTE: AST → HTML dispatch is handled by domify.jl (DomifyContext + domify methods).
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Utility functions
 # ─────────────────────────────────────────────────────────────────────────────
+
+"""Convert a nav item page path (e.g. `"api.md"`) to an HTML href."""
+function _nav_href(page_path::String, prettyurls::Bool)::String
+    html_path = replace(page_path, r"\.md$" => ".html")
+    if prettyurls
+        if html_path == "index.html"
+            return ""
+        else
+            # "api.html" → "api/"
+            return replace(html_path, r"\.html$" => "") * "/"
+        end
+    else
+        return html_path
+    end
+end
 
 """Escape HTML special characters."""
 function _html_escape(s::AbstractString)::String

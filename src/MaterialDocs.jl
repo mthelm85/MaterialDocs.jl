@@ -26,6 +26,7 @@ include("themes/builtin.jl")
 
 include("writer/nav.jl")
 include("writer/writer.jl")
+include("writer/domify.jl")
 include("writer/page.jl")
 include("writer/render.jl")
 

@@ -1,4 +1,5 @@
 using MaterialDocs
+using Documenter
 using Test
 using Aqua
 using JET
@@ -507,7 +508,7 @@ using JET
     end
 
     @testset "Utility: _relative_root" begin
-        @test MaterialDocs._relative_root("index.html") == ""
+        @test MaterialDocs._relative_root("index.html") == "./"
         @test MaterialDocs._relative_root("guide/page.html") == "../"
         @test MaterialDocs._relative_root("a/b/c.html") == "../../"
     end
@@ -526,6 +527,158 @@ using JET
         link2 = MaterialDocs._google_fonts_link(tc2)
         # Count "family=Inter" occurrences
         @test count("family=Inter", link2) == 1
+    end
+
+    # ─────────────────────────────────────────────────────────────────
+    # Phase 3: AST → HTML Rendering (domify)
+    # ─────────────────────────────────────────────────────────────────
+
+    @testset "Integration: makedocs builds successfully" begin
+        fixtures_dir = joinpath(@__DIR__, "fixtures")
+        build_dir = joinpath(fixtures_dir, "build")
+
+        # Clean previous build
+        isdir(build_dir) && rm(build_dir; recursive=true)
+
+        # Run makedocs inline (avoids include/module scoping issues)
+        makedocs(;
+            sitename = "TestPackage.jl",
+            format = Material3(theme = :ocean_depth, dark_mode = :toggle, toc_depth = 3),
+            modules = [MaterialDocs],
+            pages = [
+                "Home" => "index.md",
+                "API" => "api.md",
+            ],
+            root = fixtures_dir,
+            source = "src",
+            build = "build",
+            warnonly = true,
+        )
+
+        # Output files exist
+        @test isfile(joinpath(build_dir, "index.html"))
+        @test isfile(joinpath(build_dir, "api", "index.html"))
+        @test isfile(joinpath(build_dir, "assets", "materialdocs.css"))
+        @test isfile(joinpath(build_dir, "assets", "materialdocs.js"))
+    end
+
+    @testset "Integration: index.html structure" begin
+        index_html = read(joinpath(@__DIR__, "fixtures", "build", "index.html"), String)
+
+        # Document structure
+        @test contains(index_html, "<!doctype html>")
+        @test contains(index_html, "<html lang=\"en\">")
+        @test contains(index_html, "<title>Welcome to TestPackage.jl — TestPackage.jl</title>")
+
+        # Navbar
+        @test contains(index_html, "class=\"md-navbar\"")
+        @test contains(index_html, "md-navbar-title")
+        @test contains(index_html, "md-theme-toggle")  # toggle mode
+
+        # Sidebar nav
+        @test contains(index_html, "class=\"md-sidebar\"")
+        @test contains(index_html, "href=\"./\"")   # Home link (prettyurl root)
+        @test contains(index_html, "href=\"./api/\"")  # API link (prettyurl)
+
+        # Content area
+        @test contains(index_html, "class=\"md-article\"")
+
+        # Headings with anchors
+        @test contains(index_html, "class=\"md-heading\"")
+        @test contains(index_html, "class=\"md-heading-anchor\"")
+
+        # Inline formatting
+        @test contains(index_html, "<strong>MaterialDocs.jl</strong>")
+        @test contains(index_html, "<em>italic text</em>")
+        @test contains(index_html, "class=\"md-code-inline\"")
+
+        # Code block with copy button
+        @test contains(index_html, "class=\"md-code-block\"")
+        @test contains(index_html, "class=\"md-copy-btn\"")
+        @test contains(index_html, "language-julia")
+
+        # Links
+        @test contains(index_html, "href=\"./api/\"")  # cross-page link
+        @test contains(index_html, "href=\"https://julialang.org\"")
+
+        # Blockquote
+        @test contains(index_html, "class=\"md-blockquote\"")
+
+        # Thematic break
+        @test contains(index_html, "class=\"md-hr\"")
+
+        # Lists
+        @test contains(index_html, "class=\"md-list-tight\"")
+        @test contains(index_html, "<ol")
+        @test contains(index_html, "<ul")
+
+        # Table
+        @test contains(index_html, "class=\"md-table-wrap\"")
+        @test contains(index_html, "class=\"md-table\"")
+        @test contains(index_html, "text-align:left")
+        @test contains(index_html, "text-align:center")
+        @test contains(index_html, "text-align:right")
+
+        # Admonitions
+        @test contains(index_html, "md-admonition-note")
+        @test contains(index_html, "md-admonition-warning")
+        @test contains(index_html, "md-admonition-tip")
+        @test contains(index_html, "md-admonition-danger")
+        @test contains(index_html, "class=\"md-admonition-title\"")
+        @test contains(index_html, "class=\"md-admonition-body\"")
+
+        # Math
+        @test contains(index_html, "md-math-inline")
+        @test contains(index_html, "md-math-display")
+        @test contains(index_html, "\\(e = mc^2\\)")
+        @test contains(index_html, "\\[")
+
+        # Footnotes
+        @test contains(index_html, "class=\"md-footnote-ref\"")
+        @test contains(index_html, "class=\"md-footnote\"")
+        @test contains(index_html, "id=\"fn-1\"")
+
+        # TOC rail
+        @test contains(index_html, "class=\"md-toc\"")
+        @test contains(index_html, "class=\"md-toc-title\"")
+        @test contains(index_html, "class=\"md-toc-link md-toc-h2\"")
+        @test contains(index_html, "class=\"md-toc-link md-toc-h3\"")
+
+        # Footer
+        @test contains(index_html, "class=\"md-footer\"")
+        @test contains(index_html, "Documenter.jl")
+        @test contains(index_html, "MaterialDocs.jl")
+
+        # Assets
+        @test contains(index_html, "materialdocs.css")
+        @test contains(index_html, "materialdocs.js")
+        @test contains(index_html, "fonts.googleapis.com")
+    end
+
+    @testset "Integration: api.html structure" begin
+        api_html = read(joinpath(@__DIR__, "fixtures", "build", "api", "index.html"), String)
+
+        # Page title
+        @test contains(api_html, "<title>API Reference — TestPackage.jl</title>")
+
+        # Docstrings
+        @test contains(api_html, "class=\"md-docstring\"")
+        @test contains(api_html, "class=\"md-docstring-binding\"")
+        @test contains(api_html, "class=\"md-docstring-content\"")
+
+        # Root prefix for nested prettyurl (api/index.html → ../ to reach root)
+        @test contains(api_html, "href=\"../assets/materialdocs.css\"")
+    end
+
+    @testset "Utility: _nav_href" begin
+        # prettyurls
+        @test MaterialDocs._nav_href("index.md", true) == ""
+        @test MaterialDocs._nav_href("api.md", true) == "api/"
+        @test MaterialDocs._nav_href("guide/intro.md", true) == "guide/intro/"
+
+        # no prettyurls
+        @test MaterialDocs._nav_href("index.md", false) == "index.html"
+        @test MaterialDocs._nav_href("api.md", false) == "api.html"
     end
 
     @testset "MD3 scheme meets WCAG AA" begin
