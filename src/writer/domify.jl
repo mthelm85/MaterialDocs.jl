@@ -340,12 +340,18 @@ function domify(ctx::DomifyContext, node, elem::Documenter.DocsNode)
     println(io, "</h4>")
 
     # Source link — try each docstring result
+    # Wrapped in try-catch because Documenter.source_url can fail when
+    # unregistered packages are in the manifest (Pkg can't resolve their paths)
     for docstr in elem.results
-        url = Documenter.source_url(ctx.doc, docstr)
-        if url !== nothing
-            println(io, "<a class=\"md-docstring-source\" href=\"", _html_escape(url),
-                    "\" title=\"View source\">source</a>")
-            break  # one link is enough
+        try
+            url = Documenter.source_url(ctx.doc, docstr)
+            if url !== nothing
+                println(io, "<a class=\"md-docstring-source\" href=\"", _html_escape(url),
+                        "\" title=\"View source\">source</a>")
+                break  # one link is enough
+            end
+        catch
+            # Skip source link if we can't resolve the URL
         end
     end
 
