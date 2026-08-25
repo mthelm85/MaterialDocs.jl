@@ -749,7 +749,7 @@ using JET
         @test contains(api_html, "class=\"md-docstring-content\"")
 
         # Root prefix for nested prettyurl (api/index.html → ../ to reach root)
-        @test contains(api_html, "href=\"../assets/materialdocs.css\"")
+        @test contains(api_html, "href=\"../assets/materialdocs.css?v=")
     end
 
     @testset "Utility: _nav_href" begin
@@ -1039,11 +1039,11 @@ using JET
         theme = resolve_theme(:ocean_depth)
         js = MaterialDocs._editor_panel_js(theme)
 
-        # Should have JS color engine
-        @test contains(js, "hexToHSL")
+        # Should have HCT color engine
+        @test contains(js, "hexToHCT")
         @test contains(js, "generateScheme")
         @test contains(js, "generateTOML")
-        @test contains(js, "applyTheme")
+        @test contains(js, "applyColors")
         @test contains(js, "applyFonts")
         @test contains(js, "applyShape")
 

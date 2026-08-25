@@ -1,0 +1,56 @@
+/* ── Syntax highlighting ──────────────────────────────────────────────────── */
+/* Class → token mapping for highlight.js. Color values come from generated  */
+/* CSS custom properties (--md-code-*) written by _write_highlight_vars.     */
+
+.hljs { color: inherit; background: transparent; }
+
+.hljs-keyword,
+.hljs-selector-tag { color: var(--md-code-keyword); font-weight: 600; }
+
+.hljs-string,
+.hljs-doctag,
+.hljs-regexp { color: var(--md-code-string); }
+
+.hljs-number { color: var(--md-code-number); }
+
+.hljs-comment { color: var(--md-code-comment); font-style: italic; }
+
+.hljs-title,
+.hljs-title.function_ { color: var(--md-code-function); }
+
+.hljs-type,
+.hljs-title.class_ { color: var(--md-code-type); }
+
+.hljs-built_in { color: var(--md-code-builtin); }
+
+.hljs-literal { color: var(--md-code-literal); font-weight: 600; }
+
+.hljs-variable,
+.hljs-template-variable { color: var(--md-code-variable); }
+
+.hljs-operator,
+.hljs-symbol { color: var(--md-code-operator); }
+
+.hljs-punctuation { color: var(--md-code-punctuation); }
+
+.hljs-attr,
+.hljs-attribute { color: var(--md-code-attr); }
+
+.hljs-meta,
+.hljs-meta .hljs-keyword { color: var(--md-code-meta); }
+
+.hljs-deletion {
+  color: var(--md-code-deletion);
+  background-color: var(--md-code-deletion-bg);
+}
+
+.hljs-addition {
+  color: var(--md-code-addition);
+  background-color: var(--md-code-addition-bg);
+}
+
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 700; }
+
+/* REPL prompt styling */
+.hljs-meta.prompt_ { color: var(--md-code-meta); user-select: none; }

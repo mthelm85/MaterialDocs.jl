@@ -49,9 +49,6 @@
   border-right: 1px solid var(--md-sys-color-outline-variant);
   background: var(--md-sys-color-surface);
   overflow-y: auto;
-  height: calc(100vh - 3.5rem);
-  position: sticky;
-  top: 3.5rem;
   scrollbar-width: thin;
   scrollbar-color: var(--md-sys-color-outline-variant) transparent;
 }
@@ -141,9 +138,6 @@
   border-left: 1px solid var(--md-sys-color-outline-variant);
   background: var(--md-sys-color-surface);
   overflow-y: auto;
-  height: calc(100vh - 3.5rem);
-  position: sticky;
-  top: 3.5rem;
   scrollbar-width: thin;
   scrollbar-color: var(--md-sys-color-outline-variant) transparent;
 }
@@ -182,13 +176,14 @@
 .md-toc-h3 { padding-left: 1.25rem; }
 .md-toc-h4 { padding-left: 2rem; }
 
-/* ── Footer ── */
+/* ── Footer (inside content column) ── */
 .md-footer {
-  padding: 1.5rem;
+  margin-top: 3rem;
+  padding: 1.5rem 0;
   text-align: center;
   border-top: 1px solid var(--md-sys-color-outline-variant);
-  background: var(--md-sys-color-surface-container-lowest);
   color: var(--md-sys-color-on-surface-variant);
   font-size: var(--md-sys-typescale-body-small-size);
 }
+.md-footer p { max-width: none; }
 .md-footer a { color: var(--md-sys-color-primary); }

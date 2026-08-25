@@ -24,6 +24,7 @@ A Documenter.jl writer that generates Material Design 3 documentation sites.
 
 # Keywords
 - `theme = :default`: Built-in theme name (`Symbol`) or a [`ThemeConfig`](@ref).
+  When `:default`, automatically loads `docs/.materialdocs.toml` if present.
 - `dark_mode = :auto`: Dark mode behavior. One of:
   - `:auto` — follows `prefers-color-scheme`
   - `:light` — always light
@@ -92,7 +93,18 @@ function Material3(;
     2 <= toc_depth <= 4 ||
         throw(ArgumentError("toc_depth must be between 2 and 4"))
 
-    resolved_theme = resolve_theme(theme)
+    # Auto-detect .materialdocs.toml when no explicit theme is provided
+    resolved_theme = if theme === :default
+        toml_path = find_theme_toml("docs")
+        if toml_path !== nothing
+            @info "MaterialDocs: loading theme from $toml_path"
+            load_theme(toml_path)
+        else
+            resolve_theme(:default)
+        end
+    else
+        resolve_theme(theme)
+    end
 
     Material3(resolved_theme, dark_mode, sidebar_collapsed, toc_depth,
               search,

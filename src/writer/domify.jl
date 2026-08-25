@@ -326,7 +326,8 @@ function domify(ctx::DomifyContext, node, elem::Documenter.DocsNode)
 
     println(io, "<div class=\"md-docstring\" id=\"", _html_escape(slug), "\">")
 
-    # Binding header
+    # Binding header with optional source link
+    println(io, "<div class=\"md-docstring-header\">")
     print(io, "<h4 class=\"md-docstring-binding\"><code>")
     print(io, _html_escape(string(binding)))
     print(io, "</code>")
@@ -337,6 +338,18 @@ function domify(ctx::DomifyContext, node, elem::Documenter.DocsNode)
         print(io, "</span>")
     end
     println(io, "</h4>")
+
+    # Source link — try each docstring result
+    for docstr in elem.results
+        url = Documenter.source_url(ctx.doc, docstr)
+        if url !== nothing
+            println(io, "<a class=\"md-docstring-source\" href=\"", _html_escape(url),
+                    "\" title=\"View source\">source</a>")
+            break  # one link is enough
+        end
+    end
+
+    println(io, "</div>")  # md-docstring-header
 
     # Render each docstring markdown AST
     for mdast in elem.mdasts
@@ -463,8 +476,10 @@ function domify(ctx::DomifyContext, node, elem::Documenter.PageLink)
     io = ctx.io
     page = elem.page
     # page.build is like "build/api.md" — extract relative part and convert
-    build_prefix = ctx.doc.user.build * (Sys.iswindows() ? "\\" : "/")
-    page_path = page.build
+    # Normalize separators to "/" for consistent matching across platforms
+    _norm(p) = replace(p, '\\' => '/')
+    build_prefix = _norm(ctx.doc.user.build) * "/"
+    page_path = _norm(page.build)
     if startswith(page_path, build_prefix)
         page_path = page_path[length(build_prefix)+1:end]
     end

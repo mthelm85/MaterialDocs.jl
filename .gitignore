@@ -3,3 +3,5 @@
 /docs/build/
 /test/fixtures/build/
 dev/
+.claude/
+.vscode/

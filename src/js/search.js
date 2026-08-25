@@ -7,6 +7,7 @@
   var index = null;
   var items = [];
   var selected = -1;
+  var basePath = '';
 
   // Load search index lazily
   function loadIndex(base) {
@@ -62,17 +63,48 @@
     selected = -1;
     // Determine base path from the page's script tag
     var scripts = document.querySelectorAll('script[src*="materialdocs.js"]');
-    var base = '';
+    basePath = '';
     if (scripts.length) {
-      var src = scripts[0].getAttribute('src');
-      base = src.replace('assets/materialdocs.js', '');
+      var src = scripts[0].getAttribute('src').split('?')[0];
+      basePath = src.replace('assets/materialdocs.js', '');
     }
-    loadIndex(base);
+    loadIndex(basePath);
     requestAnimationFrame(function() { input.focus(); });
   }
 
   function close() {
     if (overlay) overlay.classList.remove('md-search-active');
+  }
+
+  // Highlight all occurrences of query in text (both already HTML-escaped)
+  function highlight(text, query) {
+    if (!query) return escHtml(text);
+    var escaped = escHtml(text);
+    var qEsc = escHtml(query);
+    var re = new RegExp('(' + qEsc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    return escaped.replace(re, '<mark class="md-search-mark">$1</mark>');
+  }
+
+  // Extract a snippet around the first match in text
+  function snippet(text, query) {
+    if (!text) return '';
+    var lower = text.toLowerCase();
+    var idx = lower.indexOf(query.toLowerCase());
+    if (idx === -1) return '';
+    // Grab ~40 chars before and ~80 after the match
+    var start = Math.max(0, idx - 40);
+    var end = Math.min(text.length, idx + query.length + 80);
+    // Snap to word boundaries
+    if (start > 0) {
+      var ws = text.indexOf(' ', start);
+      if (ws !== -1 && ws < idx) start = ws + 1;
+    }
+    if (end < text.length) {
+      var ws2 = text.lastIndexOf(' ', end);
+      if (ws2 > idx + query.length) end = ws2;
+    }
+    var s = text.substring(start, end);
+    return (start > 0 ? '…' : '') + s + (end < text.length ? '…' : '');
   }
 
   function search(query) {
@@ -90,9 +122,9 @@
       var title = (entry.title || '').toLowerCase();
       var text = (entry.text || '').toLowerCase();
       var score = 0;
+      if (title === q) score += 20;
       if (title.indexOf(q) !== -1) score += 10;
       if (text.indexOf(q) !== -1) score += 1;
-      if (title === q) score += 20;
       if (score > 0) matches.push({ entry: entry, score: score });
     }
     matches.sort(function(a, b) { return b.score - a.score; });
@@ -100,10 +132,12 @@
     var html = '';
     for (var j = 0; j < items.length; j++) {
       var e = items[j].entry;
-      items[j].href = e.href || '#';
+      items[j].href = basePath + (e.href || '#');
+      var snip = snippet(e.text || '', query);
       html += '<a class="md-search-item" href="' + escHtml(items[j].href) + '">' +
-        '<span class="md-search-item-title">' + escHtml(e.title || '') + '</span>' +
+        '<span class="md-search-item-title">' + highlight(e.title || '', query) + '</span>' +
         (e.section ? '<span class="md-search-item-section">' + escHtml(e.section) + '</span>' : '') +
+        (snip ? '<span class="md-search-item-snippet">' + highlight(snip, query) + '</span>' : '') +
         '</a>';
     }
     results.innerHTML = html || '<div class="md-search-empty">No results</div>';

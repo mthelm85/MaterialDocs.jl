@@ -4,11 +4,17 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Suppress transitions during page load to prevent style flashes */
+html.no-transition, html.no-transition *, html.no-transition *::before, html.no-transition *::after {
+  transition: none !important;
+}
+
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  scroll-behavior: smooth;
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -19,6 +25,8 @@ body {
   letter-spacing: var(--md-sys-typescale-body-large-tracking);
   background: var(--md-sys-color-surface);
   color: var(--md-sys-color-on-surface);
+  height: 100%;
+  overflow: hidden;
 }
 
 /* ── Links ── */
@@ -104,30 +112,45 @@ hr {
 .md-heading:hover .md-heading-anchor { opacity: 1; }
 .md-heading-anchor:hover { color: var(--md-sys-color-primary); text-decoration: none; }
 
-/* ── Layout grid ── */
+/* ── Layout grid ──
+   Each column scrolls independently — the page body never scrolls.
+   This is the standard MD3 documentation layout. */
 .md-layout {
   display: grid;
-  grid-template-columns: 280px 1fr 220px;
-  min-height: calc(100vh - 3.5rem);
-  max-width: 1440px;
-  margin: 0 auto;
+  grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr) minmax(11rem, 14rem);
+  height: calc(100vh - 3.5rem);
+  overflow: hidden;
+}
+
+.md-article {
+  max-width: 52rem;
 }
 
 .md-content {
   padding: 2rem 2.5rem;
-  max-width: 52rem;
   min-width: 0;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--md-sys-color-outline-variant) transparent;
 }
 
 .md-article > *:first-child { margin-top: 0; }
 
+/* Single-page layout: TOC moves to left, no right rail */
+.md-layout-no-sidebar {
+  grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
+}
+
 /* ── Responsive ── */
 @media (max-width: 1200px) {
-  .md-layout { grid-template-columns: 260px 1fr; }
-  .md-toc { display: none; }
+  .md-layout { grid-template-columns: minmax(12rem, 15rem) minmax(0, 1fr); }
+  .md-layout .md-toc { display: none; }
 }
 @media (max-width: 768px) {
   .md-layout { grid-template-columns: 1fr; }
+  .md-layout-no-sidebar { grid-template-columns: 1fr; }
   .md-sidebar { display: none; }
+  .md-toc { display: none; }
   .md-content { padding: 1.25rem 1rem; }
 }

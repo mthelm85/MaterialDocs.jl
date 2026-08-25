@@ -29,9 +29,12 @@ function render_page(doc::Documenter.Document, settings::Material3,
     page_build_html = replace(page.build, r"\.md$" => ".html")
 
     # Get the portion after the build dir prefix for relative path calculations
-    build_prefix = doc.user.build * (Sys.iswindows() ? "\\" : "/")
-    page_rel = startswith(page_build_html, build_prefix) ?
-        page_build_html[length(build_prefix)+1:end] : page_build_html
+    # Normalize separators to "/" for consistent matching across platforms
+    _norm(p) = replace(p, '\\' => '/')
+    build_prefix = _norm(doc.user.build) * "/"
+    page_build_norm = _norm(page_build_html)
+    page_rel = startswith(page_build_norm, build_prefix) ?
+        page_build_norm[length(build_prefix)+1:end] : page_build_norm
 
     if settings.prettyurls && page_rel != "index.html"
         # "api.html" → "api/index.html"
@@ -57,6 +60,9 @@ function render_page(doc::Documenter.Document, settings::Material3,
         ""
     end
 
+    # Cache-busting hash based on build time
+    _cache_v = string(hash(time()), base=16)[1:8]
+
     # ── HTML Head ──
     print(io, """
     <!doctype html>
@@ -65,7 +71,7 @@ function render_page(doc::Documenter.Document, settings::Material3,
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>$page_title — $sitename</title>
-      <link rel="stylesheet" href="$(root_prefix)assets/materialdocs.css">
+      <link rel="stylesheet" href="$(root_prefix)assets/materialdocs.css?v=$(_cache_v)">
       $fonts_link
     """)
 
@@ -79,6 +85,17 @@ function render_page(doc::Documenter.Document, settings::Material3,
     for css in settings.custom_css
         println(io, "  <link rel=\"stylesheet\" href=\"$(root_prefix)assets/$(basename(css))\">")
     end
+
+    # Inline script to prevent FOUC: restore theme + suppress transitions during load
+    println(io, "  <script>")
+    println(io, "    (function(){")
+    println(io, "      document.documentElement.classList.add('no-transition');")
+    if settings.dark_mode == :toggle
+        println(io, "      var t=localStorage.getItem('md-theme');if(t)document.documentElement.setAttribute('data-theme',t);")
+    end
+    println(io, "      window.addEventListener('load',function(){setTimeout(function(){document.documentElement.classList.remove('no-transition');},50);});")
+    println(io, "    })()")
+    println(io, "  </script>")
 
     println(io, "</head>")
     println(io, "<body>")
@@ -110,12 +127,23 @@ function render_page(doc::Documenter.Document, settings::Material3,
     println(io, "  </header>")
 
     # ── Layout grid ──
-    println(io, "  <div class=\"md-layout\">")
+    # Hide sidebar when there's only one page (no useful navigation)
+    hide_sidebar = _nav_leaf_count(nav_ctx) <= 1
+    if hide_sidebar
+        println(io, "  <div class=\"md-layout md-layout-no-sidebar\">")
 
-    # ── Sidebar ──
-    println(io, "    <nav class=\"md-sidebar\">")
-    _render_nav(io, nav_ctx, page.build, root_prefix, settings)
-    println(io, "    </nav>")
+        # TOC on the left (takes the sidebar's place)
+        println(io, "    <aside class=\"md-toc\">")
+        _render_toc(io, page, settings.toc_depth)
+        println(io, "    </aside>")
+    else
+        println(io, "  <div class=\"md-layout\">")
+
+        # ── Sidebar ──
+        println(io, "    <nav class=\"md-sidebar\">")
+        _render_nav(io, nav_ctx, page.build, root_prefix, settings)
+        println(io, "    </nav>")
+    end
 
     # ── Main content ──
     println(io, "    <main class=\"md-content\">")
@@ -125,25 +153,34 @@ function render_page(doc::Documenter.Document, settings::Material3,
     _render_article_content(io, page, doc, root_prefix, settings)
 
     println(io, "      </article>")
+
+    # Footer inside content column so it scrolls with the article
+    println(io, "      <footer class=\"md-footer\">")
+    if settings.footer !== nothing
+        println(io, "        <p>", settings.footer, "</p>")
+    end
+    println(io, "        <p>Built with <a href=\"https://github.com/JuliaDocs/Documenter.jl\">Documenter.jl</a> and <a href=\"https://github.com/mthelm85/MaterialDocs.jl\">MaterialDocs.jl</a></p>")
+    println(io, "      </footer>")
+
     println(io, "    </main>")
 
-    # ── TOC rail ──
-    println(io, "    <aside class=\"md-toc\">")
-    _render_toc(io, page, settings.toc_depth)
-    println(io, "    </aside>")
+    if !hide_sidebar
+        # ── TOC rail (right side, only for multi-page sites) ──
+        println(io, "    <aside class=\"md-toc\">")
+        _render_toc(io, page, settings.toc_depth)
+        println(io, "    </aside>")
+    end
 
     println(io, "  </div>")  # md-layout
 
-    # ── Footer ──
-    println(io, "  <footer class=\"md-footer\">")
-    if settings.footer !== nothing
-        println(io, "    <p>", settings.footer, "</p>")
-    end
-    println(io, "    <p>Built with <a href=\"https://github.com/JuliaDocs/Documenter.jl\">Documenter.jl</a> and <a href=\"https://github.com/mthelm85/MaterialDocs.jl\">MaterialDocs.jl</a></p>")
-    println(io, "  </footer>")
-
     # ── JS ──
-    println(io, "  <script src=\"$(root_prefix)assets/materialdocs.js\"></script>")
+    # Syntax highlighting (highlight.js CDN + Julia language packs)
+    println(io, "  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js\"></script>")
+    println(io, "  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/julia.min.js\"></script>")
+    println(io, "  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/julia-repl.min.js\"></script>")
+    println(io, "  <script>hljs.highlightAll();</script>")
+
+    println(io, "  <script src=\"$(root_prefix)assets/materialdocs.js?v=$(_cache_v)\"></script>")
     for js in settings.custom_js
         println(io, "  <script src=\"$(root_prefix)assets/$(basename(js))\"></script>")
     end
@@ -323,6 +360,28 @@ function _html_escape(s::AbstractString)::String
         '"' => "&quot;",
         '\'' => "&#39;",
     )
+end
+
+"""Count visible leaf pages in the nav context."""
+function _nav_leaf_count(nav_ctx::NavContext)::Int
+    count = 0
+    for item in nav_ctx.items
+        count += _count_leaves(item)
+    end
+    count
+end
+
+function _count_leaves(item::NavItem)::Int
+    item.visible || return 0
+    if item.path !== nothing
+        n = 1
+    else
+        n = 0
+    end
+    for child in item.children
+        n += _count_leaves(child)
+    end
+    n
 end
 
 """Generate a URL-safe slug from heading text."""

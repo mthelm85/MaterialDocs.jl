@@ -83,7 +83,7 @@ function build_css(theme::ThemeConfig, light::Dict{Symbol,String},
 
     # Static CSS files — read from src/css/ and concatenate
     css_dir = joinpath(@__DIR__, "..", "css")
-    for file in ("base.css", "components.css", "nav.css", "print.css")
+    for file in ("base.css", "components.css", "nav.css", "highlight.css", "print.css")
         path = joinpath(css_dir, file)
         if isfile(path)
             println(io, "\n/* ── ", file, " ── */")
@@ -111,6 +111,7 @@ function _write_css_tokens(io::IO, theme::ThemeConfig,
     _write_shape_vars(io, radii)
     _write_elevation_vars(io)
     _write_motion_vars(io)
+    _write_highlight_vars(io, :light)
     println(io, "}")
 
     # ── System-preference dark ──
@@ -118,6 +119,7 @@ function _write_css_tokens(io::IO, theme::ThemeConfig,
         println(io, "\n@media (prefers-color-scheme: dark) {")
         println(io, "  :root:not([data-theme=\"light\"]) {")
         _write_color_vars(io, dark, theme.custom_colors; indent="    ")
+        _write_highlight_vars(io, :dark; indent="    ")
         println(io, "  }")
         println(io, "}")
     end
@@ -126,6 +128,7 @@ function _write_css_tokens(io::IO, theme::ThemeConfig,
     if settings.dark_mode in (:auto, :toggle, :dark)
         println(io, "\n:root[data-theme=\"dark\"] {")
         _write_color_vars(io, dark, theme.custom_colors; indent="  ")
+        _write_highlight_vars(io, :dark; indent="  ")
         println(io, "}")
     end
 end
@@ -216,6 +219,57 @@ function _write_motion_vars(io::IO)
     println(io, "  --md-sys-motion-duration-medium2: 400ms;")
     println(io, "  --md-sys-motion-duration-long1: 450ms;")
     println(io, "  --md-sys-motion-duration-long2: 700ms;")
+end
+
+"""Write syntax highlighting color tokens (GitHub-inspired light/dark palettes)."""
+function _write_highlight_vars(io::IO, mode::Symbol; indent::String = "  ")
+    # GitHub-inspired palettes that work well on both light and dark backgrounds
+    palette = if mode == :light
+        Dict(
+            "keyword"      => "#cf222e",   # red — control flow, keywords
+            "string"       => "#0a3069",   # dark blue — string literals
+            "number"       => "#0550ae",   # blue — numeric constants
+            "comment"      => "#6e7781",   # grey — comments
+            "function"     => "#8250df",   # purple — function names
+            "type"         => "#953800",   # orange — type names
+            "builtin"      => "#0550ae",   # blue — built-in functions
+            "literal"      => "#0550ae",   # blue — true/false/nothing
+            "variable"     => "#24292f",   # near-black — variables
+            "operator"     => "#cf222e",   # red — operators
+            "punctuation"  => "#24292f",   # near-black — punctuation
+            "attr"         => "#116329",   # green — attributes
+            "meta"         => "#8250df",   # purple — macros/directives
+            "deletion"     => "#82071e",   # dark red — diff deletions
+            "deletion-bg"  => "#ffebe9",   # light red bg
+            "addition"     => "#116329",   # green — diff additions
+            "addition-bg"  => "#dafbe1",   # light green bg
+        )
+    else
+        Dict(
+            "keyword"      => "#ff7b72",   # salmon — control flow, keywords
+            "string"       => "#a5d6ff",   # light blue — string literals
+            "number"       => "#79c0ff",   # blue — numeric constants
+            "comment"      => "#8b949e",   # grey — comments
+            "function"     => "#d2a8ff",   # lavender — function names
+            "type"         => "#ffa657",   # orange — type names
+            "builtin"      => "#79c0ff",   # blue — built-in functions
+            "literal"      => "#79c0ff",   # blue — true/false/nothing
+            "variable"     => "#c9d1d9",   # light grey — variables
+            "operator"     => "#ff7b72",   # salmon — operators
+            "punctuation"  => "#c9d1d9",   # light grey — punctuation
+            "attr"         => "#7ee787",   # green — attributes
+            "meta"         => "#d2a8ff",   # lavender — macros/directives
+            "deletion"     => "#ffa198",   # light red — diff deletions
+            "deletion-bg"  => "#490202",   # dark red bg
+            "addition"     => "#7ee787",   # green — diff additions
+            "addition-bg"  => "#04260f",   # dark green bg
+        )
+    end
+
+    println(io, indent, "/* Syntax highlighting */")
+    for key in sort(collect(keys(palette)))
+        println(io, indent, "--md-code-", key, ": ", palette[key], ";")
+    end
 end
 
 """Build a CSS font-family stack with appropriate fallbacks."""
@@ -346,11 +400,14 @@ function build_search_index(doc::Documenter.Document)::String
         page_title = _page_title_from_page(page)
 
         # Compute page URL (relative to build root)
+        # Normalize separators to "/" for consistent matching across platforms
+        _norm(p) = replace(p, '\\' => '/')
         page_build_html = replace(page.build, r"\.md$" => ".html")
-        build_prefix = doc.user.build * (Sys.iswindows() ? "\\" : "/")
-        page_rel = startswith(page_build_html, build_prefix) ?
-            page_build_html[length(build_prefix)+1:end] : page_build_html
-        page_href = _nav_href(replace(page_rel, '\\' => '/'), true)  # always prettyurl for search
+        build_prefix = _norm(doc.user.build) * "/"
+        page_build_norm = _norm(page_build_html)
+        page_rel = startswith(page_build_norm, build_prefix) ?
+            page_build_norm[length(build_prefix)+1:end] : page_build_norm
+        page_href = _nav_href(page_rel, true)  # always prettyurl for search
 
         # Walk AST, splitting into sections by heading
         sections = _split_page_sections(page)
@@ -381,7 +438,8 @@ struct SearchSection
     text::String
 end
 
-"""Split a page's AST into sections delimited by headings."""
+"""Split a page's AST into sections delimited by headings.
+Each docstring also becomes its own entry (binding name as title)."""
 function _split_page_sections(page::Documenter.Page)::Vector{SearchSection}
     sections = SearchSection[]
     current_title = ""
@@ -401,9 +459,24 @@ function _split_page_sections(page::Documenter.Page)::Vector{SearchSection}
             current_slug = slug
             buf = IOBuffer()
         else
-            # Accumulate plain text
-            _collect_plain_text(buf, child)
-            print(buf, ' ')
+            # Check for DocsNode or DocsNodesBlock — emit each docstring
+            # as its own search entry for precise matching
+            docsnodes = _collect_docsnodes(child)
+            if !isempty(docsnodes)
+                # Flush any accumulated text before docstrings
+                text = strip(String(take!(buf)))
+                if !isempty(text)
+                    push!(sections, SearchSection(current_title, current_slug, text))
+                    buf = IOBuffer()
+                end
+                for dn in docsnodes
+                    _emit_docsnode_section!(sections, dn)
+                end
+            else
+                # Accumulate plain text
+                _collect_plain_text(buf, child)
+                print(buf, ' ')
+            end
         end
     end
 
@@ -421,6 +494,44 @@ function _split_page_sections(page::Documenter.Page)::Vector{SearchSection}
     sections
 end
 
+"""Collect DocsNode elements from a node (handles DocsNodesBlock containers)."""
+function _collect_docsnodes(node)::Vector{Any}
+    elem = node.element
+    if elem isa Documenter.DocsNode
+        return [elem]
+    elseif elem isa Documenter.DocsNodesBlock
+        result = []
+        for child in node.children
+            if child.element isa Documenter.DocsNode
+                push!(result, child.element)
+            end
+        end
+        return result
+    end
+    return []
+end
+
+"""Emit a DocsNode as its own SearchSection entry."""
+function _emit_docsnode_section!(sections::Vector{SearchSection}, dn::Documenter.DocsNode)
+    binding = string(dn.object.binding)
+    slug = Documenter.anchor_label(dn.anchor)
+
+    buf = IOBuffer()
+    # Add signature
+    if dn.object.signature !== Union{}
+        print(buf, string(dn.object.signature), ' ')
+    end
+    # Extract docstring text
+    for mdast in dn.mdasts
+        for child in mdast.children
+            _collect_plain_text(buf, child)
+            print(buf, ' ')
+        end
+    end
+    text = strip(String(take!(buf)))
+    push!(sections, SearchSection(binding, slug, text))
+end
+
 """Recursively extract plain text from an AST node (no HTML)."""
 function _collect_plain_text(io::IO, node)
     elem = node.element
@@ -434,6 +545,38 @@ function _collect_plain_text(io::IO, node)
         print(io, ' ')
     elseif elem isa MarkdownAST.ThematicBreak
         # skip
+    elseif elem isa Documenter.DocsNode
+        # Index the binding name and signature
+        print(io, string(elem.object.binding), ' ')
+        if elem.object.signature !== Union{}
+            print(io, string(elem.object.signature), ' ')
+        end
+        # Extract text from each docstring's markdown AST
+        for mdast in elem.mdasts
+            for child in mdast.children
+                _collect_plain_text(io, child)
+                print(io, ' ')
+            end
+        end
+    elseif elem isa Documenter.DocsNodesBlock
+        # Container for DocsNode nodes — recurse into children
+        for child in node.children
+            _collect_plain_text(io, child)
+        end
+    elseif elem isa Documenter.MultiOutput
+        # Multi-output blocks — extract code from children
+        for child in node.children
+            _collect_plain_text(io, child)
+        end
+    elseif elem isa Documenter.MultiOutputElement
+        result = elem.element
+        if result isa Dict && haskey(result, MIME"text/plain"())
+            print(io, result[MIME"text/plain"()], ' ')
+        else
+            for child in node.children
+                _collect_plain_text(io, child)
+            end
+        end
     else
         # Recurse into children (paragraphs, emphasis, strong, lists, etc.)
         for child in node.children

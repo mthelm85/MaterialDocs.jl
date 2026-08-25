@@ -131,6 +131,7 @@ li p { margin-bottom: 0.25rem; }
   font-family: var(--md-sys-typescale-title-small-font);
   font-weight: var(--md-sys-typescale-title-small-weight);
   font-size: var(--md-sys-typescale-title-small-size);
+  max-width: none;
 }
 .md-admonition-body {
   padding: 0.75rem 1rem;
@@ -181,14 +182,35 @@ li p { margin-bottom: 0.25rem; }
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-corner-medium);
 }
+.md-docstring-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
 .md-docstring-binding {
   font-family: var(--md-sys-typescale-body-large-code-font);
   font-size: 1rem;
   font-weight: 600;
   color: var(--md-sys-color-on-surface);
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.md-docstring-source {
+  flex-shrink: 0;
+  font-size: var(--md-sys-typescale-body-small-size);
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+  opacity: 0.7;
+  transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+.md-docstring-source:hover {
+  opacity: 1;
+  text-decoration: underline;
 }
 .md-docstring-binding code {
   background: var(--md-sys-color-primary-container);
@@ -359,6 +381,22 @@ del { color: var(--md-sys-color-on-surface-variant); }
   font-size: var(--md-sys-typescale-body-small-size);
   color: var(--md-sys-color-on-surface-variant);
   margin-top: 0.125rem;
+}
+.md-search-item-snippet {
+  display: block;
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.md-search-mark {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  border-radius: 2px;
+  padding: 0 0.125em;
 }
 .md-search-empty {
   padding: 1.25rem;
