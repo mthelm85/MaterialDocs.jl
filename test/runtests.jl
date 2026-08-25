@@ -275,7 +275,7 @@ using JET
         @test tc.display_font == "Roboto"
         @test tc.body_font == "Roboto"
         @test tc.code_font == "Roboto Mono"
-        @test tc.corner_radius == :rounded
+        @test tc.corner_radius == :default
         @test isempty(tc.custom_colors)
     end
 
@@ -288,7 +288,7 @@ using JET
             display_font="Literata",
             body_font="Source Serif 4",
             code_font="Fira Code",
-            corner_radius=:slight,
+            corner_radius=:default,
             custom_colors=Dict("primary" => "#112233"),
         )
         @test tc.name == "Test"
@@ -296,7 +296,7 @@ using JET
         @test tc.secondary_seed == "#006B5E"
         @test tc.tertiary_seed == "#E65100"
         @test tc.display_font == "Literata"
-        @test tc.corner_radius == :slight
+        @test tc.corner_radius == :default
         @test tc.custom_colors["primary"] == "#112233"
     end
 
@@ -314,11 +314,11 @@ using JET
 
     @testset "Corner radius presets" begin
         @test haskey(MaterialDocs.CORNER_RADII, :sharp)
-        @test haskey(MaterialDocs.CORNER_RADII, :slight)
+        @test haskey(MaterialDocs.CORNER_RADII, :default)
         @test haskey(MaterialDocs.CORNER_RADII, :rounded)
-        @test haskey(MaterialDocs.CORNER_RADII, :full)
-        # Sharp is all zeros
-        @test all(r -> r == 0, MaterialDocs.CORNER_RADII[:sharp])
+        @test haskey(MaterialDocs.CORNER_RADII, :pill)
+        # Sharp starts with zero
+        @test MaterialDocs.CORNER_RADII[:sharp][1] == 0
         # Rounded should be increasing
         r = collect(MaterialDocs.CORNER_RADII[:rounded])
         @test issorted(r)
@@ -830,7 +830,7 @@ using JET
             display_font = "Fira Sans",
             body_font = "Source Sans 3",
             code_font = "JetBrains Mono",
-            corner_radius = :slight,
+            corner_radius = :default,
             custom_colors = Dict("primary" => "#112233", "surface" => "#FAFAFA"),
         )
 
@@ -871,7 +871,7 @@ using JET
         @test loaded.display_font == "Roboto"
         @test loaded.body_font == "Roboto"
         @test loaded.code_font == "Roboto Mono"
-        @test loaded.corner_radius == :rounded
+        @test loaded.corner_radius == :default
         @test isempty(loaded.custom_colors)
 
         rm(toml_dir; recursive=true)
@@ -888,7 +888,7 @@ using JET
             display_font = "Inter",
             body_font = "Inter",
             code_font = "Fira Code",
-            corner_radius = :full,
+            corner_radius = :pill,
         )
         save_theme(tc, toml_path)
 
@@ -897,7 +897,7 @@ using JET
         @test contains(content, "[theme.fonts]")
         @test contains(content, "[theme.shape]")
         @test contains(content, "seed = \"#006B5E\"")
-        @test contains(content, "corner_radius = \"full\"")
+        @test contains(content, "corner_radius = \"pill\"")
         @test contains(content, "display = \"Inter\"")
 
         # Should NOT contain custom_colors section when empty

@@ -28,7 +28,7 @@ const BUILTIN_THEMES = Dict{Symbol,ThemeConfig}(
         display_font = "Space Grotesk",
         body_font = "DM Sans",
         code_font = "JetBrains Mono",
-        corner_radius = :slight,
+        corner_radius = :default,
     ),
     :midnight => ThemeConfig(
         name = "Midnight",
@@ -44,7 +44,7 @@ const BUILTIN_THEMES = Dict{Symbol,ThemeConfig}(
         display_font = "Literata",
         body_font = "Source Serif 4",
         code_font = "Roboto Mono",
-        corner_radius = :slight,
+        corner_radius = :default,
     ),
     :arctic => ThemeConfig(
         name = "Arctic",
@@ -68,7 +68,7 @@ const BUILTIN_THEMES = Dict{Symbol,ThemeConfig}(
         display_font = "JetBrains Mono",
         body_font = "IBM Plex Sans",
         code_font = "JetBrains Mono",
-        corner_radius = :slight,
+        corner_radius = :default,
     ),
     :lavender => ThemeConfig(
         name = "Lavender",
@@ -84,7 +84,7 @@ const BUILTIN_THEMES = Dict{Symbol,ThemeConfig}(
         display_font = "Bitter",
         body_font = "Libre Baskerville",
         code_font = "Roboto Mono",
-        corner_radius = :slight,
+        corner_radius = :default,
     ),
     :neon_lab => ThemeConfig(
         name = "Neon Lab",
@@ -92,7 +92,7 @@ const BUILTIN_THEMES = Dict{Symbol,ThemeConfig}(
         display_font = "Outfit",
         body_font = "Outfit",
         code_font = "Fira Code",
-        corner_radius = :full,
+        corner_radius = :pill,
     ),
     :slate => ThemeConfig(
         name = "Slate",

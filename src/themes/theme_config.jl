@@ -19,7 +19,7 @@ typography (via Google Fonts names), shape, and per-role color overrides.
 - `display_font::String`: Google Fonts name for headings.
 - `body_font::String`: Google Fonts name for body text.
 - `code_font::String`: Google Fonts name for code blocks.
-- `corner_radius::Symbol`: `:sharp`, `:slight`, `:rounded`, or `:full`.
+- `corner_radius::Symbol`: `:sharp`, `:default`, `:rounded`, or `:pill`.
 - `custom_colors::Dict{String,String}`: Override individual MD3 color roles.
 
 # Examples
@@ -52,7 +52,7 @@ Construct a theme configuration with sensible defaults.
 - `display_font = "Roboto"`: Google Fonts heading font.
 - `body_font = "Roboto"`: Google Fonts body font.
 - `code_font = "Roboto Mono"`: Google Fonts code font.
-- `corner_radius = :rounded`: Shape preset.
+- `corner_radius = :default`: Shape preset (`:sharp`, `:default`, `:rounded`, `:pill`).
 - `custom_colors = Dict{String,String}()`: Per-role color overrides.
 """
 function ThemeConfig(;
@@ -63,11 +63,11 @@ function ThemeConfig(;
     display_font::AbstractString = "Roboto",
     body_font::AbstractString = "Roboto",
     code_font::AbstractString = "Roboto Mono",
-    corner_radius::Symbol = :rounded,
+    corner_radius::Symbol = :default,
     custom_colors::Dict{String,String} = Dict{String,String}(),
 )
-    corner_radius in (:sharp, :slight, :rounded, :full) ||
-        throw(ArgumentError("corner_radius must be :sharp, :slight, :rounded, or :full"))
+    corner_radius in (:sharp, :default, :rounded, :pill) ||
+        throw(ArgumentError("corner_radius must be :sharp, :default, :rounded, or :pill"))
     ThemeConfig(String(name), String(seed),
                 secondary_seed === nothing ? nothing : String(secondary_seed),
                 tertiary_seed === nothing ? nothing : String(tertiary_seed),
@@ -88,8 +88,8 @@ Corner radius presets mapping to (extra-small, small, medium, large,
 extra-large, full) CSS border-radius values in pixels.
 """
 const CORNER_RADII = Dict{Symbol,NTuple{6,Int}}(
-    :sharp   => (0,  0,  0,  0,  0,  0),
-    :slight  => (2,  4,  6,  8, 12, 16),
-    :rounded => (4,  8, 12, 16, 28, 28),
-    :full    => (8, 12, 16, 28, 28, 28),
+    :sharp   => (0,  2,  4,  8, 12, 16),
+    :default => (4,  8, 12, 16, 28, 9999),
+    :rounded => (8, 12, 20, 28, 36, 9999),
+    :pill    => (12, 16, 28, 36, 44, 9999),
 )

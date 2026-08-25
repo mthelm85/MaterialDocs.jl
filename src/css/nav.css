@@ -120,6 +120,7 @@
     position: fixed;
     left: 0;
     top: 3.5rem;
+    bottom: 0;
     width: 280px;
     z-index: 90;
     transform: translateX(-100%);
@@ -129,6 +130,40 @@
   .md-sidebar-open {
     transform: translateX(0);
     box-shadow: var(--md-sys-elevation-3);
+  }
+  /* TOC used as mobile nav on single-page sites */
+  .md-toc.md-mobile-nav {
+    display: block !important;
+    position: fixed;
+    left: 0;
+    top: 3.5rem;
+    bottom: 0;
+    width: 280px;
+    z-index: 90;
+    border-left: none;
+    border-right: 1px solid var(--md-sys-color-outline-variant);
+    transform: translateX(-100%);
+    transition: transform var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-standard);
+    box-shadow: none;
+  }
+  .md-toc.md-mobile-nav.md-sidebar-open {
+    transform: translateX(0);
+    box-shadow: var(--md-sys-elevation-3);
+  }
+  /* Scrim behind open sidebar */
+  .md-sidebar-scrim {
+    display: none;
+    position: fixed;
+    inset: 0;
+    top: 3.5rem;
+    z-index: 89;
+    background: rgba(0, 0, 0, 0.32);
+    transition: opacity var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-standard);
+    opacity: 0;
+  }
+  .md-sidebar-scrim.active {
+    display: block;
+    opacity: 1;
   }
 }
 

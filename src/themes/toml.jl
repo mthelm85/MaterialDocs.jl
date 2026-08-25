@@ -18,7 +18,7 @@ Format:
     code = "JetBrains Mono"
 
     [theme.shape]
-    corner_radius = "rounded"    # sharp | slight | rounded | full
+    corner_radius = "default"    # sharp | default | rounded | pill
 
     [theme.custom_colors]        # optional overrides
     primary = "#custom-hex"
@@ -74,10 +74,10 @@ function load_theme(path::String)::ThemeConfig
     # Shape
     shape = get(theme, "shape", Dict{String,Any}())
     shape isa Dict || throw(ArgumentError("Expected [theme.shape] table in $path"))
-    corner_str = get(shape, "corner_radius", "rounded")::String
+    corner_str = get(shape, "corner_radius", "default")::String
     corner_radius = Symbol(corner_str)
-    if corner_radius ∉ (:sharp, :slight, :rounded, :full)
-        throw(ArgumentError("Invalid corner_radius \"$corner_str\" in $path — expected sharp, slight, rounded, or full"))
+    if corner_radius ∉ (:sharp, :default, :rounded, :pill)
+        throw(ArgumentError("Invalid corner_radius \"$corner_str\" in $path — expected sharp, default, rounded, or pill"))
     end
 
     # Custom colors

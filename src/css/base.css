@@ -150,7 +150,8 @@ hr {
 @media (max-width: 768px) {
   .md-layout { grid-template-columns: 1fr; }
   .md-layout-no-sidebar { grid-template-columns: 1fr; }
-  .md-sidebar { display: none; }
+  /* Sidebar is NOT display:none — nav.css positions it off-screen
+     and the hamburger slides it in via .md-sidebar-open */
   .md-toc { display: none; }
   .md-content { padding: 1.25rem 1rem; }
 }
