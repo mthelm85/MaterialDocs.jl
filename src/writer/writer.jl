@@ -32,7 +32,13 @@ A Documenter.jl writer that generates Material Design 3 documentation sites.
   - `:toggle` — adds a light/dark toggle button
 - `sidebar_collapsed = false`: Start sidebar sections collapsed.
 - `toc_depth = 3`: Right-rail table-of-contents heading depth (2–4).
-- `search = true`: Enable search overlay.
+- `search = true`: Enable the search bar.
+- `repolink = :auto`: Link to the source repository in the navbar. One of:
+  - `:auto` — derive from Documenter's configured remote (`makedocs(repo = ...)`)
+  - a `String` — an explicit URL
+  - `nothing` — omit the link
+- `versions = true`: Show a version selector when `deploydocs` has generated
+  `versions.js` / `siteinfo.js`. Hidden automatically on non-deployed builds.
 - `analytics = nothing`: Google Analytics measurement ID (e.g. `"G-XXXXXXXXXX"`).
 - `logo = nothing`: Path to logo image (relative to docs/src).
 - `favicon = nothing`: Path to favicon (relative to docs/src).
@@ -65,6 +71,8 @@ struct Material3 <: Documenter.Writer
     sidebar_collapsed::Bool
     toc_depth::Int
     search::Bool
+    repolink::Union{String,Nothing,Symbol}
+    versions::Bool
     analytics::Union{String,Nothing}
     logo::Union{String,Nothing}
     favicon::Union{String,Nothing}
@@ -80,6 +88,8 @@ function Material3(;
     sidebar_collapsed::Bool = false,
     toc_depth::Int = 3,
     search::Bool = true,
+    repolink::Union{AbstractString,Nothing,Symbol} = :auto,
+    versions::Bool = true,
     analytics::Union{AbstractString,Nothing} = nothing,
     logo::Union{AbstractString,Nothing} = nothing,
     favicon::Union{AbstractString,Nothing} = nothing,
@@ -92,6 +102,8 @@ function Material3(;
         throw(ArgumentError("dark_mode must be :auto, :light, :dark, or :toggle"))
     2 <= toc_depth <= 4 ||
         throw(ArgumentError("toc_depth must be between 2 and 4"))
+    repolink isa Symbol && repolink !== :auto &&
+        throw(ArgumentError("repolink must be :auto, a URL string, or nothing"))
 
     # Auto-detect .materialdocs.toml when no explicit theme is provided
     resolved_theme = if theme === :default
@@ -108,6 +120,8 @@ function Material3(;
 
     Material3(resolved_theme, dark_mode, sidebar_collapsed, toc_depth,
               search,
+              repolink isa AbstractString ? String(repolink) : repolink,
+              versions,
               analytics === nothing ? nothing : String(analytics),
               logo === nothing ? nothing : String(logo),
               favicon === nothing ? nothing : String(favicon),

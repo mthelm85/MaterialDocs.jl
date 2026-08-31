@@ -318,62 +318,89 @@ li p { margin-bottom: 0.25rem; }
 /* ── Strikethrough ── */
 del { color: var(--md-sys-color-on-surface-variant); }
 
-/* ── Search overlay ── */
-.md-search-overlay {
+/* ── MD3 Search view ──
+   The expanded state of the navbar search bar. Docked beneath the bar on
+   wide windows; full-screen on compact ones. Per MD3, the docked view
+   carries no scrim — the click-catcher below is deliberately transparent. */
+
+.md-search-scrim {
   display: none;
   position: fixed;
   inset: 0;
+  z-index: 190;
+  background: transparent;
+}
+.md-search-scrim.md-search-active { display: block; }
+
+.md-search-view {
+  display: none;
+  position: fixed;
+  top: var(--md-search-top, 3.5rem);
+  left: var(--md-search-left, auto);
+  width: var(--md-search-width, 28rem);
+  max-height: calc(100vh - 5rem);
   z-index: 200;
-  background: rgba(0,0,0,0.5);
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 15vh;
-}
-.md-search-overlay.md-search-active {
-  display: flex;
-}
-.md-search-modal {
-  width: 90%;
-  max-width: 36rem;
-  background: var(--md-sys-color-surface);
-  border-radius: var(--md-sys-shape-corner-large);
-  box-shadow: var(--md-sys-elevation-3);
+  flex-direction: column;
   overflow: hidden;
+  background: var(--md-sys-color-surface-container-high);
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  box-shadow: var(--md-sys-elevation-3);
+}
+.md-search-view.md-search-active { display: flex; }
+
+/* Header row — leading icon, input, trailing clear button */
+.md-search-view-header {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.5rem 0 0.75rem;
+  height: 3.5rem;
+  flex: none;
 }
 .md-search-input {
-  width: 100%;
-  padding: 0.875rem 1.25rem;
-  font-size: 1rem;
-  font-family: var(--md-sys-typescale-body-large-font);
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 0.5rem;
   border: none;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
-  background: var(--md-sys-color-surface);
-  color: var(--md-sys-color-on-surface);
   outline: none;
-  box-sizing: border-box;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: var(--md-sys-typescale-body-large-size);
 }
-.md-search-input::placeholder {
-  color: var(--md-sys-color-on-surface-variant);
+.md-search-input::placeholder { color: var(--md-sys-color-on-surface-variant); }
+.md-search-clear[hidden] { display: none; }
+
+/* Divider appears only once there is something to divide */
+.md-search-view-header + .md-search-results:not(:empty) {
+  border-top: 1px solid var(--md-sys-color-outline-variant);
 }
+
 .md-search-results {
-  max-height: 50vh;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--md-sys-color-outline-variant) transparent;
+  padding: 0.5rem 0;
 }
+.md-search-results:empty { display: none; }
+
+/* MD3 list item */
 .md-search-item {
   display: block;
-  padding: 0.625rem 1.25rem;
+  padding: 0.625rem 1rem;
   text-decoration: none;
   color: var(--md-sys-color-on-surface);
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
   transition: background var(--md-sys-motion-duration-short1) var(--md-sys-motion-easing-standard);
 }
-.md-search-item:last-child { border-bottom: none; }
 .md-search-item:hover,
 .md-search-item.md-search-selected {
-  background: var(--md-sys-color-surface-container);
+  background: var(--md-sys-color-surface-container-highest);
+  text-decoration: none;
 }
 .md-search-item-title {
   display: block;
+  font-size: var(--md-sys-typescale-body-large-size);
   font-weight: 500;
 }
 .md-search-item-section {
@@ -395,18 +422,28 @@ del { color: var(--md-sys-color-on-surface-variant); }
 .md-search-mark {
   background: var(--md-sys-color-tertiary-container);
   color: var(--md-sys-color-on-tertiary-container);
-  border-radius: 2px;
+  border-radius: var(--md-sys-shape-corner-extra-small);
   padding: 0 0.125em;
 }
 .md-search-empty {
-  padding: 1.25rem;
+  padding: 1.25rem 1rem;
   text-align: center;
   color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-body-medium-size);
 }
-.md-search-hint {
-  padding: 0.5rem 1.25rem;
-  font-size: var(--md-sys-typescale-label-small-size);
-  color: var(--md-sys-color-on-surface-variant);
-  border-top: 1px solid var(--md-sys-color-outline-variant);
-  text-align: center;
+
+/* Full-screen search view on compact windows */
+@media (max-width: 768px) {
+  .md-search-view {
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border-radius: 0;
+    background: var(--md-sys-color-surface);
+    box-shadow: none;
+  }
+  .md-search-results { flex: 1; }
 }

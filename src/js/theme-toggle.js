@@ -15,11 +15,8 @@
     var next = isDark ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('md-theme', next);
-    // Update icon
-    toggle.textContent = next === 'dark' ? '☀️' : '🌙';
   });
 
-  // Set initial icon
-  var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-  toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+  // The icon itself is swapped by CSS off the resolved theme — see the
+  // .md-icon-light / .md-icon-dark rules in the generated token stylesheet.
 })();

@@ -101,27 +101,56 @@ function render_page(doc::Documenter.Document, settings::Material3,
     println(io, "<body>")
 
     # ── Navbar ──
-    print(io, """
-      <header class="md-navbar">
-    """)
+    println(io, "  <header class=\"md-navbar\">")
+
     # Hamburger menu (mobile)
-    println(io, "    <button id=\"md-hamburger\" class=\"md-hamburger\" aria-label=\"Toggle navigation\" aria-expanded=\"false\">☰</button>")
+    println(io, "    <button id=\"md-hamburger\" class=\"md-icon-btn md-hamburger\" aria-label=\"Toggle navigation\" aria-expanded=\"false\">",
+                _icon(:menu), "</button>")
 
     if settings.logo !== nothing
         logo_name = basename(settings.logo)
         println(io, "    <img class=\"md-navbar-logo\" src=\"$(root_prefix)assets/$logo_name\" alt=\"$sitename logo\" height=\"32\">")
     end
-    println(io, "    <span class=\"md-navbar-title\">$sitename</span>")
-    println(io, "    <span style=\"flex:1\"></span>")
+    println(io, "    <span class=\"md-navbar-title\">$(_html_escape(sitename))</span>")
+    println(io, "    <span class=\"md-navbar-spacer\"></span>")
 
-    # Search button
+    # ── MD3 search bar — morphs into a search view on activation ──
     if settings.search
-        println(io, "    <button id=\"md-search-btn\" class=\"md-icon-btn\" title=\"Search (Ctrl+K)\" aria-label=\"Search documentation\">🔍</button>")
+        println(io, "    <button id=\"md-search-btn\" class=\"md-search-bar\" aria-label=\"Search documentation\" aria-expanded=\"false\">")
+        println(io, "      ", _icon(:search, "md-search-bar-icon"))
+        println(io, "      <span class=\"md-search-bar-label\">Search docs</span>")
+        println(io, "      <kbd class=\"md-search-bar-kbd\">Ctrl K</kbd>")
+        println(io, "    </button>")
+    end
+
+    # ── Version selector — populated by versions.js, hidden until then ──
+    if settings.versions
+        println(io, "    <div id=\"md-version\" class=\"md-version\" hidden>")
+        println(io, "      <button id=\"md-version-btn\" class=\"md-version-btn\" aria-haspopup=\"listbox\" aria-expanded=\"false\" aria-label=\"Select documentation version\">")
+        println(io, "        <span id=\"md-version-current\" class=\"md-version-current\"></span>")
+        println(io, "        ", _icon(:arrow_drop_down, "md-version-caret"))
+        println(io, "      </button>")
+        println(io, "      <ul id=\"md-version-menu\" class=\"md-version-menu\" role=\"listbox\" hidden></ul>")
+        println(io, "    </div>")
+    end
+
+    # ── Repository link ──
+    repo = _repo_link(doc, settings)
+    if repo !== nothing
+        url, host = repo
+        label = isempty(host) ? "Repository" : host
+        println(io, "    <a class=\"md-icon-btn md-repo-link\" href=\"$(_html_escape(url))\" ",
+                    "title=\"View the repository", isempty(host) ? "" : " on $host", "\" ",
+                    "aria-label=\"View the repository", isempty(host) ? "" : " on $host", "\" ",
+                    "rel=\"noopener\" target=\"_blank\">",
+                    _icon(_repo_icon(host)),
+                    "<span class=\"md-repo-label\">$(_html_escape(label))</span></a>")
     end
 
     # Theme toggle button
     if settings.dark_mode == :toggle
-        println(io, "    <button id=\"md-theme-toggle\" class=\"md-icon-btn\" title=\"Toggle dark mode\" aria-label=\"Toggle dark mode\">🌓</button>")
+        println(io, "    <button id=\"md-theme-toggle\" class=\"md-icon-btn\" title=\"Toggle dark mode\" aria-label=\"Toggle dark mode\">",
+                    _icon(:light_mode, "md-icon-light"), _icon(:dark_mode, "md-icon-dark"), "</button>")
     end
 
     println(io, "  </header>")
@@ -179,6 +208,13 @@ function render_page(doc::Documenter.Document, settings::Material3,
     println(io, "  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/julia.min.js\"></script>")
     println(io, "  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/julia-repl.min.js\"></script>")
     println(io, "  <script>hljs.highlightAll();</script>")
+
+    # Version metadata written by Documenter's deploydocs(). Absent on local
+    # builds — versions.js guards on `typeof`, so a 404 here is harmless.
+    if settings.versions
+        println(io, "  <script src=\"$(root_prefix)siteinfo.js\"></script>")
+        println(io, "  <script src=\"$(root_prefix)../versions.js\"></script>")
+    end
 
     println(io, "  <script src=\"$(root_prefix)assets/materialdocs.js?v=$(_cache_v)\"></script>")
     for js in settings.custom_js
@@ -360,6 +396,78 @@ function _html_escape(s::AbstractString)::String
         '"' => "&quot;",
         '\'' => "&#39;",
     )
+end
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Icons — inline SVG (Material Symbols paths, 24×24 viewBox)
+# ─────────────────────────────────────────────────────────────────────────────
+
+const ICON_PATHS = Dict{Symbol,String}(
+    :menu => "M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z",
+    :search => "M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z",
+    :close => "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
+    :arrow_back => "M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z",
+    :arrow_drop_down => "M7 10l5 5 5-5z",
+    :check => "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
+    :light_mode => "M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 000-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z",
+    :dark_mode => "M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z",
+    :github => "M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 016 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.2 2.8.1 3.2.8.8 1.3 1.9 1.3 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1.1.9 2.2v3.3c0 .3.1.7.8.6A12 12 0 0012 .3z",
+    :gitlab => "M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 01-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 014.82 2a.43.43 0 01.58.18l2.44 7.49h8.32l2.44-7.51A.42.42 0 0119 2a.43.43 0 01.58.18l2.44 7.51L23.2 13.4a.84.84 0 01-.55.99z",
+    :git => "M23.5 11.1l-10.6-10.6a1.4 1.4 0 00-2 0L8.7 2.7l2.8 2.8a1.7 1.7 0 012.1 2.1l2.7 2.7a1.7 1.7 0 11-1 1l-2.5-2.5v6.6a1.7 1.7 0 11-1.4 0V8.8a1.7 1.7 0 01-.9-2.2L7.7 3.8.5 11a1.4 1.4 0 000 2l10.6 10.6a1.4 1.4 0 002 0l10.4-10.4a1.4 1.4 0 000-2z",
+)
+
+"""Render an inline SVG icon by name, with an optional extra CSS class."""
+function _icon(name::Symbol, extra_class::AbstractString = "")::String
+    path = get(ICON_PATHS, name, ICON_PATHS[:git])
+    cls = isempty(extra_class) ? "md-icon" : "md-icon $extra_class"
+    string("<svg class=\"", cls, "\" viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" ",
+           "fill=\"currentColor\" aria-hidden=\"true\" focusable=\"false\">",
+           "<path d=\"", path, "\"/></svg>")
+end
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Repository link
+# ─────────────────────────────────────────────────────────────────────────────
+
+"""
+    _repo_link(doc, settings) → (url, host) or nothing
+
+Resolve the source-repository URL for the navbar link. Honours an explicit
+`repolink` string, `nothing` to disable, or `:auto` to derive the URL from
+Documenter's configured remote.
+"""
+function _repo_link(doc::Documenter.Document, settings::Material3)
+    settings.repolink === nothing && return nothing
+
+    url = if settings.repolink isa String
+        settings.repolink
+    else  # :auto — derive from the Documenter remote
+        remote = doc.user.remote
+        remote === nothing && return nothing
+        try
+            Documenter.Remotes.repourl(remote)
+        catch
+            nothing
+        end
+    end
+
+    (url === nothing || isempty(url)) && return nothing
+    (url, _repo_host(url))
+end
+
+"""Identify the hosting service from a repository URL."""
+function _repo_host(url::AbstractString)::String
+    u = lowercase(url)
+    occursin("github", u)    ? "GitHub"    :
+    occursin("gitlab", u)    ? "GitLab"    :
+    occursin("bitbucket", u) ? "Bitbucket" :
+    occursin("azure", u)     ? "Azure DevOps" : ""
+end
+
+"""Pick the icon matching a repository host name."""
+function _repo_icon(host::AbstractString)::Symbol
+    host == "GitHub" ? :github :
+    host == "GitLab" ? :gitlab : :git
 end
 
 """Count visible leaf pages in the nav context."""

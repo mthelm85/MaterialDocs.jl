@@ -360,6 +360,8 @@ using JET
         @test m3.sidebar_collapsed == false
         @test m3.toc_depth == 3
         @test m3.search == true
+        @test m3.repolink === :auto
+        @test m3.versions == true
         @test m3.analytics === nothing
         @test m3.logo === nothing
         @test m3.favicon === nothing
@@ -467,12 +469,15 @@ using JET
         # Responsive breakpoints
         @test contains(css, "@media (max-width:")
 
-        # Search overlay CSS (Phase 6)
-        @test contains(css, ".md-search-overlay")
-        @test contains(css, ".md-search-modal")
+        # MD3 search bar + search view CSS
+        @test contains(css, ".md-search-bar")
+        @test contains(css, ".md-search-view")
         @test contains(css, ".md-search-input")
         @test contains(css, ".md-search-item")
         @test contains(css, ".md-search-selected")
+        # Version selector + repo link
+        @test contains(css, ".md-version-menu")
+        @test contains(css, ".md-repo-link")
 
         # Sidebar collapse/mobile CSS (Phase 6)
         @test contains(css, ".md-nav-collapsed")
@@ -542,15 +547,25 @@ using JET
         m3_search = Material3(dark_mode=:auto, search=true)
         js_search = MaterialDocs.build_js(m3_search)
         @test contains(js_search, "search.js")
-        @test contains(js_search, "md-search-overlay")
+        @test contains(js_search, "md-search-view")
         @test contains(js_search, "search-index.json")
-        @test contains(js_search, "Ctrl")  # Cmd/Ctrl+K shortcut
+        @test contains(js_search, "metaKey")  # Cmd/Ctrl+K shortcut
 
         # Search disabled
         m3_nosearch = Material3(dark_mode=:auto, search=false)
         js_nosearch = MaterialDocs.build_js(m3_nosearch)
         @test !contains(js_nosearch, "search.js")
-        @test !contains(js_nosearch, "md-search-overlay")
+        @test !contains(js_nosearch, "md-search-view")
+
+        # Version selector module — only when versions=true (default)
+        js_versions = MaterialDocs.build_js(Material3(dark_mode=:auto, versions=true))
+        @test contains(js_versions, "versions.js")
+        @test contains(js_versions, "DOC_VERSIONS")
+        @test contains(js_versions, "DOCUMENTER_CURRENT_VERSION")
+
+        js_noversions = MaterialDocs.build_js(Material3(dark_mode=:auto, versions=false))
+        @test !contains(js_noversions, "versions.js")
+        @test !contains(js_noversions, "DOC_VERSIONS")
     end
 
     @testset "NavItem and NavContext" begin
@@ -655,7 +670,11 @@ using JET
         @test contains(index_html, "md-navbar-title")
         @test contains(index_html, "md-theme-toggle")  # toggle mode
         @test contains(index_html, "md-hamburger")      # mobile hamburger
-        @test contains(index_html, "md-search-btn")     # search button
+        @test contains(index_html, "md-search-btn")     # MD3 search bar
+        @test contains(index_html, "md-search-bar")
+        @test contains(index_html, "md-version")        # version selector shell
+        @test contains(index_html, "siteinfo.js")       # deploydocs version metadata
+        @test contains(index_html, "../versions.js")
 
         # Sidebar nav
         @test contains(index_html, "class=\"md-sidebar\"")

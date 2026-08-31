@@ -131,6 +131,22 @@ function _write_css_tokens(io::IO, theme::ThemeConfig,
         _write_highlight_vars(io, :dark; indent="  ")
         println(io, "}")
     end
+
+    # ── Theme-toggle icon swap ──
+    # The button shows the mode you'd switch TO: a moon in light themes, a sun
+    # in dark ones. Driven by CSS so it stays correct before JS runs. Emitted
+    # only for :toggle — the other modes have no button, and :light must stay
+    # free of any dark-mode selectors.
+    if settings.dark_mode == :toggle
+        println(io, "\n@media (prefers-color-scheme: dark) {")
+        println(io, "  :root:not([data-theme=\"light\"]) .md-icon-light { display: block; }")
+        println(io, "  :root:not([data-theme=\"light\"]) .md-icon-dark { display: none; }")
+        println(io, "}")
+        println(io, ":root[data-theme=\"dark\"] .md-icon-light { display: block; }")
+        println(io, ":root[data-theme=\"dark\"] .md-icon-dark { display: none; }")
+        println(io, ":root[data-theme=\"light\"] .md-icon-light { display: none; }")
+        println(io, ":root[data-theme=\"light\"] .md-icon-dark { display: block; }")
+    end
 end
 
 """Write color role CSS custom properties."""
@@ -313,6 +329,11 @@ function build_js(settings::Material3)::String
     # Search — only when search is enabled
     if settings.search
         _append_js_file(io, js_dir, "search.js")
+    end
+
+    # Version selector — only when versions are enabled
+    if settings.versions
+        _append_js_file(io, js_dir, "versions.js")
     end
 
     String(take!(io))
