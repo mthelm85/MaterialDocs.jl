@@ -222,15 +222,37 @@ end
 
 """Inject the editor panel HTML + JS loader into an HTML page."""
 function _inject_editor(html::String, panel_html::String)::String
+    # The panel script is large (it carries the whole HCT engine) and loads as
+    # an external resource, so it lands well after first paint. On navigation
+    # that shows the built-in theme before the edited one — the theme appears
+    # to reset. This head script re-applies the last-applied tokens from a
+    # cache written by the panel, synchronously, before anything is painted.
+    head_script = """
+    <script>
+    (function(){
+      try {
+        var c = sessionStorage.getItem('__md_editor_css__');
+        if (!c) return;
+        var vars = JSON.parse(c), root = document.documentElement;
+        for (var k in vars) root.style.setProperty(k, vars[k]);
+      } catch(e) {}
+    })()
+    </script>
+    """
+
     # Inject panel before </body>, and load the editor JS
     injection = """
     $panel_html
     <script src="/__editor__.js"></script>
     """
-    if contains(html, "</body>")
-        replace(html, "</body>" => injection * "\n</body>")
+
+    out = contains(html, "</head>") ?
+        replace(html, "</head>" => head_script * "\n</head>"; count=1) : html
+
+    if contains(out, "</body>")
+        replace(out, "</body>" => injection * "\n</body>")
     else
-        html * injection
+        out * injection
     end
 end
 
@@ -572,7 +594,22 @@ function _editor_panel_js(theme::ThemeConfig)::String
     (function() {
       'use strict';
       var STORAGE_KEY = '__md_editor_state__';
+      // Snapshot of the tokens we last wrote, replayed by the head script on
+      // the next page so the edited theme survives navigation without a flash
+      var CSS_KEY = '__md_editor_css__';
       var root = document.documentElement;
+
+      // Record every --md-sys-* property currently set inline on <html>
+      function cacheCSS() {
+        try {
+          var out = {}, s = root.style;
+          for (var i = 0; i < s.length; i++) {
+            var n = s[i];
+            if (n.indexOf('--md-sys-') === 0) out[n] = s.getPropertyValue(n);
+          }
+          sessionStorage.setItem(CSS_KEY, JSON.stringify(out));
+        } catch(e) {}
+      }
 
       // ── Panel toggle (persisted across page navigation) ──
       var panel = document.getElementById('md-editor-panel');
@@ -1075,6 +1112,7 @@ function _editor_panel_js(theme::ThemeConfig)::String
         }
         updatePalette();
         updateTOML();
+        cacheCSS();
       }
 
       function applyFonts() {
@@ -1090,6 +1128,7 @@ function _editor_panel_js(theme::ThemeConfig)::String
                         'label-large','label-medium','label-small'];
         bodyCats.forEach(function(c) { root.style.setProperty('--md-sys-typescale-'+c+'-font', bodyStack); });
         root.style.setProperty('--md-sys-typescale-body-large-code-font', codeStack);
+        cacheCSS();
       }
 
       function applyShape() {
@@ -1104,6 +1143,7 @@ function _editor_panel_js(theme::ThemeConfig)::String
         names.forEach(function(n, i) {
           root.style.setProperty('--md-sys-shape-corner-' + n, r[i] + 'px');
         });
+        cacheCSS();
       }
 
       function applyAll() {
@@ -1158,6 +1198,9 @@ function _editor_panel_js(theme::ThemeConfig)::String
       if (stateChanged) {
         applyAll();
       } else {
+        // Back to the built-in theme: drop the cache so the head script on the
+        // next page doesn't replay stale overrides
+        try { sessionStorage.removeItem(CSS_KEY); } catch(e) {}
         updatePalette();
         updateTOML();
       }
