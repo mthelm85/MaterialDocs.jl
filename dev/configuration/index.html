@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configuration — MaterialDocs.jl</title>
+  <link rel="stylesheet" href="../assets/materialdocs.css?v=2669ecec">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
+  <script>
+    (function(){
+      document.documentElement.classList.add('no-transition');
+      var t=localStorage.getItem('md-theme');if(t)document.documentElement.setAttribute('data-theme',t);
+      window.addEventListener('load',function(){setTimeout(function(){document.documentElement.classList.remove('no-transition');},50);});
+    })()
+  </script>
+</head>
+<body>
+  <header class="md-navbar">
+    <button id="md-hamburger" class="md-icon-btn md-hamburger" aria-label="Toggle navigation" aria-expanded="false"><svg class="md-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></button>
+    <span class="md-navbar-title">MaterialDocs.jl</span>
+    <span class="md-navbar-spacer"></span>
+    <button id="md-search-btn" class="md-search-bar" aria-label="Search documentation" aria-expanded="false">
+      <svg class="md-icon md-search-bar-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <span class="md-search-bar-label">Search docs</span>
+      <kbd class="md-search-bar-kbd">Ctrl K</kbd>
+    </button>
+    <div id="md-version" class="md-version" hidden>
+      <button id="md-version-btn" class="md-version-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Select documentation version">
+        <span id="md-version-current" class="md-version-current"></span>
+        <svg class="md-icon md-version-caret" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M7 10l5 5 5-5z"/></svg>
+      </button>
+      <ul id="md-version-menu" class="md-version-menu" role="listbox" hidden></ul>
+    </div>
+    <a class="md-icon-btn md-repo-link" href="https://github.com/mthelm85/MaterialDocs.jl" title="View the repository on GitHub" aria-label="View the repository on GitHub" rel="noopener" target="_blank"><svg class="md-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 016 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.2 2.8.1 3.2.8.8 1.3 1.9 1.3 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1.1.9 2.2v3.3c0 .3.1.7.8.6A12 12 0 0012 .3z"/></svg><span class="md-repo-label">GitHub</span></a>
+    <button id="md-theme-toggle" class="md-icon-btn" title="Toggle dark mode" aria-label="Toggle dark mode"><svg class="md-icon md-icon-light" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 000-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg><svg class="md-icon md-icon-dark" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg></button>
+  </header>
+  <div class="md-layout">
+    <nav class="md-sidebar">
+      <a href="../">Home</a>
+      <a href="../getting-started/">Getting Started</a>
+      <a href="../theming/">Theming</a>
+      <a href="../configuration/">Configuration</a>
+      <a href="../editor/">Theme Editor</a>
+      <a href="../colors/">Color Engine</a>
+      <a href="../api/">API Reference</a>
+    </nav>
+    <main class="md-content">
+      <article class="md-article">
+<h1 id="Configuration" class="md-heading">Configuration<a href="#Configuration" class="md-heading-anchor" aria-label="Link to this section">#</a></h1>
+<p>Every option is a keyword to <a href="../api/#MaterialDocs.Material3"><code class="md-code-inline">Material3</code></a>.</p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">format = Material3(
+    theme = :ocean_depth,
+    dark_mode = :toggle,
+    toc_depth = 3,
+    logo = &quot;assets/logo.svg&quot;,
+    favicon = &quot;assets/favicon.ico&quot;,
+)</code></pre>
+</div>
+<h2 id="Appearance" class="md-heading">Appearance<a href="#Appearance" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
+<h3 id="theme" class="md-heading"><code class="md-code-inline">theme</code><a href="#theme" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>A built-in theme name (<code class="md-code-inline">Symbol</code>) or a <a href="../api/#MaterialDocs.ThemeConfig"><code class="md-code-inline">ThemeConfig</code></a>. Defaults to <code class="md-code-inline">:default</code>, which first checks for <code class="md-code-inline">docs/.materialdocs.toml</code> — see <a href="../theming/#Theming">Theming</a>.</p>
+<h3 id="dark_mode" class="md-heading"><code class="md-code-inline">dark_mode</code><a href="#dark_mode" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>How light and dark are chosen. Default <code class="md-code-inline">:auto</code>.</p>
+<div class="md-table-wrap">
+<table class="md-table">
+<thead>
+<tr>
+<th style="text-align:right">Value</th>
+<th style="text-align:right">Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:auto</code></td>
+<td style="text-align:right">Follows the reader&#39;s <code class="md-code-inline">prefers-color-scheme</code></td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:light</code></td>
+<td style="text-align:right">Always light; no dark rules are emitted at all</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:dark</code></td>
+<td style="text-align:right">Always dark</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:toggle</code></td>
+<td style="text-align:right">Adds a navbar toggle, remembered in <code class="md-code-inline">localStorage</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="logo-and-favicon" class="md-heading"><code class="md-code-inline">logo</code> and <code class="md-code-inline">favicon</code><a href="#logo-and-favicon" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>Paths relative to <code class="md-code-inline">docs/src</code>, copied into the build:</p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">Material3(logo = &quot;assets/logo.svg&quot;, favicon = &quot;assets/favicon.ico&quot;)</code></pre>
+</div>
+<p>The logo appears in the navbar at 32px tall. SVG is recommended so it stays sharp in both themes.</p>
+<h3 id="footer" class="md-heading"><code class="md-code-inline">footer</code><a href="#footer" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>Extra HTML placed above the generated attribution line:</p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">Material3(footer = &quot;Made with ❤️ and Julia&quot;)</code></pre>
+</div>
+<h2 id="Navigation" class="md-heading">Navigation<a href="#Navigation" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
+<h3 id="toc_depth" class="md-heading"><code class="md-code-inline">toc_depth</code><a href="#toc_depth" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>Deepest heading level shown in the on-this-page rail. Between <code class="md-code-inline">2</code> and <code class="md-code-inline">4</code>, default <code class="md-code-inline">3</code>.</p>
+<h3 id="sidebar_collapsed" class="md-heading"><code class="md-code-inline">sidebar_collapsed</code><a href="#sidebar_collapsed" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>Start sidebar sections collapsed. Default <code class="md-code-inline">false</code>. Reader changes persist in <code class="md-code-inline">localStorage</code> either way.</p>
+<h3 id="repolink" class="md-heading"><code class="md-code-inline">repolink</code><a href="#repolink" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>The repository link in the navbar. Default <code class="md-code-inline">:auto</code>.</p>
+<div class="md-table-wrap">
+<table class="md-table">
+<thead>
+<tr>
+<th style="text-align:right">Value</th>
+<th style="text-align:right">Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:auto</code></td>
+<td style="text-align:right">Derived from Documenter&#39;s configured remote</td>
+</tr>
+<tr>
+<td style="text-align:right">a <code class="md-code-inline">String</code></td>
+<td style="text-align:right">Used as the URL verbatim</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">nothing</code></td>
+<td style="text-align:right">No link</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The icon and label follow the host — GitHub, GitLab, Bitbucket, and Azure DevOps are recognised, with a generic git icon otherwise.</p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">Material3(repolink = &quot;https://codeberg.org/you/MyPackage.jl&quot;)</code></pre>
+</div>
+<h3 id="versions" class="md-heading"><code class="md-code-inline">versions</code><a href="#versions" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>Show the version selector when the site has been deployed with more than one version. Default <code class="md-code-inline">true</code>.</p>
+<p>It reads <code class="md-code-inline">DOCUMENTER_CURRENT_VERSION</code> from <code class="md-code-inline">siteinfo.js</code> and <code class="md-code-inline">DOC_VERSIONS</code> from <code class="md-code-inline">../versions.js</code> — both written by <code class="md-code-inline">deploydocs</code>. On a local build neither exists, so the selector stays hidden and the two missing files are harmless.</p>
+<p>Switching versions keeps you on the same page where that page exists in the target version, and falls back to its home page where it does not.</p>
+<h3 id="search" class="md-heading"><code class="md-code-inline">search</code><a href="#search" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>Enable the search bar and index. Default <code class="md-code-inline">true</code>.</p>
+<p>Search is entirely client-side: a JSON index is generated at build time and loaded on first use. Ctrl/Cmd+K opens it from anywhere.</p>
+<h2 id="Output" class="md-heading">Output<a href="#Output" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
+<h3 id="prettyurls" class="md-heading"><code class="md-code-inline">prettyurls</code><a href="#prettyurls" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>Directory-style URLs (<code class="md-code-inline">page/index.html</code>, linked as <code class="md-code-inline">./page/</code>). Default <code class="md-code-inline">true</code>.</p>
+<p>Set it to <code class="md-code-inline">false</code>, or condition it on CI, when the build needs to be opened from disk — see <a href="../getting-started/#Getting-Started">Getting Started</a>.</p>
+<h3 id="custom_css-and-custom_js" class="md-heading"><code class="md-code-inline">custom_css</code> and <code class="md-code-inline">custom_js</code><a href="#custom_css-and-custom_js" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>Extra files, relative to <code class="md-code-inline">docs/src</code>, copied in and linked after the generated assets:</p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">Material3(
+    custom_css = [&quot;assets/extra.css&quot;],
+    custom_js  = [&quot;assets/extra.js&quot;],
+)</code></pre>
+</div>
+<p>Because all styling is driven by <code class="md-code-inline">--md-sys-*</code> custom properties, custom CSS should reference those tokens rather than literal colors. That way it keeps working in both light and dark mode:</p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-css">.my-callout {
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+  border-radius: var(--md-sys-shape-corner-medium);
+}</code></pre>
+</div>
+<h3 id="analytics" class="md-heading"><code class="md-code-inline">analytics</code><a href="#analytics" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>A Google Analytics measurement ID:</p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">Material3(analytics = &quot;G-XXXXXXXXXX&quot;)</code></pre>
+</div>
+      </article>
+      <footer class="md-footer">
+        <p>Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://github.com/mthelm85/MaterialDocs.jl">MaterialDocs.jl</a></p>
+      </footer>
+    </main>
+    <aside class="md-toc">
+      <div class="md-toc-inner">
+        <p class="md-toc-title">On this page</p>
+          <a class="md-toc-link md-toc-h2" href="#Appearance">Appearance</a>
+            <a class="md-toc-link md-toc-h3" href="#theme">theme</a>
+            <a class="md-toc-link md-toc-h3" href="#dark_mode">dark_mode</a>
+            <a class="md-toc-link md-toc-h3" href="#logo-and-favicon">logo and favicon</a>
+            <a class="md-toc-link md-toc-h3" href="#footer">footer</a>
+          <a class="md-toc-link md-toc-h2" href="#Navigation">Navigation</a>
+            <a class="md-toc-link md-toc-h3" href="#toc_depth">toc_depth</a>
+            <a class="md-toc-link md-toc-h3" href="#sidebar_collapsed">sidebar_collapsed</a>
+            <a class="md-toc-link md-toc-h3" href="#repolink">repolink</a>
+            <a class="md-toc-link md-toc-h3" href="#versions">versions</a>
+            <a class="md-toc-link md-toc-h3" href="#search">search</a>
+          <a class="md-toc-link md-toc-h2" href="#Output">Output</a>
+            <a class="md-toc-link md-toc-h3" href="#prettyurls">prettyurls</a>
+            <a class="md-toc-link md-toc-h3" href="#custom_css-and-custom_js">custom_css and custom_js</a>
+            <a class="md-toc-link md-toc-h3" href="#analytics">analytics</a>
+      </div>
+    </aside>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/julia.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/julia-repl.min.js"></script>
+  <script>hljs.highlightAll();</script>
+  <script src="../siteinfo.js"></script>
+  <script src="../../versions.js"></script>
+  <script src="../assets/materialdocs.js?v=2669ecec"></script>
+</body>
+</html>

@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API Reference — MaterialDocs.jl</title>
+  <link rel="stylesheet" href="../assets/materialdocs.css?v=41e4451b">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
+  <script>
+    (function(){
+      document.documentElement.classList.add('no-transition');
+      var t=localStorage.getItem('md-theme');if(t)document.documentElement.setAttribute('data-theme',t);
+      window.addEventListener('load',function(){setTimeout(function(){document.documentElement.classList.remove('no-transition');},50);});
+    })()
+  </script>
+</head>
+<body>
+  <header class="md-navbar">
+    <button id="md-hamburger" class="md-icon-btn md-hamburger" aria-label="Toggle navigation" aria-expanded="false"><svg class="md-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></button>
+    <span class="md-navbar-title">MaterialDocs.jl</span>
+    <span class="md-navbar-spacer"></span>
+    <button id="md-search-btn" class="md-search-bar" aria-label="Search documentation" aria-expanded="false">
+      <svg class="md-icon md-search-bar-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <span class="md-search-bar-label">Search docs</span>
+      <kbd class="md-search-bar-kbd">Ctrl K</kbd>
+    </button>
+    <div id="md-version" class="md-version" hidden>
+      <button id="md-version-btn" class="md-version-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Select documentation version">
+        <span id="md-version-current" class="md-version-current"></span>
+        <svg class="md-icon md-version-caret" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M7 10l5 5 5-5z"/></svg>
+      </button>
+      <ul id="md-version-menu" class="md-version-menu" role="listbox" hidden></ul>
+    </div>
+    <a class="md-icon-btn md-repo-link" href="https://github.com/mthelm85/MaterialDocs.jl" title="View the repository on GitHub" aria-label="View the repository on GitHub" rel="noopener" target="_blank"><svg class="md-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 016 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.2 2.8.1 3.2.8.8 1.3 1.9 1.3 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1.1.9 2.2v3.3c0 .3.1.7.8.6A12 12 0 0012 .3z"/></svg><span class="md-repo-label">GitHub</span></a>
+    <button id="md-theme-toggle" class="md-icon-btn" title="Toggle dark mode" aria-label="Toggle dark mode"><svg class="md-icon md-icon-light" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 000-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg><svg class="md-icon md-icon-dark" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg></button>
+  </header>
+  <div class="md-layout">
+    <nav class="md-sidebar">
+      <a href="../">Home</a>
+      <a href="../getting-started/">Getting Started</a>
+      <a href="../theming/">Theming</a>
+      <a href="../configuration/">Configuration</a>
+      <a href="../editor/">Theme Editor</a>
+      <a href="../colors/">Color Engine</a>
+      <a href="../api/">API Reference</a>
+    </nav>
+    <main class="md-content">
+      <article class="md-article">
+<h1 id="API-Reference" class="md-heading">API Reference<a href="#API-Reference" class="md-heading-anchor" aria-label="Link to this section">#</a></h1>
+<div class="md-index">
+<ul>
+</ul>
+</div>
+<h2 id="Writer" class="md-heading">Writer<a href="#Writer" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="md-docstring" id="MaterialDocs.Material3">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.Material3</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/writer/writer.jl#L20-L67" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">Material3 &lt;: Documenter.Writer</code></pre>
+</div>
+<p>A Documenter.jl writer that generates Material Design 3 documentation sites.</p>
+<p><strong>Keywords</strong></p>
+<ul class="md-list-tight">
+<li><p><code class="md-code-inline">theme = :default</code>: Built-in theme name (<code class="md-code-inline">Symbol</code>) or a <a href="../api/#MaterialDocs.ThemeConfig"><code class="md-code-inline">ThemeConfig</code></a>. When <code class="md-code-inline">:default</code>, automatically loads <code class="md-code-inline">docs/.materialdocs.toml</code> if present.</p>
+</li>
+<li><p><code class="md-code-inline">dark_mode = :auto</code>: Dark mode behavior. One of:</p>
+<ul class="md-list-tight">
+<li><p><code class="md-code-inline">:auto</code> — follows <code class="md-code-inline">prefers-color-scheme</code></p>
+</li>
+<li><p><code class="md-code-inline">:light</code> — always light</p>
+</li>
+<li><p><code class="md-code-inline">:dark</code> — always dark</p>
+</li>
+<li><p><code class="md-code-inline">:toggle</code> — adds a light/dark toggle button</p>
+</li>
+</ul>
+</li>
+<li><p><code class="md-code-inline">sidebar_collapsed = false</code>: Start sidebar sections collapsed.</p>
+</li>
+<li><p><code class="md-code-inline">toc_depth = 3</code>: Right-rail table-of-contents heading depth (2–4).</p>
+</li>
+<li><p><code class="md-code-inline">search = true</code>: Enable the search bar.</p>
+</li>
+<li><p><code class="md-code-inline">repolink = :auto</code>: Link to the source repository in the navbar. One of:</p>
+<ul class="md-list-tight">
+<li><p><code class="md-code-inline">:auto</code> — derive from Documenter&#39;s configured remote (<code class="md-code-inline">makedocs(repo = ...)</code>)</p>
+</li>
+<li><p>a <code class="md-code-inline">String</code> — an explicit URL</p>
+</li>
+<li><p><code class="md-code-inline">nothing</code> — omit the link</p>
+</li>
+</ul>
+</li>
+<li><p><code class="md-code-inline">versions = true</code>: Show a version selector when <code class="md-code-inline">deploydocs</code> has generated <code class="md-code-inline">versions.js</code> / <code class="md-code-inline">siteinfo.js</code>. Hidden automatically on non-deployed builds.</p>
+</li>
+<li><p><code class="md-code-inline">analytics = nothing</code>: Google Analytics measurement ID (e.g. <code class="md-code-inline">&quot;G-XXXXXXXXXX&quot;</code>).</p>
+</li>
+<li><p><code class="md-code-inline">logo = nothing</code>: Path to logo image (relative to docs/src).</p>
+</li>
+<li><p><code class="md-code-inline">favicon = nothing</code>: Path to favicon (relative to docs/src).</p>
+</li>
+<li><p><code class="md-code-inline">footer = nothing</code>: Custom footer HTML string.</p>
+</li>
+<li><p><code class="md-code-inline">custom_css = String[]</code>: Additional CSS files to include.</p>
+</li>
+<li><p><code class="md-code-inline">custom_js = String[]</code>: Additional JS files to include.</p>
+</li>
+<li><p><code class="md-code-inline">prettyurls = true</code>: Use clean URLs (<code class="md-code-inline">page/index.html</code> instead of <code class="md-code-inline">page.html</code>).</p>
+</li>
+</ul>
+<p><strong>Examples</strong></p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia"># Use a built-in theme
+format = Material3(theme = :ocean_depth)
+
+# Use a custom theme
+format = Material3(theme = ThemeConfig(seed = &quot;#E65100&quot;, display_font = &quot;Space Grotesk&quot;))
+
+# Full configuration
+format = Material3(
+    theme = :midnight,
+    dark_mode = :toggle,
+    toc_depth = 4,
+    logo = &quot;assets/logo.svg&quot;,
+    footer = &quot;Made with ❤️ and Julia&quot;,
+)</code></pre>
+</div>
+</div>
+</div>
+<h2 id="Themes" class="md-heading">Themes<a href="#Themes" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="md-docstring" id="MaterialDocs.ThemeConfig">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.ThemeConfig</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/themes/theme_config.jl#L8-L29" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">ThemeConfig</code></pre>
+</div>
+<p>Configuration for a MaterialDocs theme. Controls colors (via HCT seed), typography (via Google Fonts names), shape, and per-role color overrides.</p>
+<p><strong>Fields</strong></p>
+<ul class="md-list-tight">
+<li><p><code class="md-code-inline">name::String</code>: Human-readable theme name.</p>
+</li>
+<li><p><code class="md-code-inline">seed::String</code>: Primary seed hex color (e.g. <code class="md-code-inline">&quot;#6750A4&quot;</code>).</p>
+</li>
+<li><p><code class="md-code-inline">secondary_seed::Union{String,Nothing}</code>: Override secondary palette seed.</p>
+</li>
+<li><p><code class="md-code-inline">tertiary_seed::Union{String,Nothing}</code>: Override tertiary palette seed.</p>
+</li>
+<li><p><code class="md-code-inline">display_font::String</code>: Google Fonts name for headings.</p>
+</li>
+<li><p><code class="md-code-inline">body_font::String</code>: Google Fonts name for body text.</p>
+</li>
+<li><p><code class="md-code-inline">code_font::String</code>: Google Fonts name for code blocks.</p>
+</li>
+<li><p><code class="md-code-inline">corner_radius::Symbol</code>: <code class="md-code-inline">:sharp</code>, <code class="md-code-inline">:default</code>, <code class="md-code-inline">:rounded</code>, or <code class="md-code-inline">:pill</code>.</p>
+</li>
+<li><p><code class="md-code-inline">custom_colors::Dict{String,String}</code>: Override individual MD3 color roles.</p>
+</li>
+</ul>
+<p><strong>Examples</strong></p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">theme = ThemeConfig(seed = &quot;#2E7D32&quot;, display_font = &quot;Literata&quot;)</code></pre>
+</div>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.resolve_theme">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.resolve_theme</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/themes/builtin.jl#L121-L129" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">resolve_theme(theme) → ThemeConfig</code></pre>
+</div>
+<p>Resolve a theme argument to a ThemeConfig. Accepts:</p>
+<ul class="md-list-tight">
+<li><p>A <code class="md-code-inline">ThemeConfig</code> (returned as-is)</p>
+</li>
+<li><p>A <code class="md-code-inline">Symbol</code> naming a built-in theme (e.g. <code class="md-code-inline">:default</code>, <code class="md-code-inline">:ocean_depth</code>)</p>
+</li>
+</ul>
+<p>Throws <code class="md-code-inline">ArgumentError</code> if the symbol is not a known built-in theme.</p>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.BUILTIN_THEMES">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.BUILTIN_THEMES</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/themes/builtin.jl#L8-L21" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">BUILTIN_THEMES :: Dict{Symbol,ThemeConfig}</code></pre>
+</div>
+<p>The twelve preset themes, keyed by name. Pass a key to <a href="../api/#MaterialDocs.Material3"><code class="md-code-inline">Material3</code></a> or <a href="../api/#MaterialDocs.resolve_theme"><code class="md-code-inline">resolve_theme</code></a> rather than indexing this directly:</p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">format = Material3(theme = :ocean_depth)</code></pre>
+</div>
+<p>Available keys: <code class="md-code-inline">:default</code>, <code class="md-code-inline">:ocean_depth</code>, <code class="md-code-inline">:solar_flare</code>, <code class="md-code-inline">:midnight</code>, <code class="md-code-inline">:forest</code>, <code class="md-code-inline">:arctic</code>, <code class="md-code-inline">:rose_garden</code>, <code class="md-code-inline">:amber_workshop</code>, <code class="md-code-inline">:lavender</code>, <code class="md-code-inline">:sandstone</code>, <code class="md-code-inline">:neon_lab</code>, <code class="md-code-inline">:slate</code>.</p>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.load_theme">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.load_theme</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/themes/toml.jl#L29-L36" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">load_theme(path::String) → ThemeConfig</code></pre>
+</div>
+<p>Load a theme from a <code class="md-code-inline">.materialdocs.toml</code> file. Returns a <code class="md-code-inline">ThemeConfig</code> with all fields populated (missing fields use defaults).</p>
+<p>Throws <code class="md-code-inline">ArgumentError</code> if the file cannot be parsed or contains invalid values.</p>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.save_theme">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.save_theme</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/themes/toml.jl#L106-L111" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">save_theme(config::ThemeConfig, path::String)</code></pre>
+</div>
+<p>Write a <code class="md-code-inline">ThemeConfig</code> to a <code class="md-code-inline">.materialdocs.toml</code> file. Overwrites any existing file at <code class="md-code-inline">path</code>. The output is a clean, human-readable TOML file.</p>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.find_theme_toml">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.find_theme_toml</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/themes/toml.jl#L154-L159" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">find_theme_toml(docs_dir::String) → Union{String, Nothing}</code></pre>
+</div>
+<p>Search for a <code class="md-code-inline">.materialdocs.toml</code> file in the given directory. Returns the absolute path if found, or <code class="md-code-inline">nothing</code>.</p>
+</div>
+</div>
+<h2 id="Color" class="md-heading">Color<a href="#Color" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="md-docstring" id="MaterialDocs.HCT">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.HCT</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/color/hct.jl#L24-L33" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">HCT</code></pre>
+</div>
+<p>A color in the HCT (Hue, Chroma, Tone) perceptual color space.</p>
+<p><strong>Fields</strong></p>
+<ul class="md-list-tight">
+<li><p><code class="md-code-inline">hue::Float64</code>: 0–360 (circular). The perceived color on the color wheel.</p>
+</li>
+<li><p><code class="md-code-inline">chroma::Float64</code>: 0–~113 (gamut-dependent max). Saturation intensity.</p>
+</li>
+<li><p><code class="md-code-inline">tone::Float64</code>: 0 (black)–100 (white). Perceptual lightness (CIE L*).</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.hct">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.hct</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/color/hct.jl#L726-L736" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">hct(hex::AbstractString) → HCT</code></pre>
+</div>
+<p>Parse a hex color string (e.g. <code class="md-code-inline">&quot;#6750A4&quot;</code>) to the HCT color space.</p>
+<p><strong>Examples</strong></p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">c = hct(&quot;#6750A4&quot;)
+# HCT(281.8, 46.3, 40.0)  (approximately)</code></pre>
+</div>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.to_hex">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.to_hex</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/color/hct.jl#L753-L764" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">to_hex(c::HCT) → String</code></pre>
+</div>
+<p>Convert an HCT color to the closest sRGB hex string (<code class="md-code-inline">&quot;#RRGGBB&quot;</code>). If the requested chroma is not achievable in sRGB, the maximum achievable chroma at the given hue and tone is used instead.</p>
+<p><strong>Examples</strong></p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">to_hex(HCT(281.8, 46.3, 40.0))  # &quot;#6750A4&quot; (approximately)</code></pre>
+</div>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.TonalPalette">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.TonalPalette</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/color/tonal_palette.jl#L14-L32" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">TonalPalette</code></pre>
+</div>
+<p>A color palette derived from a single hue and chroma, generating hex colors at any requested tone (0–100).</p>
+<p><strong>Fields</strong></p>
+<ul class="md-list-tight">
+<li><p><code class="md-code-inline">hue::Float64</code>: Hue angle in degrees [0, 360).</p>
+</li>
+<li><p><code class="md-code-inline">chroma::Float64</code>: Chroma value for this palette.</p>
+</li>
+<li><p><code class="md-code-inline">cache::Dict{Int,String}</code>: Lazily populated tone → hex cache.</p>
+</li>
+</ul>
+<p><strong>Examples</strong></p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">p = tonal_palette(&quot;#6750A4&quot;)
+p[40]   # &quot;#6750A4&quot; (approximately)
+p[80]   # a lighter version
+p[10]   # a much darker version</code></pre>
+</div>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.tonal_palette">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.tonal_palette</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/color/tonal_palette.jl#L47-L59" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">tonal_palette(seed_hex::AbstractString) → TonalPalette</code></pre>
+</div>
+<p>Create a tonal palette from a seed hex color. Extracts hue and chroma from the seed using the HCT color space.</p>
+<p><strong>Examples</strong></p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">p = tonal_palette(&quot;#6750A4&quot;)
+p[40]  # ≈ &quot;#6750A4&quot;
+p[90]  # light container color</code></pre>
+</div>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.tone_at">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.tone_at</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/color/tonal_palette.jl#L76-L80" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">tone_at(p::TonalPalette, tone::Int) → String</code></pre>
+</div>
+<p>Alias for <code class="md-code-inline">p[tone]</code>. Returns the hex color at the given tone.</p>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.precompute!">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.precompute!</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/color/tonal_palette.jl#L97-L101" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">precompute!(p::TonalPalette)</code></pre>
+</div>
+<p>Eagerly compute and cache all standard MD3 tone stops.</p>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.color_scheme">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.color_scheme</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/color/color_scheme.jl#L99-L128" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">color_scheme(seed; dark=false, secondary=nothing, tertiary=nothing,
+             contrast=:standard) → Dict{Symbol,String}</code></pre>
+</div>
+<p>Generate a complete MD3 color scheme (29+ roles) from a seed color.</p>
+<p><strong>Arguments</strong></p>
+<ul class="md-list-tight">
+<li><p><code class="md-code-inline">seed::AbstractString</code>: Primary seed hex color (e.g. <code class="md-code-inline">&quot;#6750A4&quot;</code>).</p>
+</li>
+<li><p><code class="md-code-inline">dark::Bool=false</code>: Generate dark mode scheme if true.</p>
+</li>
+<li><p><code class="md-code-inline">secondary::Union{AbstractString,Nothing}=nothing</code>: Override the derived secondary palette with a custom seed hex.</p>
+</li>
+<li><p><code class="md-code-inline">tertiary::Union{AbstractString,Nothing}=nothing</code>: Override the derived tertiary palette with a custom seed hex.</p>
+</li>
+<li><p><code class="md-code-inline">contrast::Symbol=:standard</code>: Contrast level (<code class="md-code-inline">:standard</code>, <code class="md-code-inline">:medium</code>, <code class="md-code-inline">:high</code>). Currently only <code class="md-code-inline">:standard</code> is implemented.</p>
+</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p>A <code class="md-code-inline">Dict{Symbol,String}</code> mapping role names (e.g. <code class="md-code-inline">:primary</code>, <code class="md-code-inline">:on_surface</code>) to hex color strings.</p>
+<p><strong>Examples</strong></p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">scheme = color_scheme(&quot;#6750A4&quot;)
+scheme[:primary]            # &quot;#6750A4&quot; (approximately)
+scheme[:primary_container]  # light purple
+
+dark_scheme = color_scheme(&quot;#6750A4&quot;; dark=true)
+dark_scheme[:primary]       # &quot;#D0BCFF&quot; (lighter for dark backgrounds)</code></pre>
+</div>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.color_scheme_pair">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.color_scheme_pair</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/color/color_scheme.jl#L172-L178" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">color_scheme_pair(seed; secondary=nothing, tertiary=nothing,
+                  contrast=:standard) → (light, dark)</code></pre>
+</div>
+<p>Generate both light and dark color schemes in one call. Returns a tuple of <code class="md-code-inline">(light_scheme, dark_scheme)</code>.</p>
+</div>
+</div>
+<h2 id="Contrast" class="md-heading">Contrast<a href="#Contrast" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="md-docstring" id="MaterialDocs.contrast_ratio">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.contrast_ratio</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/color/contrast.jl#L8-L20" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">contrast_ratio(hex1::AbstractString, hex2::AbstractString) → Float64</code></pre>
+</div>
+<p>Compute the WCAG 2.1 contrast ratio between two hex colors. Returns a value in [1, 21]. A ratio ≥ 4.5 meets WCAG AA for normal text; ≥ 3.0 meets AA for large text; ≥ 7.0 meets AAA.</p>
+<p><strong>Examples</strong></p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">contrast_ratio(&quot;#000000&quot;, &quot;#FFFFFF&quot;)  # 21.0
+contrast_ratio(&quot;#6750A4&quot;, &quot;#FFFFFF&quot;)  # ≈ 5.3</code></pre>
+</div>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">contrast_ratio(tone1::Float64, tone2::Float64) → Float64</code></pre>
+</div>
+<p>Compute contrast ratio from two CIE L* tone values (0–100). Useful for checking contrast between HCT tones without converting to hex.</p>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.meets_aa">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.meets_aa</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/color/contrast.jl#L43-L49" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">meets_aa(hex_fg::AbstractString, hex_bg::AbstractString;
+         large_text::Bool=false) → Bool</code></pre>
+</div>
+<p>Check if a foreground/background color pair meets WCAG 2.1 AA contrast requirements. Normal text requires ≥ 4.5:1; large text requires ≥ 3.0:1.</p>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.meets_aaa">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.meets_aaa</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/color/contrast.jl#L56-L62" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">meets_aaa(hex_fg::AbstractString, hex_bg::AbstractString;
+          large_text::Bool=false) → Bool</code></pre>
+</div>
+<p>Check if a foreground/background color pair meets WCAG 2.1 AAA contrast requirements. Normal text requires ≥ 7.0:1; large text requires ≥ 4.5:1.</p>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.lighter_tone">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.lighter_tone</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/color/contrast.jl#L69-L74" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">lighter_tone(tone::Float64, ratio::Float64) → Float64</code></pre>
+</div>
+<p>Find the lightest tone (in CIE L*) that achieves at least the given contrast ratio against the input tone. Returns <code class="md-code-inline">NaN</code> if impossible.</p>
+</div>
+</div>
+<div class="md-docstring" id="MaterialDocs.darker_tone">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.darker_tone</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/color/contrast.jl#L83-L88" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">darker_tone(tone::Float64, ratio::Float64) → Float64</code></pre>
+</div>
+<p>Find the darkest tone (in CIE L*) that achieves at least the given contrast ratio against the input tone. Returns <code class="md-code-inline">NaN</code> if impossible.</p>
+</div>
+</div>
+<h2 id="Theme-editor" class="md-heading">Theme editor<a href="#Theme-editor" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
+<div class="md-docstring" id="MaterialDocs.editor">
+<div class="md-docstring-header">
+<h4 class="md-docstring-binding"><code>MaterialDocs.editor</code></h4>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/6ee7a4e92a191d070e4652461c659ceef0ac8b6a/src/editor/editor.jl#L11-L43" title="View source">source</a>
+</div>
+<div class="md-docstring-content">
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">editor(; build=&quot;docs/build&quot;, port=0, theme=resolve_theme(:default))</code></pre>
+</div>
+<p>Launch the MaterialDocs theme editor — a local server that serves your actual built documentation with a floating theme editor panel injected.</p>
+<p><strong>Workflow</strong></p>
+<ol class="md-list-tight">
+<li><p>Build your docs: <code class="md-code-inline">julia --project=docs docs/make.jl</code></p>
+</li>
+<li><p>Launch the editor: <code class="md-code-inline">MaterialDocs.editor(build=&quot;docs/build&quot;)</code></p>
+</li>
+<li><p>Tweak colors, fonts, and shape in the panel — changes apply live</p>
+</li>
+<li><p>Click <strong>Copy TOML</strong> to export your configuration</p>
+</li>
+</ol>
+<p>The editor modifies CSS custom properties on <code class="md-code-inline">:root</code>, which instantly re-themes every component since all styles use <code class="md-code-inline">var(--md-sys-*)</code> tokens.</p>
+<p><strong>Keywords</strong></p>
+<ul class="md-list-tight">
+<li><p><code class="md-code-inline">build</code>: path to the built docs directory (default <code class="md-code-inline">&quot;docs/build&quot;</code>)</p>
+</li>
+<li><p><code class="md-code-inline">port</code>: server port; <code class="md-code-inline">0</code> picks an available port automatically</p>
+</li>
+<li><p><code class="md-code-inline">theme</code>: initial <code class="md-code-inline">ThemeConfig</code> for the editor panel defaults</p>
+</li>
+</ul>
+<p><strong>Example</strong></p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">using MaterialDocs
+
+# After running makedocs:
+MaterialDocs.editor()
+
+# Or with a specific build dir and theme:
+MaterialDocs.editor(build=&quot;docs/build&quot;, theme=resolve_theme(:ocean_depth))</code></pre>
+</div>
+<p>Press Ctrl+C in the REPL to stop the server.</p>
+</div>
+</div>
+      </article>
+      <footer class="md-footer">
+        <p>Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://github.com/mthelm85/MaterialDocs.jl">MaterialDocs.jl</a></p>
+      </footer>
+    </main>
+    <aside class="md-toc">
+      <div class="md-toc-inner">
+        <p class="md-toc-title">On this page</p>
+          <a class="md-toc-link md-toc-h2" href="#Writer">Writer</a>
+          <a class="md-toc-link md-toc-h2" href="#Themes">Themes</a>
+          <a class="md-toc-link md-toc-h2" href="#Color">Color</a>
+          <a class="md-toc-link md-toc-h2" href="#Contrast">Contrast</a>
+          <a class="md-toc-link md-toc-h2" href="#Theme-editor">Theme editor</a>
+      </div>
+    </aside>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/julia.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/julia-repl.min.js"></script>
+  <script>hljs.highlightAll();</script>
+  <script src="../siteinfo.js"></script>
+  <script src="../../versions.js"></script>
+  <script src="../assets/materialdocs.js?v=41e4451b"></script>
+</body>
+</html>

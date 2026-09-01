@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Theming — MaterialDocs.jl</title>
+  <link rel="stylesheet" href="../assets/materialdocs.css?v=7c912a64">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
+  <script>
+    (function(){
+      document.documentElement.classList.add('no-transition');
+      var t=localStorage.getItem('md-theme');if(t)document.documentElement.setAttribute('data-theme',t);
+      window.addEventListener('load',function(){setTimeout(function(){document.documentElement.classList.remove('no-transition');},50);});
+    })()
+  </script>
+</head>
+<body>
+  <header class="md-navbar">
+    <button id="md-hamburger" class="md-icon-btn md-hamburger" aria-label="Toggle navigation" aria-expanded="false"><svg class="md-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></button>
+    <span class="md-navbar-title">MaterialDocs.jl</span>
+    <span class="md-navbar-spacer"></span>
+    <button id="md-search-btn" class="md-search-bar" aria-label="Search documentation" aria-expanded="false">
+      <svg class="md-icon md-search-bar-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <span class="md-search-bar-label">Search docs</span>
+      <kbd class="md-search-bar-kbd">Ctrl K</kbd>
+    </button>
+    <div id="md-version" class="md-version" hidden>
+      <button id="md-version-btn" class="md-version-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Select documentation version">
+        <span id="md-version-current" class="md-version-current"></span>
+        <svg class="md-icon md-version-caret" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M7 10l5 5 5-5z"/></svg>
+      </button>
+      <ul id="md-version-menu" class="md-version-menu" role="listbox" hidden></ul>
+    </div>
+    <a class="md-icon-btn md-repo-link" href="https://github.com/mthelm85/MaterialDocs.jl" title="View the repository on GitHub" aria-label="View the repository on GitHub" rel="noopener" target="_blank"><svg class="md-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 016 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.2 2.8.1 3.2.8.8 1.3 1.9 1.3 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1.1.9 2.2v3.3c0 .3.1.7.8.6A12 12 0 0012 .3z"/></svg><span class="md-repo-label">GitHub</span></a>
+    <button id="md-theme-toggle" class="md-icon-btn" title="Toggle dark mode" aria-label="Toggle dark mode"><svg class="md-icon md-icon-light" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 000-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg><svg class="md-icon md-icon-dark" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg></button>
+  </header>
+  <div class="md-layout">
+    <nav class="md-sidebar">
+      <a href="../">Home</a>
+      <a href="../getting-started/">Getting Started</a>
+      <a href="../theming/">Theming</a>
+      <a href="../configuration/">Configuration</a>
+      <a href="../editor/">Theme Editor</a>
+      <a href="../colors/">Color Engine</a>
+      <a href="../api/">API Reference</a>
+    </nav>
+    <main class="md-content">
+      <article class="md-article">
+<h1 id="Theming" class="md-heading">Theming<a href="#Theming" class="md-heading-anchor" aria-label="Link to this section">#</a></h1>
+<p>A MaterialDocs theme is a <a href="../api/#MaterialDocs.ThemeConfig"><code class="md-code-inline">ThemeConfig</code></a>: a seed color, three font choices, a corner-radius preset, and optional per-role overrides. Everything else — all 34 MD3 color roles, in both light and dark — is derived from the seed.</p>
+<h2 id="Built-in-themes" class="md-heading">Built-in themes<a href="#Built-in-themes" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Pass any of these by name:</p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">format = Material3(theme = :ocean_depth)</code></pre>
+</div>
+<div class="md-table-wrap">
+<table class="md-table">
+<thead>
+<tr>
+<th style="text-align:right">Theme</th>
+<th style="text-align:right">Seed</th>
+<th style="text-align:right">Display / Body</th>
+<th style="text-align:right">Code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:default</code></td>
+<td style="text-align:right"><code class="md-code-inline">#9558B2</code></td>
+<td style="text-align:right">Inter</td>
+<td style="text-align:right">JetBrains Mono</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:ocean_depth</code></td>
+<td style="text-align:right"><code class="md-code-inline">#006B5E</code></td>
+<td style="text-align:right">Fira Sans / Source Sans 3</td>
+<td style="text-align:right">Fira Code</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:solar_flare</code></td>
+<td style="text-align:right"><code class="md-code-inline">#B23C17</code></td>
+<td style="text-align:right">Space Grotesk / DM Sans</td>
+<td style="text-align:right">JetBrains Mono</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:midnight</code></td>
+<td style="text-align:right"><code class="md-code-inline">#1A237E</code></td>
+<td style="text-align:right">Plus Jakarta Sans</td>
+<td style="text-align:right">JetBrains Mono</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:forest</code></td>
+<td style="text-align:right"><code class="md-code-inline">#2E7D32</code></td>
+<td style="text-align:right">Literata / Source Serif 4</td>
+<td style="text-align:right">Roboto Mono</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:arctic</code></td>
+<td style="text-align:right"><code class="md-code-inline">#0277BD</code></td>
+<td style="text-align:right">Inter Tight / Inter</td>
+<td style="text-align:right">JetBrains Mono</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:rose_garden</code></td>
+<td style="text-align:right"><code class="md-code-inline">#AD1457</code></td>
+<td style="text-align:right">Playfair Display / Lora</td>
+<td style="text-align:right">Roboto Mono</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:amber_workshop</code></td>
+<td style="text-align:right"><code class="md-code-inline">#E65100</code></td>
+<td style="text-align:right">JetBrains Mono / IBM Plex Sans</td>
+<td style="text-align:right">JetBrains Mono</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:lavender</code></td>
+<td style="text-align:right"><code class="md-code-inline">#7B1FA2</code></td>
+<td style="text-align:right">DM Serif Display / DM Sans</td>
+<td style="text-align:right">JetBrains Mono</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:sandstone</code></td>
+<td style="text-align:right"><code class="md-code-inline">#8D6E63</code></td>
+<td style="text-align:right">Bitter / Libre Baskerville</td>
+<td style="text-align:right">Roboto Mono</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:neon_lab</code></td>
+<td style="text-align:right"><code class="md-code-inline">#00BFA5</code></td>
+<td style="text-align:right">Outfit</td>
+<td style="text-align:right">Fira Code</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:slate</code></td>
+<td style="text-align:right"><code class="md-code-inline">#455A64</code></td>
+<td style="text-align:right">Atkinson Hyperlegible</td>
+<td style="text-align:right">Roboto Mono</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>They are available programmatically as <a href="../api/#MaterialDocs.BUILTIN_THEMES"><code class="md-code-inline">BUILTIN_THEMES</code></a>, and <a href="../api/#MaterialDocs.resolve_theme"><code class="md-code-inline">resolve_theme</code></a> turns a name into a config.</p>
+<h2 id="Custom-themes" class="md-heading">Custom themes<a href="#Custom-themes" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>Build one from a seed color:</p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">format = Material3(theme = ThemeConfig(
+    seed = &quot;#2E7D32&quot;,
+    display_font = &quot;Literata&quot;,
+    body_font = &quot;Source Serif 4&quot;,
+    code_font = &quot;JetBrains Mono&quot;,
+    corner_radius = :rounded,
+))</code></pre>
+</div>
+<p>Fonts are <a href="https://fonts.google.com">Google Fonts</a> family names, requested automatically at build time.</p>
+<h3 id="Corner-radius" class="md-heading">Corner radius<a href="#Corner-radius" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p><code class="md-code-inline">corner_radius</code> selects a shape scale. Values are the extra-small through full radii in pixels:</p>
+<div class="md-table-wrap">
+<table class="md-table">
+<thead>
+<tr>
+<th style="text-align:right">Preset</th>
+<th style="text-align:right">Radii (px)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:sharp</code></td>
+<td style="text-align:right">0, 2, 4, 8, 12, 16</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:default</code></td>
+<td style="text-align:right">4, 8, 12, 16, 28, full</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:rounded</code></td>
+<td style="text-align:right">8, 12, 20, 28, 36, full</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">:pill</code></td>
+<td style="text-align:right">12, 16, 28, 36, 44, full</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="Secondary-and-tertiary-seeds" class="md-heading">Secondary and tertiary seeds<a href="#Secondary-and-tertiary-seeds" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>By default the secondary and tertiary palettes are derived from the primary seed — secondary at reduced chroma, tertiary rotated 60° around the hue circle. To control them directly:</p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">ThemeConfig(
+    seed = &quot;#1565C0&quot;,
+    secondary_seed = &quot;#00897B&quot;,
+    tertiary_seed = &quot;#E65100&quot;,
+)</code></pre>
+</div>
+<h3 id="Overriding-individual-roles" class="md-heading">Overriding individual roles<a href="#Overriding-individual-roles" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>When you need one specific color to be exact, override the role by name. These are applied after generation, so they win over the derived value:</p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-julia">ThemeConfig(
+    seed = &quot;#1565C0&quot;,
+    custom_colors = Dict(
+        &quot;surface&quot; =&gt; &quot;#FAFAFA&quot;,
+        &quot;primary&quot; =&gt; &quot;#0D47A1&quot;,
+    ),
+)</code></pre>
+</div>
+<div class="md-admonition md-admonition-warning">
+<p class="md-admonition-title">Overrides bypass contrast guarantees</p>
+<div class="md-admonition-body">
+<p>Generated roles are placed at tones chosen to meet WCAG AA against their pairings. An override is used verbatim, so check it yourself with <a href="../api/#MaterialDocs.meets_aa"><code class="md-code-inline">meets_aa</code></a>.</p>
+</div>
+</div>
+<h2 id="Configuration-files" class="md-heading">Configuration files<a href="#Configuration-files" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>A theme can live in <code class="md-code-inline">docs/.materialdocs.toml</code> instead of your <code class="md-code-inline">make.jl</code>:</p>
+<div class="md-code-block">
+<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
+<pre><code class="language-toml">[theme]
+name = &quot;my-theme&quot;
+seed = &quot;#1565C0&quot;
+secondary_seed = &quot;#00897B&quot;
+
+[theme.fonts]
+display = &quot;Fira Sans&quot;
+body = &quot;Source Sans 3&quot;
+code = &quot;JetBrains Mono&quot;
+
+[theme.shape]
+corner_radius = &quot;default&quot;    # sharp | default | rounded | pill
+
+[theme.custom_colors]
+surface = &quot;#FAFAFA&quot;</code></pre>
+</div>
+<p><strong>This file is picked up automatically.</strong> When you call <code class="md-code-inline">Material3()</code> without a <code class="md-code-inline">theme</code> argument, MaterialDocs looks for <code class="md-code-inline">docs/.materialdocs.toml</code> and loads it if present. Passing <code class="md-code-inline">theme</code> explicitly takes precedence.</p>
+<p>This is the format the <a href="../editor/#Theme-Editor">Theme Editor</a> exports, so the usual workflow is to design a theme visually, save the file, and never touch <code class="md-code-inline">make.jl</code> at all.</p>
+<p>Read and write these files directly with <a href="../api/#MaterialDocs.load_theme"><code class="md-code-inline">load_theme</code></a> and <a href="../api/#MaterialDocs.save_theme"><code class="md-code-inline">save_theme</code></a>; <a href="../api/#MaterialDocs.find_theme_toml"><code class="md-code-inline">find_theme_toml</code></a> performs the search.</p>
+      </article>
+      <footer class="md-footer">
+        <p>Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://github.com/mthelm85/MaterialDocs.jl">MaterialDocs.jl</a></p>
+      </footer>
+    </main>
+    <aside class="md-toc">
+      <div class="md-toc-inner">
+        <p class="md-toc-title">On this page</p>
+          <a class="md-toc-link md-toc-h2" href="#Built-in-themes">Built-in themes</a>
+          <a class="md-toc-link md-toc-h2" href="#Custom-themes">Custom themes</a>
+            <a class="md-toc-link md-toc-h3" href="#Corner-radius">Corner radius</a>
+            <a class="md-toc-link md-toc-h3" href="#Secondary-and-tertiary-seeds">Secondary and tertiary seeds</a>
+            <a class="md-toc-link md-toc-h3" href="#Overriding-individual-roles">Overriding individual roles</a>
+          <a class="md-toc-link md-toc-h2" href="#Configuration-files">Configuration files</a>
+      </div>
+    </aside>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/julia.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/julia-repl.min.js"></script>
+  <script>hljs.highlightAll();</script>
+  <script src="../siteinfo.js"></script>
+  <script src="../../versions.js"></script>
+  <script src="../assets/materialdocs.js?v=7c912a64"></script>
+</body>
+</html>
