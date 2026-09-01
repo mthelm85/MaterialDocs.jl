@@ -43,7 +43,24 @@ Press Ctrl+C in the REPL to stop the server.
 """
 function editor(; build::String="docs/build",
                   port::Int=0,
-                  theme::ThemeConfig=resolve_theme(:default))
+                  theme::ThemeConfig=resolve_theme(:default),
+                  make::Union{AbstractString,Nothing}="docs/make.jl")
+    # Rebuild first so the editor always reflects the current sources
+    if make !== nothing
+        if isfile(make)
+            proj = isempty(dirname(make)) ? "." : dirname(make)
+            @info "MaterialDocs: building docs before serving" script=make project=proj
+            try
+                run(`$(Base.julia_cmd()) --project=$proj $make`)
+            catch
+                error("Docs build failed: $make. Fix the build, or pass " *
+                      "make=nothing to serve the existing build directory.")
+            end
+        else
+            @warn "MaterialDocs: no build script found; serving the existing build" script=make
+        end
+    end
+
     # Validate build directory
     if !isdir(build)
         error("Build directory not found: $(abspath(build))\n" *
@@ -230,11 +247,26 @@ function _inject_editor(html::String, panel_html::String)::String
     head_script = """
     <script>
     (function(){
+      var root = document.documentElement;
+      // Restore the editor's light/dark choice. The built-in restore script
+      // only exists when the site was built with dark_mode = :toggle, so the
+      // editor has to do this itself to work against any build.
+      try {
+        var t = localStorage.getItem('md-theme');
+        if (t) root.setAttribute('data-theme', t);
+      } catch(e) {}
       try {
         var c = sessionStorage.getItem('__md_editor_css__');
         if (!c) return;
-        var vars = JSON.parse(c), root = document.documentElement;
-        for (var k in vars) root.style.setProperty(k, vars[k]);
+        var data = JSON.parse(c);
+        if (!data || !data.vars) return;
+        // Cached tokens are mode-specific; skip them if the mode has since
+        // changed and let the panel recompute rather than flash wrong colors.
+        var attr = root.getAttribute('data-theme');
+        var dark = attr === 'dark' ? true : attr === 'light' ? false :
+          window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (data.mode !== (dark ? 'dark' : 'light')) return;
+        for (var k in data.vars) root.style.setProperty(k, data.vars[k]);
       } catch(e) {}
     })()
     </script>
@@ -602,12 +634,15 @@ function _editor_panel_js(theme::ThemeConfig)::String
       // Record every --md-sys-* property currently set inline on <html>
       function cacheCSS() {
         try {
-          var out = {}, s = root.style;
+          var vars = {}, s = root.style;
           for (var i = 0; i < s.length; i++) {
             var n = s[i];
-            if (n.indexOf('--md-sys-') === 0) out[n] = s.getPropertyValue(n);
+            if (n.indexOf('--md-sys-') === 0) vars[n] = s.getPropertyValue(n);
           }
-          sessionStorage.setItem(CSS_KEY, JSON.stringify(out));
+          sessionStorage.setItem(CSS_KEY, JSON.stringify({
+            mode: isDarkFromDOM() ? 'dark' : 'light',
+            vars: vars
+          }));
         } catch(e) {}
       }
 
