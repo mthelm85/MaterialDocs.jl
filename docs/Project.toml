@@ -1,3 +1,12 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 MaterialDocs = "10bdffc8-969c-4dd4-83f3-742518eccd6b"
+
+# MaterialDocs documents itself. The docs/ environment is separate from the
+# package environment, so pointing at the package root here is all it takes —
+# there is nothing circular about it.
+[sources]
+MaterialDocs = {path = ".."}
+
+[compat]
+Documenter = "1"

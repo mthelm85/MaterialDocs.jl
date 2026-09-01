@@ -5,6 +5,20 @@ Twelve preset theme configurations covering a range of visual identities.
 Each is a named ThemeConfig constant, selectable via Material3(theme = :name).
 =#
 
+"""
+    BUILTIN_THEMES :: Dict{Symbol,ThemeConfig}
+
+The twelve preset themes, keyed by name. Pass a key to [`Material3`](@ref) or
+[`resolve_theme`](@ref) rather than indexing this directly:
+
+```julia
+format = Material3(theme = :ocean_depth)
+```
+
+Available keys: `:default`, `:ocean_depth`, `:solar_flare`, `:midnight`,
+`:forest`, `:arctic`, `:rose_garden`, `:amber_workshop`, `:lavender`,
+`:sandstone`, `:neon_lab`, `:slate`.
+"""
 const BUILTIN_THEMES = Dict{Symbol,ThemeConfig}(
     :default => ThemeConfig(
         name = "Default",
