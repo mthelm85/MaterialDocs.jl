@@ -545,6 +545,20 @@ select:focus-visible,
   border-radius: var(--md-sys-shape-corner-extra-small);
 }
 
+/* The search view's input is deliberately bare: the elevated panel only
+   appears because search has focus, so it is itself the affordance. A ring
+   here would also be clipped by the view's overflow:hidden, showing as slivers
+   at the panel edges. */
+.md-search-input:focus-visible { outline: none; }
+
+/* Menu and result rows sit flush against their scroll container's edge (their
+   lists have no horizontal padding), so an outward ring would be clipped by
+   the container's overflow. Inset it instead — same 3px, fully visible. */
+.md-search-item:focus-visible,
+.md-version-item:focus-visible {
+  outline-offset: -3px;
+}
+
 /* ── Touch targets ──
    MD3 icon buttons are 40dp visually but require a 48x48 touch target.
    Expand on coarse pointers only, so desktop keeps its density. */
