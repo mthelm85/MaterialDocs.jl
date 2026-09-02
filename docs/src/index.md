@@ -15,9 +15,11 @@ build time from a single seed color.
 
 ## Installation
 
+MaterialDocs is not yet registered in the General registry, so add it by URL:
+
 ```julia
 using Pkg
-Pkg.add("MaterialDocs")
+Pkg.add(url = "https://github.com/mthelm85/MaterialDocs.jl.git")
 ```
 
 ## Quick start

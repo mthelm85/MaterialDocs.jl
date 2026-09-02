@@ -9,10 +9,12 @@ CurrentModule = MaterialDocs
 MaterialDocs belongs in `docs/Project.toml`, alongside Documenter — not in your
 package's own dependencies. It is only needed when building documentation.
 
+MaterialDocs is not yet registered in the General registry, so add it by URL:
+
 ```julia
 using Pkg
 Pkg.activate("docs")
-Pkg.add("MaterialDocs")
+Pkg.add(url = "https://github.com/mthelm85/MaterialDocs.jl.git")
 ```
 
 Your `docs/Project.toml` should end up looking like this:
