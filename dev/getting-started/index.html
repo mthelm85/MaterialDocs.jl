@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Getting Started — MaterialDocs.jl</title>
-  <link rel="stylesheet" href="../assets/materialdocs.css?v=dce9e2b0">
+  <link rel="stylesheet" href="../assets/materialdocs.css?v=74ff8831">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
   <script>
     (function(){
@@ -49,11 +49,12 @@
 <h1 id="Getting-Started" class="md-heading">Getting Started<a href="#Getting-Started" class="md-heading-anchor" aria-label="Link to this section">#</a></h1>
 <h2 id="Add-MaterialDocs-to-your-docs-environment" class="md-heading">Add MaterialDocs to your docs environment<a href="#Add-MaterialDocs-to-your-docs-environment" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
 <p>MaterialDocs belongs in <code class="md-code-inline">docs/Project.toml</code>, alongside Documenter — not in your package&#39;s own dependencies. It is only needed when building documentation.</p>
+<p>MaterialDocs is not yet registered in the General registry, so add it by URL:</p>
 <div class="md-code-block">
 <button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
 <pre><code class="language-julia">using Pkg
 Pkg.activate(&quot;docs&quot;)
-Pkg.add(&quot;MaterialDocs&quot;)</code></pre>
+Pkg.add(url = &quot;https://github.com/mthelm85/MaterialDocs.jl.git&quot;)</code></pre>
 </div>
 <p>Your <code class="md-code-inline">docs/Project.toml</code> should end up looking like this:</p>
 <div class="md-code-block">
@@ -154,6 +155,6 @@ deploydocs(repo = &quot;github.com/you/MyPackage.jl&quot;)</code></pre>
   <script>hljs.highlightAll();</script>
   <script src="../siteinfo.js"></script>
   <script src="../../versions.js"></script>
-  <script src="../assets/materialdocs.js?v=dce9e2b0"></script>
+  <script src="../assets/materialdocs.js?v=74ff8831"></script>
 </body>
 </html>
