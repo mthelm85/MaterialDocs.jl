@@ -479,6 +479,17 @@ using JET
         @test contains(css, ".md-version-menu")
         @test contains(css, ".md-repo-link")
 
+        # MD3 state layers and focus indicator
+        @test contains(css, "--md-sys-state-hover-opacity: 0.08")
+        @test contains(css, "--md-sys-state-focus-opacity: 0.10")
+        @test contains(css, "--md-sys-state-pressed-opacity: 0.10")
+        @test contains(css, "var(--md-sys-state-hover-opacity)")
+        @test contains(css, "outline: 3px solid var(--md-sys-color-secondary)")
+        # MD3 body-large tracking is 0.5px at 16px
+        @test contains(css, "--md-sys-typescale-body-large-tracking: 0.03125em")
+        # Touch targets expand on coarse pointers
+        @test contains(css, "@media (pointer: coarse)")
+
         # Sidebar collapse/mobile CSS (Phase 6)
         @test contains(css, ".md-nav-collapsed")
         @test contains(css, ".md-hamburger")

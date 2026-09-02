@@ -51,7 +51,6 @@
 }
 .md-code-block:hover .md-copy-btn { opacity: 1; }
 .md-copy-btn:hover {
-  background: var(--md-sys-color-surface-container-highest);
   color: var(--md-sys-color-on-surface);
 }
 .md-copy-feedback { display: none; margin-left: 0.25em; }
@@ -393,11 +392,10 @@ del { color: var(--md-sys-color-on-surface-variant); }
   color: var(--md-sys-color-on-surface);
   transition: background var(--md-sys-motion-duration-short1) var(--md-sys-motion-easing-standard);
 }
-.md-search-item:hover,
 .md-search-item.md-search-selected {
   background: var(--md-sys-color-surface-container-highest);
-  text-decoration: none;
 }
+.md-search-item:hover { text-decoration: none; }
 .md-search-item-title {
   display: block;
   font-size: var(--md-sys-typescale-body-large-size);

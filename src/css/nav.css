@@ -53,13 +53,8 @@
               color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 .md-icon-btn:hover {
-  background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface);
   text-decoration: none;
-}
-.md-icon-btn:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: 2px;
 }
 
 /* Theme toggle — the button shows the mode you would switch TO, so in the
@@ -91,12 +86,7 @@
               box-shadow var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 .md-search-bar:hover {
-  background: var(--md-sys-color-surface-container-highest);
   box-shadow: var(--md-sys-elevation-1);
-}
-.md-search-bar:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: 2px;
 }
 .md-search-bar-icon { flex: none; }
 .md-search-bar-label { flex: 1; }
@@ -129,11 +119,7 @@
   font-weight: var(--md-sys-typescale-label-large-weight);
   transition: background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
-.md-version-btn:hover { background: var(--md-sys-color-surface-container-high); }
-.md-version-btn:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: 2px;
-}
+
 .md-version-caret {
   transition: transform var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
@@ -171,7 +157,6 @@
   font-size: var(--md-sys-typescale-body-medium-size);
   transition: background var(--md-sys-motion-duration-short1) var(--md-sys-motion-easing-standard);
 }
-.md-version-item:hover { background: var(--md-sys-color-surface-container-highest); }
 .md-version-item[aria-selected="true"] {
   background: var(--md-sys-color-secondary-container);
   color: var(--md-sys-color-on-secondary-container);
@@ -200,7 +185,6 @@
               color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
 .md-sidebar a:hover {
-  background: var(--md-sys-color-surface-container);
   color: var(--md-sys-color-on-surface);
   text-decoration: none;
 }

@@ -111,6 +111,7 @@ function _write_css_tokens(io::IO, theme::ThemeConfig,
     _write_shape_vars(io, radii)
     _write_elevation_vars(io)
     _write_motion_vars(io)
+    _write_state_vars(io)
     _write_highlight_vars(io, :light)
     println(io, "}")
 
@@ -178,7 +179,7 @@ function _write_typography_vars(io::IO, display_font::String,
         ("title-large",  :body, "1.375rem", "1.75rem",  600, "0em"),
         ("title-medium", :body, "1rem",     "1.5rem",   600, "0.01em"),
         ("title-small",  :body, "0.875rem", "1.25rem",  500, "0.006em"),
-        ("body-large",  :body, "1rem",     "1.5rem",   400, "0.009em"),
+        ("body-large",  :body, "1rem",     "1.5rem",   400, "0.03125em"),
         ("body-medium", :body, "0.875rem", "1.25rem",  400, "0.016em"),
         ("body-small",  :body, "0.75rem",  "1rem",     400, "0.025em"),
         ("label-large",  :body, "0.875rem", "1.25rem", 500, "0.006em"),
@@ -207,6 +208,18 @@ function _write_shape_vars(io::IO, radii::NTuple{6,Int})
     for (name, r) in zip(names, radii)
         println(io, "  --md-sys-shape-corner-", name, ": ", r, "px;")
     end
+end
+
+"""Write MD3 state-layer opacities.
+
+MD3 expresses interaction states as a translucent layer of the *content* color
+over the container, rather than by swapping the container color outright.
+"""
+function _write_state_vars(io::IO)
+    println(io, "  /* State layers */")
+    println(io, "  --md-sys-state-hover-opacity: 0.08;")
+    println(io, "  --md-sys-state-focus-opacity: 0.10;")
+    println(io, "  --md-sys-state-pressed-opacity: 0.10;")
 end
 
 """Write elevation CSS custom properties (static box-shadow values)."""
