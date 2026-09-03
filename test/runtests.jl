@@ -804,9 +804,13 @@ using JET
         theme = resolve_theme(:ocean_depth)
         js = MaterialDocs._editor_panel_js(theme)
 
-        # Should have HCT color engine
-        @test contains(js, "hexToHCT")
-        @test contains(js, "generateScheme")
+        # The colour engine is NOT duplicated in JS any more — the panel asks
+        # the Julia server for the scheme so preview and build cannot diverge.
+        @test !contains(js, "hexToHCT")
+        @test !contains(js, "cam16FromRGB")
+        @test !contains(js, "solveHCT")
+        @test contains(js, "__scheme__")
+        @test contains(js, "fetchScheme")
         @test contains(js, "generateTOML")
         @test contains(js, "applyColors")
         @test contains(js, "applyFonts")
@@ -850,6 +854,41 @@ using JET
         opts_custom = MaterialDocs._font_options("CustomFont", :body)
         @test contains(opts_custom, "CustomFont")
         @test contains(opts_custom, "selected")
+    end
+
+    @testset "Editor query parsing" begin
+        q = MaterialDocs._parse_query("seed=%236750A4&dark=true&secondary=")
+        @test q["seed"] == "#6750A4"
+        @test q["dark"] == "true"
+        @test q["secondary"] == ""
+        @test isempty(MaterialDocs._parse_query(""))
+    end
+
+    @testset "Editor scheme route" begin
+        theme = resolve_theme(:ocean_depth)
+
+        # The route returns exactly what the build would generate
+        json = MaterialDocs._scheme_json("seed=%236750A4", theme)
+        expected = hex_scheme_pair("#6750A4")[1]
+        for (role, hex) in expected
+            css = replace(String(role), '_' => '-')
+            @test contains(json, "\"$css\":\"$hex\"")
+        end
+
+        # All 34 roles, not the 31 the old JS knew about
+        @test length(collect(eachmatch(r"\"[a-z-]+\":", json))) == length(expected)
+
+        # dark differs, and overrides are honoured
+        @test MaterialDocs._scheme_json("seed=%236750A4&dark=true", theme) != json
+        withsec = MaterialDocs._scheme_json("seed=%236750A4&secondary=%23FF0000", theme)
+        @test withsec != json
+
+        # Missing seed falls back to the theme's own
+        @test MaterialDocs._scheme_json("", theme) ==
+              MaterialDocs._scheme_json("seed=" * MaterialDocs._url_encode(theme.seed), theme)
+
+        # A malformed seed is rejected rather than silently mis-rendered
+        @test_throws ArgumentError MaterialDocs._scheme_json("seed=nonsense", theme)
     end
 
     @testset "Editor scheme to JS" begin
