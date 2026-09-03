@@ -23,7 +23,8 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.10'
+          # '1.10' (LTS) is temporarily out: MaterialColors is unregistered and
+          # resolved via [sources], which needs Julia 1.11+. Restore on registration.
           - '1.12'
           - 'pre'
         os:
