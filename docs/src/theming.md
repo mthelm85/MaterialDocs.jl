@@ -95,7 +95,7 @@ ThemeConfig(
 !!! warning "Overrides bypass contrast guarantees"
     Generated roles are placed at tones chosen to meet WCAG AA against their
     pairings. An override is used verbatim, so check it yourself with
-    [`meets_aa`](@ref).
+    [`MaterialColors.meets_aa`](https://mthelm85.github.io/MaterialColors.jl/dev/).
 
 ## Configuration files
 

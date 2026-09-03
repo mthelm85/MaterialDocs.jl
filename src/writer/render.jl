@@ -30,7 +30,7 @@ function render(doc::Documenter.Document, settings::Material3)
 
     # 1. Generate color schemes from theme seed
     theme = settings.theme
-    light_scheme, dark_scheme = color_scheme_pair(
+    light_scheme, dark_scheme = hex_scheme_pair(
         theme.seed;
         secondary = theme.secondary_seed,
         tertiary = theme.tertiary_seed,

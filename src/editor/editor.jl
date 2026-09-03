@@ -614,7 +614,7 @@ end
 """Generate the editor panel JavaScript (served as /__editor__.js)."""
 function _editor_panel_js(theme::ThemeConfig)::String
     # Pre-compute initial color tokens via the real HCT engine
-    light, _ = color_scheme_pair(theme.seed;
+    light, _ = hex_scheme_pair(theme.seed;
         secondary = theme.secondary_seed,
         tertiary = theme.tertiary_seed)
     initial_tokens_js = _scheme_to_js_object(light)
