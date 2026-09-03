@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Color Engine — MaterialDocs.jl</title>
-  <link rel="stylesheet" href="../assets/materialdocs.css?v=97e15852">
+  <link rel="stylesheet" href="../assets/materialdocs.css?v=8eaf553b">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
   <script>
     (function(){
@@ -47,79 +47,20 @@
     <main class="md-content">
       <article class="md-article">
 <h1 id="Color-Engine" class="md-heading">Color Engine<a href="#Color-Engine" class="md-heading-anchor" aria-label="Link to this section">#</a></h1>
-<p>MaterialDocs contains a pure-Julia port of Google&#39;s <a href="https://github.com/material-foundation/material-color-utilities">material-color-utilities</a>. It is used to build themes, but it is a general-purpose color library and is exported for direct use.</p>
-<h2 id="HCT" class="md-heading">HCT<a href="#HCT" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
-<p>HCT combines the hue and chroma of the CAM16 color appearance model with the lightness (<code class="md-code-inline">L*</code>) of CIELAB. Its value is that <strong>tone maps directly to contrast</strong>: two colors 40 tones apart have a predictable contrast ratio regardless of hue. That is what lets a whole palette be generated from one color without hand-tuning.</p>
-<div class="md-code-block">
-<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
-<pre><code class="language-julia-repl">julia&gt; using MaterialDocs
-
-julia&gt; c = hct(&quot;#6750A4&quot;)
-HCT(hue=299.0, chroma=48.2, tone=40.1)
-
-julia&gt; to_hex(c)
-&quot;#6750A4&quot;</code></pre>
-</div>
-<p>Construct one from values with <a href="../api/#MaterialDocs.HCT"><code class="md-code-inline">HCT</code></a>:</p>
-<div class="md-code-block">
-<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
-<pre><code class="language-julia">HCT(299.0, 48.2, 40.0)</code></pre>
-</div>
-<p>Not every hue/chroma pair exists at every tone — the sRGB gamut narrows toward black and white. Requests outside it are resolved to the closest in-gamut color, so round-tripping a saturated color at an extreme tone may not return the exact input.</p>
-<h2 id="Tonal-palettes" class="md-heading">Tonal palettes<a href="#Tonal-palettes" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
-<p>A <a href="../api/#MaterialDocs.TonalPalette"><code class="md-code-inline">TonalPalette</code></a> is one hue and chroma sampled across the full tone range:</p>
-<div class="md-code-block">
-<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
-<pre><code class="language-julia">p = tonal_palette(&quot;#6750A4&quot;)
-tone_at(p, 40)   # the primary color in a light scheme
-tone_at(p, 80)   # the primary color in a dark scheme
-tone_at(p, 90)   # a light primary container</code></pre>
-</div>
-<p>Tones are cached as requested; <a href="../api/#MaterialDocs.precompute!"><code class="md-code-inline">precompute!</code></a> fills the standard MD3 stops in one pass.</p>
-<h2 id="Color-schemes" class="md-heading">Color schemes<a href="#Color-schemes" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
-<p><a href="../api/#MaterialDocs.color_scheme"><code class="md-code-inline">color_scheme</code></a> generates the full set of 34 MD3 roles from a seed:</p>
-<div class="md-code-block">
-<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
-<pre><code class="language-julia">light = color_scheme(&quot;#6750A4&quot;)
-dark  = color_scheme(&quot;#6750A4&quot;; dark = true)
-
-light[:primary]
-light[:on_primary_container]
-light[:surface]</code></pre>
-</div>
-<p><a href="../api/#MaterialDocs.color_scheme_pair"><code class="md-code-inline">color_scheme_pair</code></a> returns both at once, which is what the writer uses:</p>
-<div class="md-code-block">
-<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
-<pre><code class="language-julia">light, dark = color_scheme_pair(&quot;#6750A4&quot;)</code></pre>
-</div>
-<p>Roles are derived by fixed rules: secondary shares the seed hue at chroma 16, tertiary rotates 60° at chroma 24, neutrals hold the seed hue at very low chroma, and error is a fixed red. Each role is then placed at the tone the MD3 spec assigns it for that mode.</p>
-<h2 id="Contrast" class="md-heading">Contrast<a href="#Contrast" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
-<div class="md-code-block">
-<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
-<pre><code class="language-julia">contrast_ratio(&quot;#FFFFFF&quot;, &quot;#6750A4&quot;)   # 6.44
-meets_aa(&quot;#FFFFFF&quot;, &quot;#6750A4&quot;)         # true
-meets_aaa(&quot;#FFFFFF&quot;, &quot;#6750A4&quot;)        # false</code></pre>
-</div>
-<p><a href="../api/#MaterialDocs.contrast_ratio"><code class="md-code-inline">contrast_ratio</code></a> also accepts two tones directly, which is cheaper when working in HCT. To find a tone meeting a target ratio against a known one, use <a href="../api/#MaterialDocs.lighter_tone"><code class="md-code-inline">lighter_tone</code></a> and <a href="../api/#MaterialDocs.darker_tone"><code class="md-code-inline">darker_tone</code></a>:</p>
-<div class="md-code-block">
-<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
-<pre><code class="language-julia">lighter_tone(40.0, 4.5)   # lightest tone with 4.5:1 against tone 40</code></pre>
-</div>
-<p>Both return <code class="md-code-inline">NaN</code> when the ratio is unreachable — check before using the result.</p>
-<div class="md-code-block">
-<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
-<pre><code class="language-julia">t = lighter_tone(60.0, 7.0)
-isnan(t) &amp;&amp; error(&quot;no tone meets that contrast&quot;)</code></pre>
-</div>
-<h2 id="Generated-CSS-tokens" class="md-heading">Generated CSS tokens<a href="#Generated-CSS-tokens" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
-<p>At build time each role becomes a CSS custom property, with <code class="md-code-inline">_</code> replaced by <code class="md-code-inline">-</code>:</p>
+<p>Every colour on a MaterialDocs site is generated at build time from a single seed, using <a href="https://github.com/mthelm85/MaterialColors.jl">MaterialColors.jl</a> — a pure-Julia port of Google&#39;s <a href="https://github.com/material-foundation/material-color-utilities">material-color-utilities</a>.</p>
+<p>That package is where the colour space, tonal palettes, scheme generation and contrast helpers live, and it is usable on its own: <strong><a href="https://mthelm85.github.io/MaterialColors.jl/dev/">MaterialColors documentation</a></strong>.</p>
+<h2 id="What-MaterialDocs-uses-it-for" class="md-heading">What MaterialDocs uses it for<a href="#What-MaterialDocs-uses-it-for" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>A <a href="../api/#MaterialDocs.ThemeConfig"><code class="md-code-inline">ThemeConfig</code></a> carries a seed hex colour. At build time MaterialDocs calls <code class="md-code-inline">hex_scheme_pair</code> to generate the light and dark schemes — 34 MD3 colour roles each — and writes every role out as a CSS custom property:</p>
 <div class="md-code-block">
 <button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
 <pre><code class="language-css">--md-sys-color-primary
 --md-sys-color-on-primary-container
 --md-sys-color-surface-container-high</code></pre>
 </div>
-<p>All 34 are emitted regardless of whether the bundled stylesheets use them, so custom CSS has the complete set available. Alongside them, MaterialDocs emits typography, shape, elevation, and motion tokens — see <a href="../configuration/#Configuration">Configuration</a> for using them from your own stylesheets.</p>
+<p>All 34 roles are emitted whether or not the bundled stylesheets use them, so custom CSS has the complete set available. See <a href="../theming/#Theming">Theming</a> for choosing a seed and <a href="../configuration/#Configuration">Configuration</a> for referencing these tokens from your own stylesheets.</p>
+<h2 id="Why-the-tokens-are-trustworthy" class="md-heading">Why the tokens are trustworthy<a href="#Why-the-tokens-are-trustworthy" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
+<p>HCT combines CAM16 hue and chroma with CIELAB lightness, which makes <strong>tone map directly to contrast</strong>. Roles are placed at the tones the MD3 specification assigns, so pairings such as <code class="md-code-inline">primary</code> / <code class="md-code-inline">on_primary</code> meet WCAG AA by construction rather than by hand-checking. MaterialDocs&#39; test suite asserts this for every role pair, in both light and dark.</p>
+<p>If you override a role through <code class="md-code-inline">custom_colors</code>, that guarantee no longer holds for the overridden value — check it yourself with <code class="md-code-inline">MaterialColors.meets_aa</code>.</p>
       </article>
       <footer class="md-footer">
         <p>Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://github.com/mthelm85/MaterialDocs.jl">MaterialDocs.jl</a></p>
@@ -128,11 +69,8 @@ isnan(t) &amp;&amp; error(&quot;no tone meets that contrast&quot;)</code></pre>
     <aside class="md-toc">
       <div class="md-toc-inner">
         <p class="md-toc-title">On this page</p>
-          <a class="md-toc-link md-toc-h2" href="#HCT">HCT</a>
-          <a class="md-toc-link md-toc-h2" href="#Tonal-palettes">Tonal palettes</a>
-          <a class="md-toc-link md-toc-h2" href="#Color-schemes">Color schemes</a>
-          <a class="md-toc-link md-toc-h2" href="#Contrast">Contrast</a>
-          <a class="md-toc-link md-toc-h2" href="#Generated-CSS-tokens">Generated CSS tokens</a>
+          <a class="md-toc-link md-toc-h2" href="#What-MaterialDocs-uses-it-for">What MaterialDocs uses it for</a>
+          <a class="md-toc-link md-toc-h2" href="#Why-the-tokens-are-trustworthy">Why the tokens are trustworthy</a>
       </div>
     </aside>
   </div>
@@ -142,6 +80,6 @@ isnan(t) &amp;&amp; error(&quot;no tone meets that contrast&quot;)</code></pre>
   <script>hljs.highlightAll();</script>
   <script src="../siteinfo.js"></script>
   <script src="../../versions.js"></script>
-  <script src="../assets/materialdocs.js?v=97e15852"></script>
+  <script src="../assets/materialdocs.js?v=8eaf553b"></script>
 </body>
 </html>
