@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Color Engine — MaterialDocs.jl</title>
-  <link rel="stylesheet" href="../assets/materialdocs.css?v=3b5a99e1">
+  <link rel="stylesheet" href="../assets/materialdocs.css?v=87ba16ce">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
   <script>
     (function(){
@@ -47,10 +47,10 @@
     <main class="md-content">
       <article class="md-article">
 <h1 id="Color-Engine" class="md-heading">Color Engine<a href="#Color-Engine" class="md-heading-anchor" aria-label="Link to this section">#</a></h1>
-<p>Every colour on a MaterialDocs site is generated at build time from a single seed, using <a href="https://github.com/mthelm85/MaterialColors.jl">MaterialColors.jl</a> — a pure-Julia port of Google&#39;s <a href="https://github.com/material-foundation/material-color-utilities">material-color-utilities</a>.</p>
-<p>That package is where the colour space, tonal palettes, scheme generation and contrast helpers live, and it is usable on its own: <strong><a href="https://mthelm85.github.io/MaterialColors.jl/dev/">MaterialColors documentation</a></strong>.</p>
+<p>Every color on a MaterialDocs site is generated at build time from a single seed, using <a href="https://github.com/mthelm85/MaterialColors.jl">MaterialColors.jl</a> — a pure-Julia port of Google&#39;s <a href="https://github.com/material-foundation/material-color-utilities">material-color-utilities</a>.</p>
+<p>That package is where the color space, tonal palettes, scheme generation and contrast helpers live, and it is usable on its own: <strong><a href="https://mthelm85.github.io/MaterialColors.jl/dev/">MaterialColors documentation</a></strong>.</p>
 <h2 id="What-MaterialDocs-uses-it-for" class="md-heading">What MaterialDocs uses it for<a href="#What-MaterialDocs-uses-it-for" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
-<p>A <a href="../api/#MaterialDocs.ThemeConfig"><code class="md-code-inline">ThemeConfig</code></a> carries a seed hex colour. At build time MaterialDocs calls <code class="md-code-inline">hex_scheme_pair</code> to generate the light and dark schemes — 34 MD3 colour roles each — and writes every role out as a CSS custom property:</p>
+<p>A <a href="../api/#MaterialDocs.ThemeConfig"><code class="md-code-inline">ThemeConfig</code></a> carries a seed hex color. At build time MaterialDocs calls <code class="md-code-inline">hex_scheme_pair</code> to generate the light and dark schemes — 34 MD3 color roles each — and writes every role out as a CSS custom property:</p>
 <div class="md-code-block">
 <button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
 <pre><code class="language-css">--md-sys-color-primary
@@ -80,6 +80,6 @@
   <script>hljs.highlightAll();</script>
   <script src="../siteinfo.js"></script>
   <script src="../../versions.js"></script>
-  <script src="../assets/materialdocs.js?v=3b5a99e1"></script>
+  <script src="../assets/materialdocs.js?v=87ba16ce"></script>
 </body>
 </html>
