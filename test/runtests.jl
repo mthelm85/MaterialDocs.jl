@@ -856,6 +856,19 @@ using JET
         @test contains(opts_custom, "selected")
     end
 
+    @testset "Repo link from a Documenter URL template" begin
+        # Documenter turns a `repo = "…/blob/{commit}{path}#{line}"` string into
+        # a Remotes.URL, whose repourl() is nothing. BestieTemplate generates
+        # exactly that, so derive the repository root from the template instead.
+        f = MaterialDocs._repo_root_from_template
+        @test f("https://github.com/o/r.jl/blob/{commit}{path}#{line}") == "https://github.com/o/r.jl"
+        @test f("https://gitlab.com/o/r.jl/-/blob/{commit}{path}#{line}") == "https://gitlab.com/o/r.jl"
+        @test f("https://bitbucket.org/o/r/src/{commit}{path}#{line}") == "https://bitbucket.org/o/r"
+        # Nothing recognisable to truncate at — better no link than a wrong one
+        @test f("https://example.com/something") === nothing
+        @test f("") === nothing
+    end
+
     @testset "Editor query parsing" begin
         q = MaterialDocs._parse_query("seed=%236750A4&dark=true&secondary=")
         @test q["seed"] == "#6750A4"

@@ -430,6 +430,33 @@ end
 # ─────────────────────────────────────────────────────────────────────────────
 
 """
+    _repo_root_from_template(template) → String or nothing
+
+Recover a repository root from a Documenter source-URL template.
+
+Documenter turns `repo = "https://host/o/r/blob/{commit}{path}#{line}"` into a
+`Remotes.URL`, whose `repourl` is `nothing` — so the navbar link would be
+dropped even though the URL is right there. BestieTemplate generates precisely
+that form, so truncate the template at the host's source-path marker instead.
+Returns `nothing` when no marker is recognised, since a wrong link is worse
+than none.
+"""
+function _repo_root_from_template(template::AbstractString)
+    isempty(template) && return nothing
+    # Take the earliest marker, not the first in list order: GitLab's "/-/blob/"
+    # contains "/blob/", so scanning in order would truncate one segment late.
+    cut = nothing
+    for marker in ("/blob/", "/-/", "/src/", "/tree/")
+        i = findfirst(marker, template)
+        i === nothing && continue
+        cut = cut === nothing ? first(i) : min(cut, first(i))
+    end
+    cut === nothing && return nothing
+    root = template[1:prevind(template, cut)]
+    isempty(root) ? nothing : String(root)
+end
+
+"""
     _repo_link(doc, settings) → (url, host) or nothing
 
 Resolve the source-repository URL for the navbar link. Honours an explicit
@@ -444,11 +471,16 @@ function _repo_link(doc::Documenter.Document, settings::Material3)
     else  # :auto — derive from the Documenter remote
         remote = doc.user.remote
         remote === nothing && return nothing
-        try
+        derived = try
             Documenter.Remotes.repourl(remote)
         catch
             nothing
         end
+        # A Remotes.URL built from a template has no repourl; recover it.
+        if derived === nothing && hasproperty(remote, :urltemplate)
+            derived = _repo_root_from_template(remote.urltemplate)
+        end
+        derived
     end
 
     (url === nothing || isempty(url)) && return nothing
