@@ -553,6 +553,27 @@ using JET
     # Phase 7: Search Index
     # ─────────────────────────────────────────────────────────────────
 
+    @testset "Integration: @index and @contents render entries" begin
+        # Documenter fills IndexNode.elements with (object, doc, page, mod, cat)
+        # tuples and ContentsNode.elements with (order, page, anchor) tuples —
+        # not Pairs. Rendering used to test `isa Pair` and so emitted nothing.
+        api_html = read(joinpath(@__DIR__, "fixtures", "build", "api", "index.html"), String)
+
+        # The index lists the documented bindings, linked
+        @test contains(api_html, "md-index")
+        @test !contains(api_html, "<div class=\"md-index\">
+<ul>
+</ul>")
+        # Entries link to the docstring anchors DocsNode emits. On the same
+        # page that is a bare fragment, so no path precedes the '#'.
+        @test contains(api_html, "<li><a href=\"#MaterialDocs.Material3\"><code>MaterialDocs.Material3</code></a></li>")
+        @test contains(api_html, "<li><a href=\"#MaterialDocs.load_theme\"><code>MaterialDocs.load_theme</code></a></li>")
+        # Every index target actually exists as an anchor on the page
+        for name in ("MaterialDocs.Material3", "MaterialDocs.ThemeConfig", "MaterialDocs.load_theme")
+            @test contains(api_html, "id=\"$name\"")
+        end
+    end
+
     @testset "Integration: search index" begin
         build_dir = joinpath(@__DIR__, "fixtures", "build")
         index_path = joinpath(build_dir, "assets", "search-index.json")
@@ -804,7 +825,7 @@ using JET
         theme = resolve_theme(:ocean_depth)
         js = MaterialDocs._editor_panel_js(theme)
 
-        # The colour engine is NOT duplicated in JS any more — the panel asks
+        # The color engine is NOT duplicated in JS any more — the panel asks
         # the Julia server for the scheme so preview and build cannot diverge.
         @test !contains(js, "hexToHCT")
         @test !contains(js, "cam16FromRGB")

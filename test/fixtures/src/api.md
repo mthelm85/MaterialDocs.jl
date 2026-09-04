@@ -3,20 +3,23 @@
 ```@contents
 ```
 
+## Index
+
+```@index
+```
+
 ## Functions
 
 ```@docs
-MaterialDocs.hct
-MaterialDocs.to_hex
-MaterialDocs.tonal_palette
-MaterialDocs.color_scheme
+MaterialDocs.resolve_theme
+MaterialDocs.load_theme
+MaterialDocs.save_theme
+MaterialDocs.find_theme_toml
 ```
 
 ## Types
 
 ```@docs
-MaterialDocs.HCT
-MaterialDocs.TonalPalette
 MaterialDocs.ThemeConfig
 MaterialDocs.Material3
 ```

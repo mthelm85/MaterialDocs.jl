@@ -4,19 +4,19 @@ CurrentModule = MaterialDocs
 
 # Color Engine
 
-Every colour on a MaterialDocs site is generated at build time from a single
+Every color on a MaterialDocs site is generated at build time from a single
 seed, using [MaterialColors.jl](https://github.com/mthelm85/MaterialColors.jl) —
 a pure-Julia port of Google's
 [material-color-utilities](https://github.com/material-foundation/material-color-utilities).
 
-That package is where the colour space, tonal palettes, scheme generation and
+That package is where the color space, tonal palettes, scheme generation and
 contrast helpers live, and it is usable on its own:
 **[MaterialColors documentation](https://mthelm85.github.io/MaterialColors.jl/dev/)**.
 
 ## What MaterialDocs uses it for
 
-A [`ThemeConfig`](@ref) carries a seed hex colour. At build time MaterialDocs
-calls `hex_scheme_pair` to generate the light and dark schemes — 34 MD3 colour
+A [`ThemeConfig`](@ref) carries a seed hex color. At build time MaterialDocs
+calls `hex_scheme_pair` to generate the light and dark schemes — 34 MD3 color
 roles each — and writes every role out as a CSS custom property:
 
 ```css

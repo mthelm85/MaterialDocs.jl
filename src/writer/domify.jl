@@ -433,14 +433,13 @@ end
 
 function domify(ctx::DomifyContext, node, elem::Documenter.ContentsNode)
     io = ctx.io
-    # Render as a navigation list of page headings
+    # Documenter fills `elements` with (order, page, anchor) tuples — not Pairs.
     println(io, "<nav class=\"md-contents\">")
     println(io, "<ul>")
-    for item in elem.elements
-        if item isa Pair
-            title, slug = item
-            println(io, "<li><a href=\"#", _html_escape(slug), "\">", _html_escape(title), "</a></li>")
-        end
+    for (_, page, anchor) in elem.elements
+        href = _xref_href(ctx, page, Documenter.anchor_label(anchor))
+        title = _collect_text(anchor.node)
+        println(io, "<li><a href=\"", _html_escape(href), "\">", _html_escape(title), "</a></li>")
     end
     println(io, "</ul>")
     println(io, "</nav>")
@@ -448,17 +447,29 @@ end
 
 function domify(ctx::DomifyContext, node, elem::Documenter.IndexNode)
     io = ctx.io
+    # Documenter fills `elements` with (object, doc, page, mod, cat) tuples —
+    # not Pairs. The anchor matches the id DocsNode writes for the docstring.
     println(io, "<div class=\"md-index\">")
     println(io, "<ul>")
-    for item in elem.elements
-        if item isa Pair
-            name, url = item
-            println(io, "<li><a href=\"", _html_escape(url), "\"><code>",
-                    _html_escape(name), "</code></a></li>")
-        end
+    for (object, _, page, _, _) in elem.elements
+        href = _xref_href(ctx, page, Documenter.slugify(object))
+        println(io, "<li><a href=\"", _html_escape(href), "\"><code>",
+                _html_escape(Documenter.bindingstring(object.binding)), "</code></a></li>")
     end
     println(io, "</ul>")
     println(io, "</div>")
+end
+
+"""
+Build a link from the current page to `fragment` on `page`, honouring
+`prettyurls`. A page equal to the current one yields a bare fragment so the
+link stays valid regardless of how the page is served.
+"""
+function _xref_href(ctx::DomifyContext, page::AbstractString, fragment::AbstractString)
+    src = replace(ctx.page.source, '\\' => '/')
+    tgt = replace(String(page), '\\' => '/')
+    endswith(src, tgt) && return string("#", fragment)
+    string(ctx.root_prefix, _nav_href(tgt, ctx.settings.prettyurls), "#", fragment)
 end
 
 function domify(ctx::DomifyContext, node, ::Documenter.EvalNode)
