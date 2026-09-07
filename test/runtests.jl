@@ -1,5 +1,5 @@
 using MaterialDocs
-using MaterialColors
+using MaterialDesignColors
 using Documenter
 using Test
 using Aqua

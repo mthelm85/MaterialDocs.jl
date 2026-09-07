@@ -5,13 +5,13 @@ CurrentModule = MaterialDocs
 # Color Engine
 
 Every color on a MaterialDocs site is generated at build time from a single
-seed, using [MaterialColors.jl](https://github.com/mthelm85/MaterialColors.jl) —
+seed, using [MaterialDesignColors.jl](https://github.com/mthelm85/MaterialDesignColors.jl) —
 a pure-Julia port of Google's
 [material-color-utilities](https://github.com/material-foundation/material-color-utilities).
 
 That package is where the color space, tonal palettes, scheme generation and
 contrast helpers live, and it is usable on its own:
-**[MaterialColors documentation](https://mthelm85.github.io/MaterialColors.jl/dev/)**.
+**[MaterialDesignColors documentation](https://mthelm85.github.io/MaterialDesignColors.jl/dev/)**.
 
 ## What MaterialDocs uses it for
 
@@ -39,4 +39,4 @@ construction rather than by hand-checking. MaterialDocs' test suite asserts this
 for every role pair, in both light and dark.
 
 If you override a role through `custom_colors`, that guarantee no longer holds
-for the overridden value — check it yourself with `MaterialColors.meets_aa`.
+for the overridden value — check it yourself with `MaterialDesignColors.meets_aa`.

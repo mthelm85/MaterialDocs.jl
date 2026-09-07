@@ -1,6 +1,6 @@
 module MaterialDocs
 
-using MaterialColors
+using MaterialDesignColors
 import Documenter
 import MarkdownAST
 
