@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Color Engine — MaterialDocs.jl</title>
-  <link rel="stylesheet" href="../assets/materialdocs.css?v=87ba16ce">
+  <link rel="stylesheet" href="../assets/materialdocs.css?v=354c0ce7">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
   <script>
     (function(){
@@ -47,8 +47,8 @@
     <main class="md-content">
       <article class="md-article">
 <h1 id="Color-Engine" class="md-heading">Color Engine<a href="#Color-Engine" class="md-heading-anchor" aria-label="Link to this section">#</a></h1>
-<p>Every color on a MaterialDocs site is generated at build time from a single seed, using <a href="https://github.com/mthelm85/MaterialColors.jl">MaterialColors.jl</a> — a pure-Julia port of Google&#39;s <a href="https://github.com/material-foundation/material-color-utilities">material-color-utilities</a>.</p>
-<p>That package is where the color space, tonal palettes, scheme generation and contrast helpers live, and it is usable on its own: <strong><a href="https://mthelm85.github.io/MaterialColors.jl/dev/">MaterialColors documentation</a></strong>.</p>
+<p>Every color on a MaterialDocs site is generated at build time from a single seed, using <a href="https://github.com/mthelm85/MaterialDesignColors.jl">MaterialDesignColors.jl</a> — a pure-Julia port of Google&#39;s <a href="https://github.com/material-foundation/material-color-utilities">material-color-utilities</a>.</p>
+<p>That package is where the color space, tonal palettes, scheme generation and contrast helpers live, and it is usable on its own: <strong><a href="https://mthelm85.github.io/MaterialDesignColors.jl/dev/">MaterialDesignColors documentation</a></strong>.</p>
 <h2 id="What-MaterialDocs-uses-it-for" class="md-heading">What MaterialDocs uses it for<a href="#What-MaterialDocs-uses-it-for" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
 <p>A <a href="../api/#MaterialDocs.ThemeConfig"><code class="md-code-inline">ThemeConfig</code></a> carries a seed hex color. At build time MaterialDocs calls <code class="md-code-inline">hex_scheme_pair</code> to generate the light and dark schemes — 34 MD3 color roles each — and writes every role out as a CSS custom property:</p>
 <div class="md-code-block">
@@ -60,7 +60,7 @@
 <p>All 34 roles are emitted whether or not the bundled stylesheets use them, so custom CSS has the complete set available. See <a href="../theming/#Theming">Theming</a> for choosing a seed and <a href="../configuration/#Configuration">Configuration</a> for referencing these tokens from your own stylesheets.</p>
 <h2 id="Why-the-tokens-are-trustworthy" class="md-heading">Why the tokens are trustworthy<a href="#Why-the-tokens-are-trustworthy" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
 <p>HCT combines CAM16 hue and chroma with CIELAB lightness, which makes <strong>tone map directly to contrast</strong>. Roles are placed at the tones the MD3 specification assigns, so pairings such as <code class="md-code-inline">primary</code> / <code class="md-code-inline">on_primary</code> meet WCAG AA by construction rather than by hand-checking. MaterialDocs&#39; test suite asserts this for every role pair, in both light and dark.</p>
-<p>If you override a role through <code class="md-code-inline">custom_colors</code>, that guarantee no longer holds for the overridden value — check it yourself with <code class="md-code-inline">MaterialColors.meets_aa</code>.</p>
+<p>If you override a role through <code class="md-code-inline">custom_colors</code>, that guarantee no longer holds for the overridden value — check it yourself with <code class="md-code-inline">MaterialDesignColors.meets_aa</code>.</p>
       </article>
       <footer class="md-footer">
         <p>Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://github.com/mthelm85/MaterialDocs.jl">MaterialDocs.jl</a></p>
@@ -80,6 +80,6 @@
   <script>hljs.highlightAll();</script>
   <script src="../siteinfo.js"></script>
   <script src="../../versions.js"></script>
-  <script src="../assets/materialdocs.js?v=87ba16ce"></script>
+  <script src="../assets/materialdocs.js?v=354c0ce7"></script>
 </body>
 </html>
