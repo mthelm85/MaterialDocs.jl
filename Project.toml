@@ -6,13 +6,6 @@ authors = ["mthelm85"]
 [workspace]
 projects = ["dev"]
 
-# TEMPORARY: MaterialDesignColors is not yet in the General registry, so it is
-# resolved from git. [sources] requires Julia 1.11+, which is why the compat
-# below is 1.11 rather than the 1.10 LTS. When MaterialDesignColors is registered,
-# delete this block, restore julia = "1.10", and put 1.10 back in the CI matrix.
-[sources]
-MaterialDesignColors = {url = "https://github.com/mthelm85/MaterialDesignColors.jl.git"}
-
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 MarkdownAST = "d0879d2d-cac2-40c8-9cee-1863dc0c7391"
@@ -26,4 +19,4 @@ MarkdownAST = "0.1.3"
 Sockets = "1"
 MaterialDesignColors = "0.1"
 TOML = "1"
-julia = "1.11"
+julia = "1.10"
