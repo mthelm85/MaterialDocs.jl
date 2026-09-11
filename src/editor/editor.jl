@@ -6,10 +6,24 @@ editor panel injected. Since all CSS uses `var(--md-sys-*)` tokens, changing
 the custom properties instantly re-themes the real documentation.
 =#
 
-import Sockets: listen, accept, IPv4, TCPSocket, getsockname
+import Sockets: listen, accept, IPv4, IPv6, IPAddr, TCPSocket, getsockname
 
 """
-    editor(; build="docs/build", port=0, theme=resolve_theme(:default))
+The address the theme editor binds to unless told otherwise: loopback only, so
+a documentation build in progress is not reachable from the rest of the
+network.
+"""
+const EDITOR_DEFAULT_HOST = IPv4(127, 0, 0, 1)
+
+"""Open the editor's listening socket. Separated out so the bind is testable."""
+_editor_listen(host::IPAddr, port::Integer) = listen(host, port)
+
+"""Whether an address is reachable only from this machine."""
+_is_loopback(ip::IPv4) = (UInt32(ip) >> 24) == 127
+_is_loopback(ip::IPv6) = ip == IPv6(0, 0, 0, 0, 0, 0, 0, 1)
+
+"""
+    editor(; build="docs/build", port=0, host=127.0.0.1, theme=resolve_theme(:default), make="docs/make.jl")
 
 Launch the MaterialDocs theme editor — a local server that serves your
 actual built documentation with a floating theme editor panel injected.
@@ -26,6 +40,9 @@ re-themes every component since all styles use `var(--md-sys-*)` tokens.
 # Keywords
 - `build`: path to the built docs directory (default `"docs/build"`)
 - `port`: server port; `0` picks an available port automatically
+- `host`: interface to listen on (default loopback, `127.0.0.1`, so the
+  preview is reachable only from this machine). Pass `Sockets.IPv4(0)` to
+  expose it on your network — for example to check a build on a phone
 - `theme`: initial `ThemeConfig` for the editor panel defaults
 
 # Example
@@ -43,6 +60,7 @@ Press Ctrl+C in the REPL to stop the server.
 """
 function editor(; build::String="docs/build",
                   port::Int=0,
+                  host::IPAddr=EDITOR_DEFAULT_HOST,
                   theme::ThemeConfig=resolve_theme(:default),
                   make::Union{AbstractString,Nothing}="docs/make.jl")
     # Rebuild first so the editor always reflects the current sources
@@ -76,9 +94,14 @@ function editor(; build::String="docs/build",
     panel_js = _editor_panel_js(theme)
 
     # Start server
-    server = listen(IPv4(0), port)
+    server = _editor_listen(host, port)
     actual_port = Int(getsockname(server)[2])
+    # The browser is always opened on localhost, which works for any bind
     url = "http://localhost:$actual_port"
+    if !_is_loopback(host)
+        @warn "MaterialDocs editor is listening on $host and is reachable from " *
+              "other machines on your network, not only this one."
+    end
 
     @info "MaterialDocs theme editor" url build=build_abs
     @info "Press Ctrl+C to stop"

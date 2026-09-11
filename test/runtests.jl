@@ -2,6 +2,7 @@ using MaterialDocs
 using MaterialDesignColors
 using Documenter
 using Test
+using Sockets
 using Aqua
 using JET
 
@@ -888,6 +889,28 @@ using JET
         # Nothing recognisable to truncate at — better no link than a wrong one
         @test f("https://example.com/something") === nothing
         @test f("") === nothing
+    end
+
+    @testset "Editor server binds loopback by default" begin
+        # A local preview server must not be reachable from the rest of the
+        # network unless the caller explicitly asks for that.
+        @test MaterialDocs.EDITOR_DEFAULT_HOST == IPv4(127, 0, 0, 1)
+        @test :host in Base.kwarg_decl(first(methods(MaterialDocs.editor)))
+
+        server = MaterialDocs._editor_listen(MaterialDocs.EDITOR_DEFAULT_HOST, 0)
+        try
+            addr, port = getsockname(server)
+            @test addr == IPv4(127, 0, 0, 1)
+            @test port > 0
+        finally
+            close(server)
+        end
+
+        # Opting in to another interface is still possible, and is reported
+        @test MaterialDocs._is_loopback(IPv4(127, 0, 0, 1))
+        @test MaterialDocs._is_loopback(IPv6(0, 0, 0, 0, 0, 0, 0, 1))
+        @test !MaterialDocs._is_loopback(IPv4(0, 0, 0, 0))
+        @test !MaterialDocs._is_loopback(IPv4(192, 168, 1, 10))
     end
 
     @testset "Editor query parsing" begin
