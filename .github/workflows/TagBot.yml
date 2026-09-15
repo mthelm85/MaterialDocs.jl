@@ -4,6 +4,13 @@ on:
     types:
       - created
   workflow_dispatch:
+# TagBot pushes the release tag with GITHUB_TOKEN, which is read-only unless the
+# workflow asks for more. Without contents: write every run fails with a 403 and
+# the registered version is never tagged. issues: write lets it open an issue
+# asking for manual help when something else goes wrong.
+permissions:
+  contents: write
+  issues: write
 jobs:
   TagBot:
     if: github.event_name == 'workflow_dispatch' || github.actor == 'JuliaTagBot'

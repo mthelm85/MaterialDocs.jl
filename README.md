@@ -18,12 +18,10 @@ a self-contained static site.
 
 ## Installation
 
-Not yet registered in the General registry. Add it by URL:
-
 ```julia
 using Pkg
 Pkg.activate("docs")
-Pkg.add(url = "https://github.com/mthelm85/MaterialDocs.jl.git")
+Pkg.add("MaterialDocs")
 ```
 
 MaterialDocs belongs in `docs/Project.toml` alongside Documenter — it is only
