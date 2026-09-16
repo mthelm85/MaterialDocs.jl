@@ -103,7 +103,7 @@ function render_page(doc::Documenter.Document, settings::Material3,
     println(io, "  </script>")
 
     println(io, "</head>")
-    println(io, "<body>")
+    println(io, html.warn_outdated ? "<body data-warn-outdated>" : "<body>")
 
     # ── Navbar ──
     println(io, "  <header class=\"md-navbar\">")
@@ -235,9 +235,10 @@ function render_page(doc::Documenter.Document, settings::Material3,
         print(io, _math_scripts(html.mathengine))
     end
 
-    # Version metadata written by Documenter's deploydocs(). Absent on local
-    # builds — versions.js guards on `typeof`, so a 404 here is harmless.
-    if settings.versions
+    # Version metadata written by Documenter's deploydocs(), read by the version
+    # selector and the outdated banner. Absent on local builds — both guard on
+    # `typeof`, so a 404 here is harmless.
+    if settings.versions || html.warn_outdated
         println(io, "  <script src=\"$(root_prefix)siteinfo.js\"></script>")
         println(io, "  <script src=\"$(root_prefix)../versions.js\"></script>")
     end

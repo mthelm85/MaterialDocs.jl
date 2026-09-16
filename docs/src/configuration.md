@@ -125,7 +125,8 @@ for full details. How MaterialDocs renders each:
 | `size_threshold`, `size_threshold_warn`, `size_threshold_ignore` | Pages over `size_threshold_warn` log a warning; over `size_threshold` the build fails, except pages listed in `size_threshold_ignore` |
 | `example_size_threshold` | `@example` images at least this large are written to files beside the page; larger HTML output falls back to an image when one exists |
 | `search_size_threshold_warn` | Warns when the search index is larger |
-| `ansicolor`, `warn_outdated` | Accepted and validated; not yet applied by MaterialDocs |
+| `warn_outdated` | On deployed docs that aren't the newest release (or are the development version), a banner linking to the same page in the stable docs |
+| `ansicolor` | Accepted and validated; not yet applied by MaterialDocs |
 | `prerender`, `node`, `highlightjs` | Accepted with a warning; they only affect Documenter's own theme |
 
 ### Custom CSS and JavaScript

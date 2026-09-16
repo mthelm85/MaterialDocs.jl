@@ -62,8 +62,9 @@ function render(doc::Documenter.Document, settings::Material3)
     _warn_large_html_outputs(state, settings)
     all(within_limits) || throw(Documenter.HTMLWriter.HTMLSizeThresholdError())
 
-    # 8. Cross-project link inventory
+    # 8. Cross-project link inventory, and the build metadata Documenter.HTML writes
     write_inventory(doc, settings)
+    Documenter.HTMLWriter.generate_siteinfo_json(build_dir)
 
     # 9. Build search index
     if settings.search
@@ -394,6 +395,11 @@ function build_js(settings::Material3)::String
     # Version selector — only when versions are enabled
     if settings.versions
         _append_js_file(io, js_dir, "versions.js")
+    end
+
+    # Outdated-version banner
+    if settings.html.warn_outdated
+        _append_js_file(io, js_dir, "outdated.js")
     end
 
     String(take!(io))

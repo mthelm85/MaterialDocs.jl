@@ -445,3 +445,46 @@ del { color: var(--md-sys-color-on-surface-variant); }
   }
   .md-search-results { flex: 1; }
 }
+
+/* ── Text button (MD3) ── */
+.md-text-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: none;
+  color: var(--md-sys-color-primary);
+  font: inherit;
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* ── Outdated-version banner — filled card with supporting text and actions ── */
+.md-outdated-banner {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  margin: 1rem 0 0.5rem;
+  padding: 1rem 1rem 0.5rem;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+}
+.md-outdated-icon { color: var(--md-sys-color-tertiary); }
+.md-outdated-dev .md-outdated-icon { color: var(--md-sys-color-primary); }
+.md-outdated-text {
+  margin: 0;
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+.md-outdated-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}

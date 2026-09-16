@@ -522,6 +522,7 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
                 edit_link = "main",
                 collapselevel = 1,
                 example_size_threshold = 64,
+                warn_outdated = false,
                 mathengine = Documenter.KaTeX(Dict(:macros => Dict("\\RR" => "\\mathbb{R}"))),
                 inventory_version = "1.2.3",
             ),
@@ -653,6 +654,26 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         @test (build_small(size_threshold = 2048, size_threshold_warn = 1024, size_threshold_ignore = ["index.md", "api.md", "outputs.md"]); true)
         @test_logs (:warn, r"search_size_threshold_warn") match_mode = :any build_small(search_size_threshold_warn = 16)
         rm(joinpath(fixtures_dir, "build-size"); recursive = true, force = true)
+    end
+
+    # REQ-P18 (Must): Where `warn_outdated` is true (the default), each page shall
+    #   load the outdated-version banner, which shows when the deployed version is
+    #   not the newest; where false, the page shall not.
+    # REQ-P19 (Should): Each build shall write `.documenter-siteinfo.json`, as
+    #   Documenter.HTML does.
+    @testset "Integration: warn_outdated and siteinfo" begin
+        main_html = read(joinpath(@__DIR__, "fixtures", "build", "index.html"), String)
+        options_html = read(joinpath(@__DIR__, "fixtures", "build-options", "index.html"), String)
+        @test contains(main_html, "<body data-warn-outdated>")
+        @test contains(options_html, "<body>")
+        @test !contains(options_html, "data-warn-outdated")
+
+        js = read(joinpath(@__DIR__, "fixtures", "build", "assets", "materialdocs.js"), String)
+        @test contains(js, "DOCUMENTER_NEWEST")
+        @test contains(js, "md-outdated-banner")
+
+        siteinfo = joinpath(@__DIR__, "fixtures", "build", ".documenter-siteinfo.json")
+        @test isfile(siteinfo) && contains(read(siteinfo, String), "documenter_version")
     end
 
     @testset "Footer defaults" begin
