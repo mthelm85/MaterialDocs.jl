@@ -49,6 +49,12 @@ deploydocs(repo = "github.com/you/MyPackage.jl", devbranch = "main")
 That is the whole integration. MaterialDocs registers itself through
 Documenter's `FormatSelector`, so `makedocs` dispatches to it automatically.
 
+`Material3` accepts every keyword `Documenter.HTML` does — `canonical`,
+`assets`, `edit_link`, `mathengine`, `collapselevel`, size thresholds and the
+rest — with the same meaning, so an existing `Documenter.HTML(...)` becomes
+`Material3(...)` unchanged. It also writes the `objects.inv` inventory, so
+cross-project links from DocumenterInterLinks keep working.
+
 Only the rendering stage is replaced — parsing, cross-references, doctests, and
 `@docs` blocks are unchanged Documenter, so existing documentation works
 without edits.

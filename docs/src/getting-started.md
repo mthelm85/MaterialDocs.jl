@@ -33,7 +33,9 @@ MaterialDocs = "0.1"
 
 ## Switch the format
 
-In `docs/make.jl`, swap `Documenter.HTML` for [`Material3`](@ref):
+In `docs/make.jl`, swap `Documenter.HTML` for [`Material3`](@ref). Any keywords
+you already pass to `Documenter.HTML` carry over unchanged — see
+[Configuration](@ref):
 
 ```julia
 using Documenter, MaterialDocs, MyPackage
