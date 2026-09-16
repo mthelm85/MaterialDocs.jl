@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Theming — MaterialDocs.jl</title>
-  <link rel="stylesheet" href="../assets/materialdocs.css?v=645619b9">
+  <link rel="stylesheet" href="../assets/materialdocs.css?v=244635a0">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
   <meta name="title" content="Theming — MaterialDocs.jl">
   <meta property="og:title" content="Theming — MaterialDocs.jl">
@@ -52,6 +52,7 @@
     </nav>
     <main class="md-content">
       <article class="md-article">
+      <div class="md-article-actions"><a class="md-icon-btn md-edit-link" href="https://github.com/mthelm85/MaterialDocs.jl/blob/main/docs/src/theming.md" title="Edit source on GitHub" aria-label="Edit source on GitHub"><svg class="md-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 000-1.41l-2.34-2.34a.996.996 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></a></div>
 <h1 id="Theming" class="md-heading">Theming<a href="#Theming" class="md-heading-anchor" aria-label="Link to this section">#</a></h1>
 <p>A MaterialDocs theme is a <a href="../api/#MaterialDocs.ThemeConfig"><code class="md-code-inline">ThemeConfig</code></a>: a seed color, three font choices, a corner-radius preset, and optional per-role overrides. Everything else — all 34 MD3 color roles, in both light and dark — is derived from the seed.</p>
 <h2 id="Built-in-themes" class="md-heading">Built-in themes<a href="#Built-in-themes" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
@@ -243,6 +244,10 @@ surface = &quot;#FAFAFA&quot;</code></pre>
 <p>This is the format the <a href="../editor/#Theme-Editor">Theme Editor</a> produces, so the usual workflow is to design a theme visually, save the file, and never touch <code class="md-code-inline">make.jl</code> at all.</p>
 <p>Read and write these files directly with <a href="../api/#MaterialDocs.load_theme"><code class="md-code-inline">load_theme</code></a> and <a href="../api/#MaterialDocs.save_theme"><code class="md-code-inline">save_theme</code></a>; <a href="../api/#MaterialDocs.find_theme_toml"><code class="md-code-inline">find_theme_toml</code></a> performs the search.</p>
       </article>
+      <nav class="md-page-nav" aria-label="Previous and next pages">
+        <a class="md-page-nav-prev" href="../getting-started/"><svg class="md-icon md-page-nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg><span class="md-page-nav-text"><span class="md-page-nav-label">Previous</span><span class="md-page-nav-title">Getting Started</span></span></a>
+        <a class="md-page-nav-next" href="../configuration/"><svg class="md-icon md-page-nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg><span class="md-page-nav-text"><span class="md-page-nav-label">Next</span><span class="md-page-nav-title">Configuration</span></span></a>
+      </nav>
       <footer class="md-footer">
 <p>Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://github.com/mthelm85/MaterialDocs.jl">MaterialDocs.jl</a>.</p>
       </footer>
@@ -265,6 +270,6 @@ surface = &quot;#FAFAFA&quot;</code></pre>
   <script>hljs.highlightAll();</script>
   <script src="../siteinfo.js"></script>
   <script src="../../versions.js"></script>
-  <script src="../assets/materialdocs.js?v=645619b9"></script>
+  <script src="../assets/materialdocs.js?v=244635a0"></script>
 </body>
 </html>
