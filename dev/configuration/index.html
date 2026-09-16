@@ -4,8 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Configuration — MaterialDocs.jl</title>
-  <link rel="stylesheet" href="../assets/materialdocs.css?v=459833c5">
+  <link rel="stylesheet" href="../assets/materialdocs.css?v=6b04ce83">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
+  <meta name="title" content="Configuration — MaterialDocs.jl">
+  <meta property="og:title" content="Configuration — MaterialDocs.jl">
+  <meta property="twitter:title" content="Configuration — MaterialDocs.jl">
+  <meta name="description" content="Documentation for MaterialDocs.jl.">
+  <meta property="og:description" content="Documentation for MaterialDocs.jl.">
+  <meta property="twitter:description" content="Documentation for MaterialDocs.jl.">
   <script>
     (function(){
       document.documentElement.classList.add('no-transition');
@@ -47,7 +53,7 @@
     <main class="md-content">
       <article class="md-article">
 <h1 id="Configuration" class="md-heading">Configuration<a href="#Configuration" class="md-heading-anchor" aria-label="Link to this section">#</a></h1>
-<p>Every option is a keyword to <a href="../api/#MaterialDocs.Material3"><code class="md-code-inline">Material3</code></a>.</p>
+<p>Every option is a keyword to <a href="../api/#MaterialDocs.Material3"><code class="md-code-inline">Material3</code></a>. It accepts <strong>every keyword <code class="md-code-inline">Documenter.HTML</code> does</strong>, with the same meaning and defaults, so switching writers is a rename — see <a href="../configuration/#Documenter.HTML-options">Documenter.HTML options</a>. The options below are the ones MaterialDocs adds.</p>
 <div class="md-code-block">
 <button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
 <pre><code class="language-julia">format = Material3(
@@ -97,18 +103,13 @@
 <button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
 <pre><code class="language-julia">Material3(logo = &quot;assets/logo.svg&quot;, favicon = &quot;assets/favicon.ico&quot;)</code></pre>
 </div>
+<p>Neither is required. As with <code class="md-code-inline">Documenter.HTML</code>, a <code class="md-code-inline">docs/src/assets/logo.svg</code> (or <code class="md-code-inline">.png</code>, <code class="md-code-inline">.webp</code>, <code class="md-code-inline">.gif</code>, <code class="md-code-inline">.jpg</code>, <code class="md-code-inline">.jpeg</code>) is used automatically, together with <code class="md-code-inline">assets/logo-dark.*</code> for dark mode when present, and an <code class="md-code-inline">.ico</code> listed in <code class="md-code-inline">assets</code> sets the favicon.</p>
 <p>The logo appears in the navbar at 32px tall. SVG is recommended so it stays sharp at any display density.</p>
-<h3 id="footer" class="md-heading"><code class="md-code-inline">footer</code><a href="#footer" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
-<p>Extra HTML placed above the generated attribution line:</p>
-<div class="md-code-block">
-<button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
-<pre><code class="language-julia">Material3(footer = &quot;Made with ❤️ and Julia&quot;)</code></pre>
-</div>
 <h2 id="Navigation" class="md-heading">Navigation<a href="#Navigation" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
 <h3 id="toc_depth" class="md-heading"><code class="md-code-inline">toc_depth</code><a href="#toc_depth" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
 <p>Deepest heading level shown in the on-this-page rail. Between <code class="md-code-inline">2</code> and <code class="md-code-inline">4</code>, default <code class="md-code-inline">3</code>.</p>
 <h3 id="repolink" class="md-heading"><code class="md-code-inline">repolink</code><a href="#repolink" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
-<p>The repository link in the navbar. Default <code class="md-code-inline">:auto</code>.</p>
+<p>The repository link in the navbar. By default it is derived from Documenter&#39;s configured remote.</p>
 <div class="md-table-wrap">
 <table class="md-table">
 <thead>
@@ -119,7 +120,7 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align:right"><code class="md-code-inline">:auto</code></td>
+<td style="text-align:right">unset, or <code class="md-code-inline">:auto</code></td>
 <td style="text-align:right">Derived from Documenter&#39;s configured remote</td>
 </tr>
 <tr>
@@ -145,22 +146,78 @@
 <h3 id="search" class="md-heading"><code class="md-code-inline">search</code><a href="#search" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
 <p>Enable the search bar and index. Default <code class="md-code-inline">true</code>.</p>
 <p>Search is entirely client-side: a JSON index is generated at build time and loaded on first use. Ctrl/Cmd+K opens it from anywhere.</p>
-<h2 id="Output" class="md-heading">Output<a href="#Output" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
-<h3 id="prettyurls" class="md-heading"><code class="md-code-inline">prettyurls</code><a href="#prettyurls" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
-<p>Directory-style URLs (<code class="md-code-inline">page/index.html</code>, linked as <code class="md-code-inline">./page/</code>). Default <code class="md-code-inline">true</code>.</p>
-<p>Set it to <code class="md-code-inline">false</code>, or condition it on CI, when the build needs to be opened from disk — see <a href="../getting-started/#Getting-Started">Getting Started</a>.</p>
-<h3 id="inventory_version" class="md-heading"><code class="md-code-inline">inventory_version</code><a href="#inventory_version" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
-<p>Every build writes <code class="md-code-inline">objects.inv</code>, the same cross-reference inventory <code class="md-code-inline">Documenter.HTML</code> writes, so packages using <a href="https://github.com/JuliaDocs/DocumenterInterLinks.jl">DocumenterInterLinks</a> can link into your documentation. <code class="md-code-inline">inventory_version</code> sets the version recorded in it. Default <code class="md-code-inline">nothing</code>, which reads <code class="md-code-inline">version</code> from the <code class="md-code-inline">Project.toml</code> one level above the docs root.</p>
-<h3 id="custom_css-and-custom_js" class="md-heading"><code class="md-code-inline">custom_css</code> and <code class="md-code-inline">custom_js</code><a href="#custom_css-and-custom_js" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
-<p>Extra files, relative to <code class="md-code-inline">docs/src</code>, copied into the build&#39;s <code class="md-code-inline">assets</code> folder and linked after the generated assets:</p>
+<h2 id="Documenter.HTML-options" class="md-heading">Documenter.HTML options<a href="#Documenter.HTML-options" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
+<p><code class="md-code-inline">Material3</code> passes these to a real <code class="md-code-inline">Documenter.HTML</code>, so names, defaults and validation are Documenter&#39;s own — see the <a href="https://documenter.juliadocs.org/stable/lib/public/#Documenter.HTML"><code class="md-code-inline">Documenter.HTML</code> reference</a> for full details. How MaterialDocs renders each:</p>
+<div class="md-table-wrap">
+<table class="md-table">
+<thead>
+<tr>
+<th style="text-align:right">Keyword</th>
+<th style="text-align:right">In MaterialDocs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">prettyurls</code></td>
+<td style="text-align:right">Directory-style URLs (<code class="md-code-inline">page/index.html</code>, linked as <code class="md-code-inline">./page/</code>). Set it to <code class="md-code-inline">false</code>, or condition it on CI, to open a build from disk — see <a href="../getting-started/#Getting-Started">Getting Started</a></td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">repolink</code></td>
+<td style="text-align:right">The navbar repository link, as above</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">canonical</code></td>
+<td style="text-align:right">Canonical link and <code class="md-code-inline">og:url</code> tags; with <code class="md-code-inline">assets/preview.*</code>, preview-image tags</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">description</code></td>
+<td style="text-align:right">Description meta tags. A page&#39;s <code class="md-code-inline">@meta Description</code> overrides it</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">lang</code></td>
+<td style="text-align:right">The <code class="md-code-inline">lang</code> attribute of every page</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">analytics</code></td>
+<td style="text-align:right">Google Analytics</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">assets</code></td>
+<td style="text-align:right">Local CSS, JS and ICO files, remote <a href="https://documenter.juliadocs.org/stable/lib/public/#Documenter.asset"><code class="md-code-inline">asset</code></a>s and <code class="md-code-inline">RawHTMLHeadContent</code>, in order, after MaterialDocs&#39; stylesheet</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">footer</code></td>
+<td style="text-align:right">Markdown in the page footer, replacing the default attribution; <code class="md-code-inline">nothing</code> removes it</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">highlights</code></td>
+<td style="text-align:right">Extra highlight.js languages</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">sidebar_sitename</code></td>
+<td style="text-align:right"><code class="md-code-inline">false</code> hides the site name in the navbar</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">inventory_version</code></td>
+<td style="text-align:right">The version recorded in <code class="md-code-inline">objects.inv</code> (see below)</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">disable_git</code>, <code class="md-code-inline">edit_link</code>, <code class="md-code-inline">edit_branch</code>, <code class="md-code-inline">collapselevel</code>, <code class="md-code-inline">mathengine</code>, <code class="md-code-inline">ansicolor</code>, <code class="md-code-inline">warn_outdated</code>, <code class="md-code-inline">size_threshold</code>, <code class="md-code-inline">size_threshold_warn</code>, <code class="md-code-inline">size_threshold_ignore</code>, <code class="md-code-inline">example_size_threshold</code>, <code class="md-code-inline">search_size_threshold_warn</code></td>
+<td style="text-align:right">Accepted and validated; not yet applied by MaterialDocs</td>
+</tr>
+<tr>
+<td style="text-align:right"><code class="md-code-inline">prerender</code>, <code class="md-code-inline">node</code>, <code class="md-code-inline">highlightjs</code></td>
+<td style="text-align:right">Accepted with a warning; they only affect Documenter&#39;s own theme</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="Custom-CSS-and-JavaScript" class="md-heading">Custom CSS and JavaScript<a href="#Custom-CSS-and-JavaScript" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>Add them through <code class="md-code-inline">assets</code>, with paths relative to <code class="md-code-inline">docs/src</code>:</p>
 <div class="md-code-block">
 <button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
-<pre><code class="language-julia">Material3(
-    custom_css = [&quot;assets/extra.css&quot;],
-    custom_js  = [&quot;assets/extra.js&quot;],
-)</code></pre>
+<pre><code class="language-julia">Material3(assets = [&quot;assets/extra.css&quot;, &quot;assets/extra.js&quot;])</code></pre>
 </div>
-<p>Files are copied by name alone, so two files with the same name in different folders overwrite each other.</p>
 <p>Because all styling is driven by <code class="md-code-inline">--md-sys-*</code> custom properties, custom CSS should reference those tokens rather than literal colors. That way it keeps working in both light and dark mode:</p>
 <div class="md-code-block">
 <button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
@@ -170,9 +227,11 @@
   border-radius: var(--md-sys-shape-corner-medium);
 }</code></pre>
 </div>
+<h3 id="Cross-project-links" class="md-heading">Cross-project links<a href="#Cross-project-links" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>Every build writes <code class="md-code-inline">objects.inv</code>, the same cross-reference inventory <code class="md-code-inline">Documenter.HTML</code> writes, so packages using <a href="https://github.com/JuliaDocs/DocumenterInterLinks.jl">DocumenterInterLinks</a> can link into your documentation. <code class="md-code-inline">inventory_version</code> sets the version recorded in it; by default it is read from the <code class="md-code-inline">Project.toml</code> one level above the docs root.</p>
       </article>
       <footer class="md-footer">
-        <p>Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://github.com/mthelm85/MaterialDocs.jl">MaterialDocs.jl</a></p>
+<p>Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://github.com/mthelm85/MaterialDocs.jl">MaterialDocs.jl</a>.</p>
       </footer>
     </main>
     <aside class="md-toc">
@@ -182,16 +241,14 @@
             <a class="md-toc-link md-toc-h3" href="#theme">theme</a>
             <a class="md-toc-link md-toc-h3" href="#dark_mode">dark_mode</a>
             <a class="md-toc-link md-toc-h3" href="#logo-and-favicon">logo and favicon</a>
-            <a class="md-toc-link md-toc-h3" href="#footer">footer</a>
           <a class="md-toc-link md-toc-h2" href="#Navigation">Navigation</a>
             <a class="md-toc-link md-toc-h3" href="#toc_depth">toc_depth</a>
             <a class="md-toc-link md-toc-h3" href="#repolink">repolink</a>
             <a class="md-toc-link md-toc-h3" href="#versions">versions</a>
             <a class="md-toc-link md-toc-h3" href="#search">search</a>
-          <a class="md-toc-link md-toc-h2" href="#Output">Output</a>
-            <a class="md-toc-link md-toc-h3" href="#prettyurls">prettyurls</a>
-            <a class="md-toc-link md-toc-h3" href="#inventory_version">inventory_version</a>
-            <a class="md-toc-link md-toc-h3" href="#custom_css-and-custom_js">custom_css and custom_js</a>
+          <a class="md-toc-link md-toc-h2" href="#Documenter.HTML-options">Documenter.HTML options</a>
+            <a class="md-toc-link md-toc-h3" href="#Custom-CSS-and-JavaScript">Custom CSS and JavaScript</a>
+            <a class="md-toc-link md-toc-h3" href="#Cross-project-links">Cross-project links</a>
       </div>
     </aside>
   </div>
@@ -201,6 +258,6 @@
   <script>hljs.highlightAll();</script>
   <script src="../siteinfo.js"></script>
   <script src="../../versions.js"></script>
-  <script src="../assets/materialdocs.js?v=459833c5"></script>
+  <script src="../assets/materialdocs.js?v=6b04ce83"></script>
 </body>
 </html>

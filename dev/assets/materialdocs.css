@@ -282,6 +282,14 @@
 :root[data-theme="light"] .md-icon-light { display: none; }
 :root[data-theme="light"] .md-icon-dark { display: block; }
 
+.md-logo-dark { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .md-logo-light { display: none; }
+  :root:not([data-theme="light"]) .md-logo-dark { display: inline-block; }
+}
+:root[data-theme="dark"] .md-logo-light { display: none; }
+:root[data-theme="dark"] .md-logo-dark { display: inline-block; }
+
 
 /* ── base.css ── */
 /* ── MaterialDocs: Reset & Base ──

@@ -4,8 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>API Reference — MaterialDocs.jl</title>
-  <link rel="stylesheet" href="../assets/materialdocs.css?v=a1d98d79">
+  <link rel="stylesheet" href="../assets/materialdocs.css?v=745aeadd">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
+  <meta name="title" content="API Reference — MaterialDocs.jl">
+  <meta property="og:title" content="API Reference — MaterialDocs.jl">
+  <meta property="twitter:title" content="API Reference — MaterialDocs.jl">
+  <meta name="description" content="Documentation for MaterialDocs.jl.">
+  <meta property="og:description" content="Documentation for MaterialDocs.jl.">
+  <meta property="twitter:description" content="Documentation for MaterialDocs.jl.">
   <script>
     (function(){
       document.documentElement.classList.add('no-transition');
@@ -63,7 +69,7 @@
 <div class="md-docstring" id="MaterialDocs.Material3">
 <div class="md-docstring-header">
 <h4 class="md-docstring-binding"><code>MaterialDocs.Material3</code></h4>
-<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/c59ebe36805d3863353d6a85c80ec08b138bc229/src/writer/writer.jl#L20-L67" title="View source">source</a>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/f7107f4c8e256c8c4e1bc28051cbaa7268523824/src/writer/writer.jl#L25-L73" title="View source">source</a>
 </div>
 <div class="md-docstring-content">
 <div class="md-code-block">
@@ -71,7 +77,8 @@
 <pre><code class="language-julia">Material3 &lt;: Documenter.Writer</code></pre>
 </div>
 <p>A Documenter.jl writer that generates Material Design 3 documentation sites.</p>
-<p><strong>Keywords</strong></p>
+<p><code class="md-code-inline">Material3</code> accepts every keyword <a href="https://documenter.juliadocs.org/stable/lib/public/#Documenter.HTML"><code class="md-code-inline">Documenter.HTML</code></a> does, with the same meaning and defaults, so switching writers is a rename: <code class="md-code-inline">format = Documenter.HTML(...)</code> becomes <code class="md-code-inline">format = Material3(...)</code>. Those keywords are validated by constructing a <code class="md-code-inline">Documenter.HTML</code>, available as the <code class="md-code-inline">html</code> field. <code class="md-code-inline">prerender</code>, <code class="md-code-inline">node</code> and <code class="md-code-inline">highlightjs</code> are accepted but have no effect.</p>
+<p><strong>MaterialDocs keywords</strong></p>
 <ul class="md-list-tight">
 <li><p><code class="md-code-inline">theme = :default</code>: Built-in theme name (<code class="md-code-inline">Symbol</code>) or a <a href="../api/#MaterialDocs.ThemeConfig"><code class="md-code-inline">ThemeConfig</code></a>. When <code class="md-code-inline">:default</code>, automatically loads <code class="md-code-inline">docs/.materialdocs.toml</code> if present.</p>
 </li>
@@ -91,33 +98,14 @@
 </li>
 <li><p><code class="md-code-inline">search = true</code>: Enable the search bar.</p>
 </li>
-<li><p><code class="md-code-inline">repolink = :auto</code>: Link to the source repository in the navbar. One of:</p>
-<ul class="md-list-tight">
-<li><p><code class="md-code-inline">:auto</code> — derive from Documenter&#39;s configured remote (<code class="md-code-inline">makedocs(repo = ...)</code>)</p>
-</li>
-<li><p>a <code class="md-code-inline">String</code> — an explicit URL</p>
-</li>
-<li><p><code class="md-code-inline">nothing</code> — omit the link</p>
-</li>
-</ul>
-</li>
 <li><p><code class="md-code-inline">versions = true</code>: Show a version selector when <code class="md-code-inline">deploydocs</code> has generated <code class="md-code-inline">versions.js</code> / <code class="md-code-inline">siteinfo.js</code>. Hidden automatically on non-deployed builds.</p>
 </li>
-<li><p><code class="md-code-inline">logo = nothing</code>: Path to logo image (relative to docs/src).</p>
+<li><p><code class="md-code-inline">logo = nothing</code>: Path to a logo image (relative to docs/src). When <code class="md-code-inline">nothing</code>, <code class="md-code-inline">assets/logo.{svg,png,webp,gif,jpg,jpeg}</code> is used if present, as in Documenter.</p>
 </li>
-<li><p><code class="md-code-inline">favicon = nothing</code>: Path to favicon (relative to docs/src).</p>
-</li>
-<li><p><code class="md-code-inline">footer = nothing</code>: Custom footer HTML string.</p>
-</li>
-<li><p><code class="md-code-inline">custom_css = String[]</code>: Additional CSS files to include.</p>
-</li>
-<li><p><code class="md-code-inline">custom_js = String[]</code>: Additional JS files to include.</p>
-</li>
-<li><p><code class="md-code-inline">prettyurls = true</code>: Use clean URLs (<code class="md-code-inline">page/index.html</code> instead of <code class="md-code-inline">page.html</code>).</p>
-</li>
-<li><p><code class="md-code-inline">inventory_version = nothing</code>: Version written to the <code class="md-code-inline">objects.inv</code> inventory header. When <code class="md-code-inline">nothing</code>, read from the <code class="md-code-inline">Project.toml</code> in the parent of the docs root.</p>
+<li><p><code class="md-code-inline">favicon = nothing</code>: Path to a favicon (relative to docs/src). An <code class="md-code-inline">.ico</code> in <code class="md-code-inline">assets</code> works too, as in Documenter.</p>
 </li>
 </ul>
+<p><code class="md-code-inline">repolink</code> additionally accepts <code class="md-code-inline">:auto</code>, the same as leaving it unset.</p>
 <p><strong>Examples</strong></p>
 <div class="md-code-block">
 <button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
@@ -127,12 +115,12 @@ format = Material3(theme = :ocean_depth)
 # Use a custom theme
 format = Material3(theme = ThemeConfig(seed = &quot;#E65100&quot;, display_font = &quot;Space Grotesk&quot;))
 
-# Full configuration
+# Documenter.HTML options carry over unchanged
 format = Material3(
     theme = :midnight,
     dark_mode = :toggle,
-    toc_depth = 4,
-    logo = &quot;assets/logo.svg&quot;,
+    canonical = &quot;https://you.github.io/MyPackage.jl/stable&quot;,
+    assets = [&quot;assets/extra.css&quot;],
     footer = &quot;Made with ❤️ and Julia&quot;,
 )</code></pre>
 </div>
@@ -142,7 +130,7 @@ format = Material3(
 <div class="md-docstring" id="MaterialDocs.ThemeConfig">
 <div class="md-docstring-header">
 <h4 class="md-docstring-binding"><code>MaterialDocs.ThemeConfig</code></h4>
-<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/c59ebe36805d3863353d6a85c80ec08b138bc229/src/themes/theme_config.jl#L8-L29" title="View source">source</a>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/f7107f4c8e256c8c4e1bc28051cbaa7268523824/src/themes/theme_config.jl#L8-L29" title="View source">source</a>
 </div>
 <div class="md-docstring-content">
 <div class="md-code-block">
@@ -181,7 +169,7 @@ format = Material3(
 <div class="md-docstring" id="MaterialDocs.resolve_theme">
 <div class="md-docstring-header">
 <h4 class="md-docstring-binding"><code>MaterialDocs.resolve_theme</code></h4>
-<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/c59ebe36805d3863353d6a85c80ec08b138bc229/src/themes/builtin.jl#L121-L129" title="View source">source</a>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/f7107f4c8e256c8c4e1bc28051cbaa7268523824/src/themes/builtin.jl#L121-L129" title="View source">source</a>
 </div>
 <div class="md-docstring-content">
 <div class="md-code-block">
@@ -201,7 +189,7 @@ format = Material3(
 <div class="md-docstring" id="MaterialDocs.BUILTIN_THEMES">
 <div class="md-docstring-header">
 <h4 class="md-docstring-binding"><code>MaterialDocs.BUILTIN_THEMES</code></h4>
-<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/c59ebe36805d3863353d6a85c80ec08b138bc229/src/themes/builtin.jl#L8-L21" title="View source">source</a>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/f7107f4c8e256c8c4e1bc28051cbaa7268523824/src/themes/builtin.jl#L8-L21" title="View source">source</a>
 </div>
 <div class="md-docstring-content">
 <div class="md-code-block">
@@ -219,7 +207,7 @@ format = Material3(
 <div class="md-docstring" id="MaterialDocs.load_theme">
 <div class="md-docstring-header">
 <h4 class="md-docstring-binding"><code>MaterialDocs.load_theme</code></h4>
-<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/c59ebe36805d3863353d6a85c80ec08b138bc229/src/themes/toml.jl#L29-L36" title="View source">source</a>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/f7107f4c8e256c8c4e1bc28051cbaa7268523824/src/themes/toml.jl#L29-L36" title="View source">source</a>
 </div>
 <div class="md-docstring-content">
 <div class="md-code-block">
@@ -233,7 +221,7 @@ format = Material3(
 <div class="md-docstring" id="MaterialDocs.save_theme">
 <div class="md-docstring-header">
 <h4 class="md-docstring-binding"><code>MaterialDocs.save_theme</code></h4>
-<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/c59ebe36805d3863353d6a85c80ec08b138bc229/src/themes/toml.jl#L106-L111" title="View source">source</a>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/f7107f4c8e256c8c4e1bc28051cbaa7268523824/src/themes/toml.jl#L106-L111" title="View source">source</a>
 </div>
 <div class="md-docstring-content">
 <div class="md-code-block">
@@ -246,7 +234,7 @@ format = Material3(
 <div class="md-docstring" id="MaterialDocs.find_theme_toml">
 <div class="md-docstring-header">
 <h4 class="md-docstring-binding"><code>MaterialDocs.find_theme_toml</code></h4>
-<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/c59ebe36805d3863353d6a85c80ec08b138bc229/src/themes/toml.jl#L154-L159" title="View source">source</a>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/f7107f4c8e256c8c4e1bc28051cbaa7268523824/src/themes/toml.jl#L154-L159" title="View source">source</a>
 </div>
 <div class="md-docstring-content">
 <div class="md-code-block">
@@ -262,7 +250,7 @@ format = Material3(
 <div class="md-docstring" id="MaterialDocs.editor">
 <div class="md-docstring-header">
 <h4 class="md-docstring-binding"><code>MaterialDocs.editor</code></h4>
-<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/c59ebe36805d3863353d6a85c80ec08b138bc229/src/editor/editor.jl#L25-L60" title="View source">source</a>
+<a class="md-docstring-source" href="https://github.com/mthelm85/MaterialDocs.jl/blob/f7107f4c8e256c8c4e1bc28051cbaa7268523824/src/editor/editor.jl#L25-L60" title="View source">source</a>
 </div>
 <div class="md-docstring-content">
 <div class="md-code-block">
@@ -309,7 +297,7 @@ MaterialDocs.editor(build=&quot;docs/build&quot;, theme=resolve_theme(:ocean_dep
 </div>
       </article>
       <footer class="md-footer">
-        <p>Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://github.com/mthelm85/MaterialDocs.jl">MaterialDocs.jl</a></p>
+<p>Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://github.com/mthelm85/MaterialDocs.jl">MaterialDocs.jl</a>.</p>
       </footer>
     </main>
     <aside class="md-toc">
@@ -328,6 +316,6 @@ MaterialDocs.editor(build=&quot;docs/build&quot;, theme=resolve_theme(:ocean_dep
   <script>hljs.highlightAll();</script>
   <script src="../siteinfo.js"></script>
   <script src="../../versions.js"></script>
-  <script src="../assets/materialdocs.js?v=a1d98d79"></script>
+  <script src="../assets/materialdocs.js?v=745aeadd"></script>
 </body>
 </html>
