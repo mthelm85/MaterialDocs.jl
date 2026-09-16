@@ -5,6 +5,7 @@ using Test
 using Sockets
 using Aqua
 using JET
+using CodecZlib
 
 struct UnknownFixtureElement <: Documenter.MarkdownAST.AbstractInline end
 Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
@@ -416,7 +417,8 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         # Run makedocs inline (avoids include/module scoping issues)
         makedocs(;
             sitename = "TestPackage.jl",
-            format = Material3(theme = :ocean_depth, dark_mode = :toggle, toc_depth = 3),
+            format = Material3(theme = :ocean_depth, dark_mode = :toggle, toc_depth = 3,
+                               inventory_version = "1.2.3"),
             modules = [MaterialDocs],
             pages = [
                 "Home" => "index.md",
@@ -434,6 +436,47 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         @test isfile(joinpath(build_dir, "api", "index.html"))
         @test isfile(joinpath(build_dir, "assets", "materialdocs.css"))
         @test isfile(joinpath(build_dir, "assets", "materialdocs.js"))
+    end
+
+    # REQ-M5 (Must): When a build completes, the writer shall write an
+    #   `objects.inv` inventory listing the same pages, labels and docstrings,
+    #   at the same URIs, as Documenter.HTML writes for the same sources.
+    # REQ-M6 (Must): Where `inventory_version` is set, the inventory header
+    #   shall carry that version.
+    @testset "Integration: objects.inv matches Documenter.HTML" begin
+        fixtures_dir = joinpath(@__DIR__, "fixtures")
+        html_build = joinpath(fixtures_dir, "build-html")
+        isdir(html_build) && rm(html_build; recursive = true)
+        makedocs(;
+            sitename = "TestPackage.jl",
+            format = Documenter.HTML(inventory_version = "1.2.3"),
+            modules = [MaterialDocs],
+            pages = ["Home" => "index.md", "API" => "api.md", "Outputs" => "outputs.md"],
+            root = fixtures_dir, source = "src", build = "build-html",
+            warnonly = true,
+        )
+
+        function read_inventory(path)
+            bytes = read(path)
+            header_end = 0
+            for _ in 1:4
+                header_end = findnext(==(UInt8('\n')), bytes, header_end + 1)
+            end
+            header = split(String(bytes[1:header_end]), '\n'; keepempty = false)
+            body = String(transcode(CodecZlib.ZlibDecompressor, bytes[header_end+1:end]))
+            return header, sort(split(body, '\n'; keepempty = false))
+        end
+
+        ours_path = joinpath(fixtures_dir, "build", "objects.inv")
+        @test isfile(ours_path)
+        ours_header, ours = read_inventory(ours_path)
+        theirs_header, theirs = read_inventory(joinpath(html_build, "objects.inv"))
+
+        @test ours_header == theirs_header
+        @test "# Version: 1.2.3" in ours_header
+        @test !isempty(ours)
+        @test ours == theirs
+        @test any(startswith("MaterialDocs.Material3 jl:type 1 api/#"), ours)
     end
 
     @testset "Integration: index.html structure" begin

@@ -44,6 +44,8 @@ A Documenter.jl writer that generates Material Design 3 documentation sites.
 - `custom_css = String[]`: Additional CSS files to include.
 - `custom_js = String[]`: Additional JS files to include.
 - `prettyurls = true`: Use clean URLs (`page/index.html` instead of `page.html`).
+- `inventory_version = nothing`: Version written to the `objects.inv` inventory header.
+  When `nothing`, read from the `Project.toml` in the parent of the docs root.
 
 # Examples
 ```julia
@@ -76,6 +78,7 @@ struct Material3 <: Documenter.Writer
     custom_css::Vector{String}
     custom_js::Vector{String}
     prettyurls::Bool
+    inventory_version::Union{String,Nothing}
 end
 
 function Material3(;
@@ -91,6 +94,7 @@ function Material3(;
     custom_css::Vector{String} = String[],
     custom_js::Vector{String} = String[],
     prettyurls::Bool = true,
+    inventory_version = nothing,
 )
     dark_mode in (:auto, :light, :dark, :toggle) ||
         throw(ArgumentError("dark_mode must be :auto, :light, :dark, or :toggle"))
@@ -119,7 +123,8 @@ function Material3(;
               logo === nothing ? nothing : String(logo),
               favicon === nothing ? nothing : String(favicon),
               footer === nothing ? nothing : String(footer),
-              custom_css, custom_js, prettyurls)
+              custom_css, custom_js, prettyurls,
+              inventory_version === nothing ? nothing : string(inventory_version))
 end
 
 function Base.show(io::IO, m::Material3)

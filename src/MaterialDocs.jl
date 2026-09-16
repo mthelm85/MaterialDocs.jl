@@ -26,6 +26,7 @@ include("writer/writer.jl")
 include("writer/domify.jl")
 include("writer/page.jl")
 include("writer/render.jl")
+include("writer/inventory.jl")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Theme Editor (Phase 8)

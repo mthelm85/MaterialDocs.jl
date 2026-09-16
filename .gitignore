@@ -4,4 +4,4 @@
 /test/fixtures/build/
 dev/
 .claude/
-.vscode/
+.vscode//test/fixtures/build-html/

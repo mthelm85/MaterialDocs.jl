@@ -4,7 +4,8 @@ using MaterialDocs
 
 makedocs(;
     sitename = "TestPackage.jl",
-    format = Material3(theme = :ocean_depth, dark_mode = :toggle, toc_depth = 3),
+    format = Material3(theme = :ocean_depth, dark_mode = :toggle, toc_depth = 3,
+                       inventory_version = "1.2.3"),
     modules = [MaterialDocs],
     pages = [
         "Home" => "index.md",

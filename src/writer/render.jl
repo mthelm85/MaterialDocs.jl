@@ -60,7 +60,10 @@ function render(doc::Documenter.Document, settings::Material3)
         render_page(doc, settings, page, nav_ctx, light_scheme, dark_scheme; state)
     end
 
-    # 8. Build search index
+    # 8. Cross-project link inventory
+    write_inventory(doc, settings)
+
+    # 9. Build search index
     if settings.search
         search_index = build_search_index(doc)
         write(joinpath(assets_dir, "search-index.json"), search_index)

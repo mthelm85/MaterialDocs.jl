@@ -107,6 +107,15 @@ Directory-style URLs (`page/index.html`, linked as `./page/`). Default `true`.
 Set it to `false`, or condition it on CI, when the build needs to be opened from
 disk — see [Getting Started](@ref).
 
+### `inventory_version`
+
+Every build writes `objects.inv`, the same cross-reference inventory
+`Documenter.HTML` writes, so packages using
+[DocumenterInterLinks](https://github.com/JuliaDocs/DocumenterInterLinks.jl) can
+link into your documentation. `inventory_version` sets the version recorded in
+it. Default `nothing`, which reads `version` from the `Project.toml` one level
+above the docs root.
+
 ### `custom_css` and `custom_js`
 
 Extra files, relative to `docs/src`, copied into the build's `assets` folder and
