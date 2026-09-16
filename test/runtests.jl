@@ -570,9 +570,9 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
     #   current commit for `edit_link = :commit` ("View source on <host>").
     # REQ-P10 (Must): Where a page sets an absolute `@meta EditURL`, the page
     #   shall link "View source" to it; where `EditURL = nothing`, no link.
-    # REQ-P11 (Must): Each page shall link to the previous and next pages in
-    #   navigation order, labelled with their titles.
-    @testset "Integration: edit links and page navigation" begin
+    # REQ-P11 (Won't): Pages shall not carry previous/next page cards; the
+    #   sidebar is the navigation.
+    @testset "Integration: edit links, no previous/next cards" begin
         build_dir = joinpath(@__DIR__, "fixtures", "build-options")
         index_html = read(joinpath(build_dir, "index.html"), String)
         api_html = read(joinpath(build_dir, "api", "index.html"), String)
@@ -581,12 +581,11 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         @test contains(index_html, "href=\"https://github.com/mthelm85/MaterialDocs.jl/blob/main/test/fixtures/src/index.md\" title=\"Edit source on GitHub\"")
         @test contains(out_html, "href=\"https://example.org/outputs-source.md\" title=\"View source\"")
 
-        @test contains(index_html, "<a class=\"md-page-nav-next\" href=\"./api/\">")
-        @test !contains(index_html, "md-page-nav-prev")
-        @test contains(api_html, "<a class=\"md-page-nav-prev\" href=\"../\">")
-        @test contains(api_html, "<a class=\"md-page-nav-next\" href=\"../outputs/\">")
-        @test contains(api_html, "<span class=\"md-page-nav-title\">Outputs</span>")
-        @test !contains(out_html, "md-page-nav-next")
+        for html in (index_html, api_html, out_html)
+            @test !contains(html, "md-page-nav")
+        end
+        css = read(joinpath(build_dir, "assets", "materialdocs.css"), String)
+        @test !contains(css, "md-page-nav")
     end
 
     # REQ-P12 (Must): A navigation section nested at level `collapselevel` or

@@ -172,7 +172,6 @@ hr {
 .md-copy-btn,
 .md-search-item,
 .md-docstring-source,
-.md-page-nav a,
 .md-text-btn {
   position: relative;
   isolation: isolate;
@@ -187,7 +186,6 @@ hr {
 .md-copy-btn::before,
 .md-search-item::before,
 .md-docstring-source::before,
-.md-page-nav a::before,
 .md-text-btn::before {
   content: "";
   position: absolute;
@@ -209,7 +207,6 @@ hr {
 .md-copy-btn:hover::before,
 .md-search-item:hover::before,
 .md-docstring-source:hover::before,
-.md-page-nav a:hover::before,
 .md-text-btn:hover::before {
   opacity: var(--md-sys-state-hover-opacity);
 }
@@ -223,7 +220,6 @@ hr {
 .md-copy-btn:focus-visible::before,
 .md-search-item:focus-visible::before,
 .md-docstring-source:focus-visible::before,
-.md-page-nav a:focus-visible::before,
 .md-text-btn:focus-visible::before {
   opacity: var(--md-sys-state-focus-opacity);
 }
@@ -237,7 +233,6 @@ hr {
 .md-copy-btn:active::before,
 .md-search-item:active::before,
 .md-docstring-source:active::before,
-.md-page-nav a:active::before,
 .md-text-btn:active::before {
   opacity: var(--md-sys-state-pressed-opacity);
 }
@@ -264,7 +259,6 @@ select:focus-visible,
 .md-search-item:focus-visible,
 .md-docstring-source:focus-visible,
 .md-nav-section-title:focus-visible,
-.md-page-nav a:focus-visible,
 .md-text-btn:focus-visible {
   outline: 3px solid var(--md-sys-color-secondary);
   outline-offset: 2px;

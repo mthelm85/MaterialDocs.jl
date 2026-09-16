@@ -197,7 +197,6 @@ function render_page(doc::Documenter.Document, settings::Material3,
 
     println(io, "      </article>")
 
-    _render_page_nav(io, doc, settings, page, root_prefix)
 
     # Footer inside content column so it scrolls with the article
     println(io, "      <footer class=\"md-footer\">")
@@ -516,7 +515,6 @@ const ICON_PATHS = Dict{Symbol,String}(
     :close => "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
     :arrow_back => "M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z",
     :arrow_drop_down => "M7 10l5 5 5-5z",
-    :arrow_forward => "M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z",
     :edit => "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 000-1.41l-2.34-2.34a.996.996 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z",
     :code => "M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z",
     :check => "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
@@ -789,28 +787,4 @@ function _edit_link(doc::Documenter.Document, settings::Material3, page::Documen
     url === nothing && return nothing
     host = _repo_host(url)
     return ("$verb source" * (isempty(host) ? "" : " on $host"), url, icon)
-end
-
-"""Links to the previous and next pages in navigation order, as Documenter shows them."""
-function _render_page_nav(io::IO, doc::Documenter.Document, settings::Material3,
-                          page::Documenter.Page, root_prefix::AbstractString)
-    src = replace(relpath(page.source, doc.user.source), '\\' => '/')
-    idx = findfirst(n -> n.page !== nothing && replace(n.page, '\\' => '/') == src, doc.internal.navlist)
-    idx === nothing && return
-    navnode = doc.internal.navlist[idx]
-    navnode.prev === nothing && navnode.next === nothing && return
-
-    println(io, "      <nav class=\"md-page-nav\" aria-label=\"Previous and next pages\">")
-    for (target, cls, label, icon) in ((navnode.prev, "md-page-nav-prev", "Previous", :arrow_back),
-                                       (navnode.next, "md-page-nav-next", "Next", :arrow_forward))
-        target === nothing && continue
-        target_page = something(target.page)
-        href = root_prefix * _nav_href(target_page, settings.html.prettyurls)
-        title = _page_title_from_page(doc.blueprint.pages[target_page])
-        println(io, "        <a class=\"$cls\" href=\"", _html_escape(href), "\">",
-                _icon(icon, "md-page-nav-icon"),
-                "<span class=\"md-page-nav-text\"><span class=\"md-page-nav-label\">$label</span>",
-                "<span class=\"md-page-nav-title\">", _html_escape(title), "</span></span></a>")
-    end
-    println(io, "      </nav>")
 end
