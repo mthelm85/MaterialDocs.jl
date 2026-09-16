@@ -12,9 +12,9 @@ token system — colors, typography, shape, elevation, and motion — generated 
 build time from a single seed color.
 
 Pure Julia, with no Node.js or JavaScript toolchain. The output is a static site
-you can host anywhere. Pages load their fonts from Google Fonts and syntax
-highlighting from a CDN, so readers without network access see system fonts and
-unhighlighted code.
+you can host anywhere. Pages load their fonts from Google Fonts, and syntax
+highlighting and math typesetting from a CDN, so readers without network access
+see system fonts, unhighlighted code, and raw LaTeX.
 
 **[MaterialDocs' own documentation](https://mthelm85.github.io/MaterialDocs.jl/dev/) is built with MaterialDocs** — the site is the demo.
 
@@ -65,6 +65,8 @@ without edits.
   them locally, and injects a panel that re-themes the real pages as you drag a
   color picker — then gives you the theme as TOML to save.
 - **Light and dark modes**, following the system preference or an explicit toggle.
+- **Everything Documenter renders.** Docstrings, doctests, `@example` output
+  (HTML, SVG, PNG, JPEG, GIF, WebP, LaTeX, Markdown), and math via KaTeX.
 - **MD3 search.** A search bar that expands into a docked search view on wide
   windows and a full-screen view on narrow ones. Entirely client-side.
 - **Version selector and repository link**, wired to the metadata `deploydocs`

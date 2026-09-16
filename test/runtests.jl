@@ -6,6 +6,9 @@ using Sockets
 using Aqua
 using JET
 
+struct UnknownFixtureElement <: Documenter.MarkdownAST.AbstractInline end
+Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
+
 @testset "MaterialDocs.jl" begin
     @testset "Code quality (Aqua.jl)" begin
         Aqua.test_all(MaterialDocs)
@@ -418,6 +421,7 @@ using JET
             pages = [
                 "Home" => "index.md",
                 "API" => "api.md",
+                "Outputs" => "outputs.md",
             ],
             root = fixtures_dir,
             source = "src",
@@ -544,6 +548,80 @@ using JET
 
         # Root prefix for nested prettyurl (api/index.html → ../ to reach root)
         @test contains(api_html, "href=\"../assets/materialdocs.css?v=")
+    end
+
+    # ── Content real packages rely on ──────────────────────────────────
+    #
+    # REQ-M1 (Must): Where a page contains math, the page shall load KaTeX and
+    #   typeset every math element.
+    # REQ-M2 (Must): Where a page contains no math, the page shall not load KaTeX.
+    # REQ-M3 (Must): When an @example result's richest representation is
+    #   image/webp, image/gif or image/jpeg, the writer shall render it as an image.
+    # REQ-M4 (Must): When an @example result's richest representation is
+    #   text/latex or text/markdown, the writer shall render it as math or
+    #   formatted Markdown rather than plain text.
+    # REQ-S1 (Should): When an @example result is SVG, the writer shall embed it
+    #   as an image, so element ids in one plot cannot collide with another's.
+    # REQ-S2 (Should): When the writer meets an element type it cannot render,
+    #   it shall render the element's children and warn once per type.
+    # REQ-S3 (Should): When a page uses `[text](@id name)`, the writer shall
+    #   emit an element with that id.
+    # REQ-S4 (Should): The writer shall take a code block's highlight language
+    #   from the first word of its info string.
+
+    @testset "Integration: math is typeset" begin
+        build_dir = joinpath(@__DIR__, "fixtures", "build")
+        index_html = read(joinpath(build_dir, "index.html"), String)
+        api_html = read(joinpath(build_dir, "api", "index.html"), String)
+
+        @test contains(index_html, "katex.min.js")
+        @test contains(index_html, "katex.min.css")
+        @test contains(index_html, "katex.render(")
+        @test !contains(api_html, "katex")
+    end
+
+    @testset "Integration: rich @example outputs" begin
+        out_html = read(joinpath(@__DIR__, "fixtures", "build", "outputs", "index.html"), String)
+
+        @test contains(out_html, "<img src=\"data:image/jpeg;base64,/9j/4A==\"")
+        @test contains(out_html, "<img src=\"data:image/gif;base64,")
+        @test contains(out_html, "<img src=\"data:image/webp;base64,")
+
+        @test contains(out_html, "src=\"data:image/svg+xml;base64,")
+        @test !contains(out_html, "<rect id=\"clip1\"")
+
+        @test contains(out_html, "md-math-display")
+        @test contains(out_html, "\\alpha^2 + \\beta^2")
+        @test contains(out_html, "katex.min.js")
+
+        @test contains(out_html, "<strong>markdown</strong>")
+        # No result on this page should fall back to its text/plain form
+        @test !contains(out_html, "md-output-text")
+    end
+
+    @testset "Integration: inline anchors and code languages" begin
+        out_html = read(joinpath(@__DIR__, "fixtures", "build", "outputs", "index.html"), String)
+
+        @test contains(out_html, "<span id=\"inline-anchor\">This sentence is a link target</span>")
+        @test contains(out_html, "<code class=\"language-julia\">")
+        @test !contains(out_html, "language-julia filter")
+    end
+
+    @testset "Unsupported elements warn once and keep their content" begin
+        fixtures_dir = joinpath(@__DIR__, "fixtures")
+        doc = Documenter.Document(; root = fixtures_dir, source = "src", build = "build",
+                                  format = [Material3()], remotes = nothing)
+        page = Documenter.Page(joinpath(fixtures_dir, "src", "index.md"),
+                               joinpath(fixtures_dir, "build", "index.html"), fixtures_dir)
+        ctx = MaterialDocs.DomifyContext(IOBuffer(), doc, page, "", Material3())
+
+        node = Documenter.MarkdownAST.Node(UnknownFixtureElement())
+        push!(node.children, Documenter.MarkdownAST.Node(Documenter.MarkdownAST.Text("kept text")))
+
+        @test_logs (:warn, r"UnknownFixtureElement") MaterialDocs.domify(ctx, node)
+        @test contains(String(take!(ctx.io)), "kept text")
+        # Second encounter in the same build: no further warning
+        @test_logs MaterialDocs.domify(ctx, node)
     end
 
     @testset "Utility: _nav_href" begin

@@ -55,8 +55,9 @@ function render(doc::Documenter.Document, settings::Material3)
     nav_ctx = build_nav_context(doc)
 
     # 7. Render each page
+    state = RenderState()
     for (src, page) in doc.blueprint.pages
-        render_page(doc, settings, page, nav_ctx, light_scheme, dark_scheme)
+        render_page(doc, settings, page, nav_ctx, light_scheme, dark_scheme; state)
     end
 
     # 8. Build search index

@@ -6,12 +6,27 @@ renders it to semantic HTML with MD3 class names. A `DomifyContext` carries
 the shared state needed across the tree walk.
 =#
 
+import Base64
 import Documenter
 import MarkdownAST
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Context
 # ─────────────────────────────────────────────────────────────────────────────
+
+"""
+    RenderState
+
+Mutable state gathered while rendering. `math` records whether the current page
+contains math, so KaTeX is only loaded where it is needed. `warned` holds the
+element types already reported as unsupported, shared across a whole build so
+each is reported once.
+"""
+mutable struct RenderState
+    math::Bool
+    warned::Set{DataType}
+end
+RenderState() = RenderState(false, Set{DataType}())
 
 """
     DomifyContext
@@ -24,7 +39,10 @@ struct DomifyContext
     page::Documenter.Page
     root_prefix::String
     settings::Material3
+    state::RenderState
 end
+DomifyContext(io, doc, page, root_prefix, settings) =
+    DomifyContext(io, doc, page, root_prefix, settings, RenderState())
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Entry point
@@ -40,8 +58,18 @@ function domify(ctx::DomifyContext, node)
     domify(ctx, node, node.element)
 end
 
-"""Fallback — render children when no specific method exists."""
-function domify(ctx::DomifyContext, node, ::MarkdownAST.AbstractElement)
+"""
+Fallback — render children when no specific method exists.
+
+Element types from Documenter extensions (citations, diagrams, …) land here.
+Their text survives but their formatting does not, so say so once per type.
+"""
+function domify(ctx::DomifyContext, node, elem::MarkdownAST.AbstractElement)
+    T = typeof(elem)
+    if !(T in ctx.state.warned)
+        push!(ctx.state.warned, T)
+        @warn "MaterialDocs has no renderer for $T; rendering its content without formatting" page = ctx.page.source
+    end
     domify_children(ctx, node)
 end
 
@@ -81,8 +109,8 @@ end
 
 function domify(ctx::DomifyContext, node, elem::MarkdownAST.CodeBlock)
     io = ctx.io
-    lang = elem.info
-    lang_attr = isempty(lang) ? "" : " class=\"language-$lang\""
+    lang = _codelang(elem.info)
+    lang_attr = isempty(lang) ? "" : " class=\"language-$(_html_escape(lang))\""
     println(io, "<div class=\"md-code-block\">")
     println(io, "<button class=\"md-copy-btn\" title=\"Copy to clipboard\" aria-label=\"Copy code\">",
             "<span class=\"md-copy-icon\">⧉</span><span class=\"md-copy-feedback\">Copied!</span></button>")
@@ -142,8 +170,12 @@ function domify(ctx::DomifyContext, node, elem::MarkdownAST.FootnoteDefinition)
     println(io, "</div>")
 end
 
+"""The highlight language of a code block: the first word of its info string."""
+_codelang(info::AbstractString) = something(match(r"^\s*(\S*)", info))[1]
+
 function domify(ctx::DomifyContext, node, elem::MarkdownAST.DisplayMath)
     io = ctx.io
+    ctx.state.math = true
     println(io, "<div class=\"md-math md-math-display\">")
     println(io, "\\[", _html_escape(elem.math), "\\]")
     println(io, "</div>")
@@ -274,6 +306,7 @@ function domify(ctx::DomifyContext, node, elem::MarkdownAST.FootnoteLink)
 end
 
 function domify(ctx::DomifyContext, node, elem::MarkdownAST.InlineMath)
+    ctx.state.math = true
     print(ctx.io, "<span class=\"md-math md-math-inline\">\\(", _html_escape(elem.math), "\\)</span>")
 end
 
@@ -383,21 +416,35 @@ function domify(ctx::DomifyContext, node, elem::Documenter.MultiOutputElement)
     io = ctx.io
     result = elem.element
     if result isa Dict
-        # MIME-dispatched output from @example blocks
-        # Prefer text/html, then image/svg+xml, then image/png, then text/plain
+        # MIME-dispatched output from @example blocks, richest representation
+        # first — the same order Documenter's HTML writer uses
+        binary = findfirst(t -> haskey(result, MIME("image/$t")), _BINARY_IMAGE_TYPES)
         if haskey(result, MIME"text/html"())
             println(io, "<div class=\"md-output md-output-html\">")
             println(io, result[MIME"text/html"()])
             println(io, "</div>")
         elseif haskey(result, MIME"image/svg+xml"())
-            println(io, "<div class=\"md-output md-output-svg\">")
-            println(io, result[MIME"image/svg+xml"()])
-            println(io, "</div>")
-        elseif haskey(result, MIME"image/png"())
+            # Embedded as an image rather than inline, so ids inside one plot
+            # (clip paths, gradients) cannot collide with another's on the page
+            svg = _with_svg_xmlns(result[MIME"image/svg+xml"()])
             println(io, "<div class=\"md-output md-output-img\">")
-            imgdata = result[MIME"image/png"()]
-            println(io, "<img src=\"data:image/png;base64,", imgdata, "\">")
+            println(io, "<img src=\"data:image/svg+xml;base64,", Base64.base64encode(svg),
+                    "\" alt=\"Example block output\">")
             println(io, "</div>")
+        elseif binary !== nothing
+            # Documenter has already base64-encoded binary representations
+            t = _BINARY_IMAGE_TYPES[binary]
+            println(io, "<div class=\"md-output md-output-img\">")
+            println(io, "<img src=\"data:image/", t, ";base64,", result[MIME("image/$t")],
+                    "\" alt=\"Example block output\">")
+            println(io, "</div>")
+        elseif haskey(result, MIME"text/latex"())
+            has_math, latex = _strip_latex_math_delimiters(result[MIME"text/latex"()])
+            nodes = has_math ? [MarkdownAST.Node(MarkdownAST.DisplayMath(latex))] :
+                               Documenter.mdparse(latex; mode = :blocks)
+            foreach(n -> domify(ctx, n), nodes)
+        elseif haskey(result, MIME"text/markdown"())
+            foreach(n -> domify(ctx, n), Documenter.mdparse(result[MIME"text/markdown"()]; mode = :blocks))
         elseif haskey(result, MIME"text/plain"())
             println(io, "<pre class=\"md-output md-output-text\"><code>")
             print(io, _html_escape(result[MIME"text/plain"()]))
@@ -407,6 +454,27 @@ function domify(ctx::DomifyContext, node, elem::Documenter.MultiOutputElement)
         # Fallback: render children if it's a node tree
         domify_children(ctx, node)
     end
+end
+
+const _BINARY_IMAGE_TYPES = ("png", "webp", "gif", "jpeg")
+
+"""Add the `xmlns` attribute an SVG needs to load from a data URI, if missing."""
+function _with_svg_xmlns(svg::AbstractString)
+    tag = match(r"<svg[^>]*>", svg)
+    (tag === nothing || occursin("xmlns", tag.match)) && return String(svg)
+    return replace(svg, "<svg" => "<svg xmlns=\"http://www.w3.org/2000/svg\"", count = 1)
+end
+
+"""
+Unwrap LaTeX already delimited by `\\[ … \\]`, `\$ … \$` or `\$\$ … \$\$`.
+Returns whether delimiters were found, and the inner source.
+"""
+function _strip_latex_math_delimiters(latex::AbstractString)
+    m = match(r"\s*\\\[(.*)\\\]\s*"s, latex)
+    m !== nothing && return true, String(m[1])
+    m = match(r"^\s*(\${1,2})([^\$]*)\1\s*$"s, latex)
+    m !== nothing && return true, String(m[2])
+    return false, String(latex)
 end
 
 function domify(ctx::DomifyContext, node, elem::Documenter.MultiCodeBlock)
@@ -429,6 +497,16 @@ function domify(ctx::DomifyContext, node, elem::Documenter.RawNode)
         println(ctx.io, elem.text)
     end
     # Other formats (e.g. :latex) are silently ignored
+end
+
+# `[text](@id name)` anchors arrived in Documenter 1.18
+if isdefined(Documenter, :AnchoredInline)
+    function domify(ctx::DomifyContext, node, elem::Documenter.AnchoredInline)
+        id = lstrip(Documenter.anchor_fragment(elem.anchor), '#')
+        print(ctx.io, "<span id=\"", _html_escape(id), "\">")
+        domify_children(ctx, node)
+        print(ctx.io, "</span>")
+    end
 end
 
 function domify(ctx::DomifyContext, node, elem::Documenter.ContentsNode)

@@ -9,14 +9,16 @@ import Documenter
 import MarkdownAST
 
 """
-    render_page(doc, settings, page, nav_ctx, light_scheme, dark_scheme)
+    render_page(doc, settings, page, nav_ctx, light_scheme, dark_scheme; state)
 
 Render a single documentation page to an HTML file in the build directory.
+`state` is shared across a build's pages so unsupported elements warn once.
 """
 function render_page(doc::Documenter.Document, settings::Material3,
                      page::Documenter.Page, nav_ctx::NavContext,
                      light_scheme::Dict{Symbol,String},
-                     dark_scheme::Dict{Symbol,String})
+                     dark_scheme::Dict{Symbol,String};
+                     state::RenderState = RenderState())
     io = IOBuffer()
 
     # Compute page metadata
@@ -179,7 +181,7 @@ function render_page(doc::Documenter.Document, settings::Material3,
     println(io, "      <article class=\"md-article\">")
 
     # Render page content via domify dispatch
-    _render_article_content(io, page, doc, root_prefix, settings)
+    _render_article_content(io, page, doc, root_prefix, settings, state)
 
     println(io, "      </article>")
 
@@ -208,6 +210,14 @@ function render_page(doc::Documenter.Document, settings::Material3,
     println(io, "  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/julia.min.js\"></script>")
     println(io, "  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/julia-repl.min.js\"></script>")
     println(io, "  <script>hljs.highlightAll();</script>")
+
+    # Math typesetting, only on pages that contain math. Each element holds
+    # its TeX between \( \) or \[ \] delimiters, readable if KaTeX never loads.
+    if state.math
+        println(io, "  <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/KaTeX/$(KATEX_VERSION)/katex.min.css\">")
+        println(io, "  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/KaTeX/$(KATEX_VERSION)/katex.min.js\"></script>")
+        println(io, "  <script>", KATEX_RENDER_JS, "</script>")
+    end
 
     # Version metadata written by Documenter's deploydocs(). Absent on local
     # builds — versions.js guards on `typeof`, so a 404 here is harmless.
@@ -358,12 +368,22 @@ end
 """Render article content from page AST via domify dispatch."""
 function _render_article_content(io::IO, page::Documenter.Page,
                                  doc::Documenter.Document, root_prefix::String,
-                                 settings::Material3)
+                                 settings::Material3,
+                                 state::RenderState = RenderState())
     buf = IOBuffer()
-    ctx = DomifyContext(buf, doc, page, root_prefix, settings)
+    state.math = false
+    ctx = DomifyContext(buf, doc, page, root_prefix, settings, state)
     domify(ctx, page.mdast)
     write(io, take!(buf))
 end
+
+const KATEX_VERSION = "0.18.6"
+
+const KATEX_RENDER_JS = raw"""
+document.querySelectorAll('.md-math').forEach(function (el) {
+  var tex = el.textContent.trim().replace(/^\\[\[(]/, '').replace(/\\[\])]$/, '');
+  katex.render(tex, el, { displayMode: el.classList.contains('md-math-display'), throwOnError: false });
+});"""
 
 
 # NOTE: AST → HTML dispatch is handled by domify.jl (DomifyContext + domify methods).

@@ -50,6 +50,8 @@ That is the whole integration. MaterialDocs registers itself through Documenter'
   panel that re-themes it as you drag a color picker, then gives you the theme as
   TOML to save. See [Theme Editor](@ref).
 - **Light and dark modes**, following the system preference or a toggle.
+- **Everything Documenter renders.** Docstrings, doctests, `@example` output
+  (HTML, SVG, PNG, JPEG, GIF, WebP, LaTeX, Markdown), and math via KaTeX.
 - **MD3 search.** A search bar that expands into a docked search view on wide
   windows and a full-screen view on narrow ones.
 - **Version selector and repository link** in the navbar, wired to the metadata
@@ -66,8 +68,14 @@ Because every stylesheet references `var(--md-sys-*)` custom properties and neve
 a literal color, changing the tokens re-themes the entire site. That is what makes
 the live editor possible.
 
-Pages load their fonts from Google Fonts and syntax highlighting from a CDN, so
-readers without network access see system fonts and unhighlighted code.
+Pages load their fonts from Google Fonts, and syntax highlighting and math
+typesetting ([KaTeX](https://katex.org), only on pages with math) from a CDN, so
+readers without network access see system fonts, unhighlighted code, and raw
+LaTeX.
+
+Documenter features that need a renderer of their own — typically from extension
+packages such as DocumenterCitations — have their text kept but not their
+formatting, and the build logs a warning naming each such element type once.
 
 ## Where to go next
 

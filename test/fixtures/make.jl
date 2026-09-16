@@ -9,6 +9,7 @@ makedocs(;
     pages = [
         "Home" => "index.md",
         "API" => "api.md",
+        "Outputs" => "outputs.md",
     ],
     root = @__DIR__,
     source = "src",
