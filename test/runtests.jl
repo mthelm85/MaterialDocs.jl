@@ -521,6 +521,7 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
                 sidebar_sitename = false,
                 edit_link = "main",
                 collapselevel = 1,
+                mathengine = Documenter.KaTeX(Dict(:macros => Dict("\\RR" => "\\mathbb{R}"))),
                 inventory_version = "1.2.3",
             ),
             modules = [MaterialDocs],
@@ -794,6 +795,39 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         @test contains(index_html, "katex.min.css")
         @test contains(index_html, "katex.render(")
         @test !contains(api_html, "katex")
+    end
+
+    # REQ-P13 (Must): Where a page contains math, the page shall typeset it with
+    #   the `mathengine` given: KaTeX with its config's render options (macros
+    #   etc.), MathJax2 or MathJax3 with their config and `url`, or nothing at
+    #   all for `mathengine = nothing`.
+    @testset "mathengine scripts" begin
+        katex = MaterialDocs._math_scripts(Documenter.KaTeX(Dict(:macros => Dict("\\RR" => "\\mathbb{R}"))))
+        @test contains(katex, "katex.min.js")
+        @test contains(katex, "katex.render(")
+        @test contains(katex, "\"macros\":{\"\\\\RR\":\"\\\\mathbb{R}\"}")
+        @test !contains(katex, "delimiters")  # auto-render option, not a render option
+
+        mj3 = MaterialDocs._math_scripts(Documenter.MathJax3())
+        @test contains(mj3, "window.MathJax = {")
+        @test contains(mj3, "mathjax/3.2.2/es5/tex-svg-full.js")
+        @test contains(MaterialDocs._math_scripts(Documenter.MathJax3(; url = "https://example.org/mj.js")),
+                       "https://example.org/mj.js")
+
+        mj2 = MaterialDocs._math_scripts(Documenter.MathJax2())
+        @test contains(mj2, "MathJax.Hub.Config(")
+        @test contains(mj2, "mathjax/2.7.9/MathJax.js?config=TeX-AMS_HTML")
+
+        @test MaterialDocs._math_scripts(nothing) == ""
+
+        # Config text can't close the <script> element early
+        @test !contains(MaterialDocs._math_scripts(Documenter.KaTeX(Dict(:macros => Dict("\\x" => "</script>")))),
+                        "</script><")
+    end
+
+    @testset "Integration: mathengine config reaches the page" begin
+        index_html = read(joinpath(@__DIR__, "fixtures", "build-options", "index.html"), String)
+        @test contains(index_html, "\"macros\":{\"\\\\RR\":\"\\\\mathbb{R}\"}")
     end
 
     @testset "Integration: rich @example outputs" begin

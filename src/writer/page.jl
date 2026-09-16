@@ -232,9 +232,7 @@ function render_page(doc::Documenter.Document, settings::Material3,
     # Math typesetting, only on pages that contain math. Each element holds
     # its TeX between \( \) or \[ \] delimiters, readable if KaTeX never loads.
     if state.math
-        println(io, "  <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/KaTeX/$(KATEX_VERSION)/katex.min.css\">")
-        println(io, "  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/KaTeX/$(KATEX_VERSION)/katex.min.js\"></script>")
-        println(io, "  <script>", KATEX_RENDER_JS, "</script>")
+        print(io, _math_scripts(html.mathengine))
     end
 
     # Version metadata written by Documenter's deploydocs(). Absent on local
@@ -396,12 +394,52 @@ function _render_article_content(io::IO, page::Documenter.Page,
 end
 
 const KATEX_VERSION = "0.18.6"
+const MATHJAX2_URL = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS_HTML"
+const MATHJAX3_URL = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.js"
 
+# Options of KaTeX's auto-render extension. MaterialDocs renders each math
+# element directly, so these don't apply; everything else is a render option.
+const KATEX_AUTORENDER_KEYS = (:delimiters, :ignoredTags, :ignoredClasses, :errorCallback, :preProcess)
+
+# `el` holds its TeX between \( \) or \[ \], readable if the engine never loads
 const KATEX_RENDER_JS = raw"""
 document.querySelectorAll('.md-math').forEach(function (el) {
   var tex = el.textContent.trim().replace(/^\\[\[(]/, '').replace(/\\[\])]$/, '');
-  katex.render(tex, el, { displayMode: el.classList.contains('md-math-display'), throwOnError: false });
+  katex.render(tex, el, Object.assign({ throwOnError: false }, MD_KATEX_OPTIONS,
+    { displayMode: el.classList.contains('md-math-display') }));
 });"""
+
+"""JSON for an inline <script>, with `</` escaped so it can't end the element."""
+_script_json(x) = replace(Documenter.JSDependencies.json_jsescape(x), "</" => "<\\/")
+
+"""
+    _math_scripts(engine) → String
+
+The tags that load and configure `mathengine`, mirroring Documenter.HTML:
+KaTeX with the render options from its config, MathJax 2 or 3 with their config
+and `url`, or nothing.
+"""
+_math_scripts(::Nothing) = ""
+
+function _math_scripts(engine::Documenter.KaTeX)
+    options = Dict(k => v for (k, v) in engine.config if !(k in KATEX_AUTORENDER_KEYS))
+    base = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/$(KATEX_VERSION)"
+    string("  <link rel=\"stylesheet\" href=\"$base/katex.min.css\">\n",
+           "  <script src=\"$base/katex.min.js\"></script>\n",
+           "  <script>var MD_KATEX_OPTIONS = ", _script_json(options), ";\n", KATEX_RENDER_JS, "</script>\n")
+end
+
+function _math_scripts(engine::Documenter.MathJax2)
+    url = isempty(engine.url) ? MATHJAX2_URL : engine.url
+    string("  <script type=\"text/x-mathjax-config\">MathJax.Hub.Config(", _script_json(engine.config), ");</script>\n",
+           "  <script src=\"", _html_escape(url), "\"></script>\n")
+end
+
+function _math_scripts(engine::Documenter.MathJax3)
+    url = isempty(engine.url) ? MATHJAX3_URL : engine.url
+    string("  <script>window.MathJax = ", _script_json(engine.config), ";</script>\n",
+           "  <script src=\"", _html_escape(url), "\" async></script>\n")
+end
 
 
 # NOTE: AST → HTML dispatch is handled by domify.jl (DomifyContext + domify methods).
