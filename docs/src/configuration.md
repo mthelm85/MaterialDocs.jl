@@ -61,11 +61,6 @@ Material3(footer = "Made with ❤️ and Julia")
 Deepest heading level shown in the on-this-page rail. Between `2` and `4`,
 default `3`.
 
-### `sidebar_collapsed`
-
-Start sidebar sections collapsed. Default `false`. Reader changes persist in
-`localStorage` either way.
-
 ### `repolink`
 
 The repository link in the navbar. Default `:auto`.
@@ -137,12 +132,4 @@ working in both light and dark mode:
   color: var(--md-sys-color-on-surface);
   border-radius: var(--md-sys-shape-corner-medium);
 }
-```
-
-### `analytics`
-
-A Google Analytics measurement ID:
-
-```julia
-Material3(analytics = "G-XXXXXXXXXX")
 ```

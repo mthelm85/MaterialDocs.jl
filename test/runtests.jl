@@ -114,18 +114,25 @@ using JET
         m3 = Material3()
         @test m3.theme === BUILTIN_THEMES[:default]
         @test m3.dark_mode == :auto
-        @test m3.sidebar_collapsed == false
         @test m3.toc_depth == 3
         @test m3.search == true
         @test m3.repolink === :auto
         @test m3.versions == true
-        @test m3.analytics === nothing
         @test m3.logo === nothing
         @test m3.favicon === nothing
         @test m3.footer === nothing
         @test isempty(m3.custom_css)
         @test isempty(m3.custom_js)
         @test m3.prettyurls == true
+    end
+
+    # REQ: The Material3 constructor shall not accept the unimplemented
+    # `sidebar_collapsed` or `analytics` keywords.
+    @testset "Material3 rejects removed options" begin
+        @test !hasfield(Material3, :sidebar_collapsed)
+        @test !hasfield(Material3, :analytics)
+        @test_throws MethodError Material3(sidebar_collapsed = true)
+        @test_throws MethodError Material3(analytics = "G-XXXXXXXXXX")
     end
 
     @testset "Material3 with symbol theme" begin
