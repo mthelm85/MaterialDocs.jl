@@ -466,7 +466,8 @@ hr {
 .md-copy-btn,
 .md-search-item,
 .md-docstring-source,
-.md-page-nav a {
+.md-page-nav a,
+.md-text-btn {
   position: relative;
   isolation: isolate;
 }
@@ -480,7 +481,8 @@ hr {
 .md-copy-btn::before,
 .md-search-item::before,
 .md-docstring-source::before,
-.md-page-nav a::before {
+.md-page-nav a::before,
+.md-text-btn::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -501,7 +503,8 @@ hr {
 .md-copy-btn:hover::before,
 .md-search-item:hover::before,
 .md-docstring-source:hover::before,
-.md-page-nav a:hover::before {
+.md-page-nav a:hover::before,
+.md-text-btn:hover::before {
   opacity: var(--md-sys-state-hover-opacity);
 }
 
@@ -514,7 +517,8 @@ hr {
 .md-copy-btn:focus-visible::before,
 .md-search-item:focus-visible::before,
 .md-docstring-source:focus-visible::before,
-.md-page-nav a:focus-visible::before {
+.md-page-nav a:focus-visible::before,
+.md-text-btn:focus-visible::before {
   opacity: var(--md-sys-state-focus-opacity);
 }
 
@@ -527,7 +531,8 @@ hr {
 .md-copy-btn:active::before,
 .md-search-item:active::before,
 .md-docstring-source:active::before,
-.md-page-nav a:active::before {
+.md-page-nav a:active::before,
+.md-text-btn:active::before {
   opacity: var(--md-sys-state-pressed-opacity);
 }
 
@@ -553,7 +558,8 @@ select:focus-visible,
 .md-search-item:focus-visible,
 .md-docstring-source:focus-visible,
 .md-nav-section-title:focus-visible,
-.md-page-nav a:focus-visible {
+.md-page-nav a:focus-visible,
+.md-text-btn:focus-visible {
   outline: 3px solid var(--md-sys-color-secondary);
   outline-offset: 2px;
   border-radius: var(--md-sys-shape-corner-extra-small);
@@ -1034,6 +1040,49 @@ del { color: var(--md-sys-color-on-surface-variant); }
     box-shadow: none;
   }
   .md-search-results { flex: 1; }
+}
+
+/* ── Text button (MD3) ── */
+.md-text-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: none;
+  color: var(--md-sys-color-primary);
+  font: inherit;
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* ── Outdated-version banner — filled card with supporting text and actions ── */
+.md-outdated-banner {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  margin: 1rem 0 0.5rem;
+  padding: 1rem 1rem 0.5rem;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+}
+.md-outdated-icon { color: var(--md-sys-color-tertiary); }
+.md-outdated-dev .md-outdated-icon { color: var(--md-sys-color-primary); }
+.md-outdated-text {
+  margin: 0;
+  font-size: var(--md-sys-typescale-body-medium-size);
+}
+.md-outdated-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 
@@ -1520,6 +1569,9 @@ del { color: var(--md-sys-color-on-surface-variant); }
   .md-sidebar,
   .md-toc,
   .md-footer,
+  .md-outdated-banner,
+  .md-page-nav,
+  .md-article-actions,
   .md-copy-btn,
   .md-theme-toggle,
   .md-heading-anchor {
