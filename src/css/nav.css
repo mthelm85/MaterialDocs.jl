@@ -370,7 +370,8 @@
   margin: 0.25rem 0 0.5rem 0.5rem;
 }
 
-/* ── Previous / next page — outlined cards ── */
+/* ── Previous / next page — MD3 outlined cards; state layer and focus ring
+   come from the shared rules in base.css ── */
 .md-page-nav {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -386,17 +387,9 @@
   border-radius: var(--md-sys-shape-corner-medium);
   color: var(--md-sys-color-on-surface);
   text-decoration: none;
-  position: relative;
-  overflow: hidden;
-  transition: background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
 }
-.md-page-nav a:hover {
-  background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
-}
-.md-page-nav a:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: 2px;
-}
+/* Keep the card shape while focused (the shared ring rule sets a small radius) */
+.md-page-nav a:focus-visible { border-radius: var(--md-sys-shape-corner-medium); }
 .md-page-nav-next {
   grid-column: 2;
   flex-direction: row-reverse;

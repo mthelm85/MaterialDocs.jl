@@ -120,7 +120,8 @@ for full details. How MaterialDocs renders each:
 | `sidebar_sitename` | `false` hides the site name in the navbar |
 | `inventory_version` | The version recorded in `objects.inv` (see below) |
 | `edit_link`, `edit_branch`, `disable_git` | An edit button on each page linking to its source; a page's absolute `@meta EditURL` overrides it |
-| `collapselevel`, `mathengine`, `ansicolor`, `warn_outdated`, `size_threshold`, `size_threshold_warn`, `size_threshold_ignore`, `example_size_threshold`, `search_size_threshold_warn` | Accepted and validated; not yet applied by MaterialDocs |
+| `collapselevel` | Sidebar sections at this nesting level or deeper start collapsed, except the one holding the current page |
+| `mathengine`, `ansicolor`, `warn_outdated`, `size_threshold`, `size_threshold_warn`, `size_threshold_ignore`, `example_size_threshold`, `search_size_threshold_warn` | Accepted and validated; not yet applied by MaterialDocs |
 | `prerender`, `node`, `highlightjs` | Accepted with a warning; they only affect Documenter's own theme |
 
 ### Custom CSS and JavaScript

@@ -174,7 +174,9 @@ function render_page(doc::Documenter.Document, settings::Material3,
 
         # ── Sidebar ──
         println(io, "    <nav class=\"md-sidebar\">")
-        _render_nav(io, nav_ctx, page.build, root_prefix, settings)
+        # Nav items hold source paths relative to docs/src ("guide/intro.md")
+        current_src = _normpath(relpath(page.source, doc.user.source))
+        _render_nav(io, nav_ctx, current_src, root_prefix, settings)
         println(io, "    </nav>")
     end
 
@@ -339,13 +341,16 @@ function _render_nav_item(io::IO, item::NavItem, current_page::String,
     indent = "      " * repeat("  ", depth)
 
     if item.path !== nothing
-        is_active = item.path == current_page
+        is_active = _normpath(item.path) == current_page
         active_class = is_active ? " class=\"md-nav-active\"" : ""
         href = root_prefix * _nav_href(item.path, settings.html.prettyurls)
         println(io, indent, "<a href=\"", href, "\"", active_class, ">", _html_escape(item.title), "</a>")
     elseif !isempty(item.children)
-        # Section header
-        println(io, indent, "<div class=\"md-nav-section\">")
+        # Section header. As in Documenter, sections at level `collapselevel`
+        # or deeper start collapsed unless they lead to the current page.
+        collapsed = depth + 1 >= settings.html.collapselevel &&
+                    !_nav_contains(item, current_page)
+        println(io, indent, "<div class=\"md-nav-section", collapsed ? " md-nav-collapsed" : "", "\">")
         println(io, indent, "  <span class=\"md-nav-section-title\">", _html_escape(item.title), "</span>")
     end
 
@@ -538,6 +543,14 @@ function _repo_icon(host::AbstractString)::Symbol
     host == "GitHub" ? :github :
     host == "GitLab" ? :gitlab : :git
 end
+
+"""Whether `item` or any of its descendants is the page at `path`."""
+_nav_contains(item::NavItem, path::AbstractString) =
+    (item.path !== nothing && _normpath(item.path) == path) ||
+    any(child -> _nav_contains(child, path), item.children)
+
+"""A path with forward slashes, so Windows and POSIX paths compare equal."""
+_normpath(path::AbstractString) = replace(path, '\\' => '/')
 
 """Count visible leaf pages in the nav context."""
 function _nav_leaf_count(nav_ctx::NavContext)::Int

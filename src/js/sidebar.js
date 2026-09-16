@@ -7,9 +7,14 @@
     (function(title) {
       var section = title.parentElement;
       var key = 'md-nav-' + title.textContent.trim().toLowerCase().replace(/\s+/g, '-');
-      // Restore collapsed state
-      if (localStorage.getItem(key) === 'collapsed') {
+      // The build sets the initial state from `collapselevel`; a reader's own
+      // choice overrides it, except that the section holding the current page
+      // is never hidden.
+      var saved = localStorage.getItem(key);
+      if (saved === 'collapsed' && !section.querySelector('.md-nav-active')) {
         section.classList.add('md-nav-collapsed');
+      } else if (saved === 'expanded') {
+        section.classList.remove('md-nav-collapsed');
       }
       title.style.cursor = 'pointer';
       title.setAttribute('role', 'button');

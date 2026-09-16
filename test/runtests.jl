@@ -520,10 +520,11 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
                 highlights = ["yaml"],
                 sidebar_sitename = false,
                 edit_link = "main",
+                collapselevel = 1,
                 inventory_version = "1.2.3",
             ),
             modules = [MaterialDocs],
-            pages = ["Home" => "index.md", "API" => "api.md", "Outputs" => "outputs.md"],
+            pages = ["Home" => "index.md", "Reference" => ["API" => "api.md", "Outputs" => "outputs.md"]],
             root = fixtures_dir, source = "src", build = "build-options",
             warnonly = true,
         )
@@ -583,6 +584,25 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         @test contains(api_html, "<a class=\"md-page-nav-next\" href=\"../outputs/\">")
         @test contains(api_html, "<span class=\"md-page-nav-title\">Outputs</span>")
         @test !contains(out_html, "md-page-nav-next")
+    end
+
+    # REQ-P12 (Must): A navigation section nested at level `collapselevel` or
+    #   deeper (top level is 1) shall start collapsed, unless it contains the
+    #   current page.
+    @testset "Integration: collapselevel" begin
+        build_dir = joinpath(@__DIR__, "fixtures", "build-options")
+        index_html = read(joinpath(build_dir, "index.html"), String)
+        api_html = read(joinpath(build_dir, "api", "index.html"), String)
+        @test contains(index_html, "<div class=\"md-nav-section md-nav-collapsed\">")
+        @test contains(api_html, "<div class=\"md-nav-section\">")
+        @test !contains(api_html, "md-nav-collapsed")
+    end
+
+    # REQ: The sidebar shall mark the current page's link as active.
+    @testset "Integration: current page is highlighted in the sidebar" begin
+        api_html = read(joinpath(@__DIR__, "fixtures", "build", "api", "index.html"), String)
+        @test contains(api_html, "<a href=\"../api/\" class=\"md-nav-active\">API</a>")
+        @test count("md-nav-active", api_html) == 1
     end
 
     @testset "Footer defaults" begin

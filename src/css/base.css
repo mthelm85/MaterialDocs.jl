@@ -171,7 +171,8 @@ hr {
 .md-toc-link,
 .md-copy-btn,
 .md-search-item,
-.md-docstring-source {
+.md-docstring-source,
+.md-page-nav a {
   position: relative;
   isolation: isolate;
 }
@@ -184,7 +185,8 @@ hr {
 .md-toc-link::before,
 .md-copy-btn::before,
 .md-search-item::before,
-.md-docstring-source::before {
+.md-docstring-source::before,
+.md-page-nav a::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -204,7 +206,8 @@ hr {
 .md-toc-link:hover::before,
 .md-copy-btn:hover::before,
 .md-search-item:hover::before,
-.md-docstring-source:hover::before {
+.md-docstring-source:hover::before,
+.md-page-nav a:hover::before {
   opacity: var(--md-sys-state-hover-opacity);
 }
 
@@ -216,7 +219,8 @@ hr {
 .md-toc-link:focus-visible::before,
 .md-copy-btn:focus-visible::before,
 .md-search-item:focus-visible::before,
-.md-docstring-source:focus-visible::before {
+.md-docstring-source:focus-visible::before,
+.md-page-nav a:focus-visible::before {
   opacity: var(--md-sys-state-focus-opacity);
 }
 
@@ -228,7 +232,8 @@ hr {
 .md-toc-link:active::before,
 .md-copy-btn:active::before,
 .md-search-item:active::before,
-.md-docstring-source:active::before {
+.md-docstring-source:active::before,
+.md-page-nav a:active::before {
   opacity: var(--md-sys-state-pressed-opacity);
 }
 
@@ -253,7 +258,8 @@ select:focus-visible,
 .md-copy-btn:focus-visible,
 .md-search-item:focus-visible,
 .md-docstring-source:focus-visible,
-.md-nav-section-title:focus-visible {
+.md-nav-section-title:focus-visible,
+.md-page-nav a:focus-visible {
   outline: 3px solid var(--md-sys-color-secondary);
   outline-offset: 2px;
   border-radius: var(--md-sys-shape-corner-extra-small);
