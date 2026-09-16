@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Configuration — MaterialDocs.jl</title>
-  <link rel="stylesheet" href="../assets/materialdocs.css?v=79ff37eb">
+  <link rel="stylesheet" href="../assets/materialdocs.css?v=fce81024">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
   <script>
     (function(){
@@ -149,6 +149,8 @@
 <h3 id="prettyurls" class="md-heading"><code class="md-code-inline">prettyurls</code><a href="#prettyurls" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
 <p>Directory-style URLs (<code class="md-code-inline">page/index.html</code>, linked as <code class="md-code-inline">./page/</code>). Default <code class="md-code-inline">true</code>.</p>
 <p>Set it to <code class="md-code-inline">false</code>, or condition it on CI, when the build needs to be opened from disk — see <a href="../getting-started/#Getting-Started">Getting Started</a>.</p>
+<h3 id="inventory_version" class="md-heading"><code class="md-code-inline">inventory_version</code><a href="#inventory_version" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
+<p>Every build writes <code class="md-code-inline">objects.inv</code>, the same cross-reference inventory <code class="md-code-inline">Documenter.HTML</code> writes, so packages using <a href="https://github.com/JuliaDocs/DocumenterInterLinks.jl">DocumenterInterLinks</a> can link into your documentation. <code class="md-code-inline">inventory_version</code> sets the version recorded in it. Default <code class="md-code-inline">nothing</code>, which reads <code class="md-code-inline">version</code> from the <code class="md-code-inline">Project.toml</code> one level above the docs root.</p>
 <h3 id="custom_css-and-custom_js" class="md-heading"><code class="md-code-inline">custom_css</code> and <code class="md-code-inline">custom_js</code><a href="#custom_css-and-custom_js" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
 <p>Extra files, relative to <code class="md-code-inline">docs/src</code>, copied into the build&#39;s <code class="md-code-inline">assets</code> folder and linked after the generated assets:</p>
 <div class="md-code-block">
@@ -188,6 +190,7 @@
             <a class="md-toc-link md-toc-h3" href="#search">search</a>
           <a class="md-toc-link md-toc-h2" href="#Output">Output</a>
             <a class="md-toc-link md-toc-h3" href="#prettyurls">prettyurls</a>
+            <a class="md-toc-link md-toc-h3" href="#inventory_version">inventory_version</a>
             <a class="md-toc-link md-toc-h3" href="#custom_css-and-custom_js">custom_css and custom_js</a>
       </div>
     </aside>
@@ -198,6 +201,6 @@
   <script>hljs.highlightAll();</script>
   <script src="../siteinfo.js"></script>
   <script src="../../versions.js"></script>
-  <script src="../assets/materialdocs.js?v=79ff37eb"></script>
+  <script src="../assets/materialdocs.js?v=fce81024"></script>
 </body>
 </html>
