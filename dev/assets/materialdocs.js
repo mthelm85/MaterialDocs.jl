@@ -116,10 +116,11 @@
     if (!btn) return;
     var block = btn.closest('.md-code-block');
     if (!block) return;
-    var code = block.querySelector('code');
-    if (!code) return;
+    // An @repl block holds one <code> per input and output
+    var codes = block.querySelectorAll('pre > code');
+    if (!codes.length) return;
 
-    var text = code.textContent;
+    var text = Array.prototype.map.call(codes, function(c) { return c.textContent; }).join('\n');
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text).then(function() {
         showCopied(btn);
