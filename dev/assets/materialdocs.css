@@ -514,7 +514,6 @@ hr {
 .md-copy-btn,
 .md-search-item,
 .md-docstring-source,
-.md-page-nav a,
 .md-text-btn {
   position: relative;
   isolation: isolate;
@@ -529,7 +528,6 @@ hr {
 .md-copy-btn::before,
 .md-search-item::before,
 .md-docstring-source::before,
-.md-page-nav a::before,
 .md-text-btn::before {
   content: "";
   position: absolute;
@@ -551,7 +549,6 @@ hr {
 .md-copy-btn:hover::before,
 .md-search-item:hover::before,
 .md-docstring-source:hover::before,
-.md-page-nav a:hover::before,
 .md-text-btn:hover::before {
   opacity: var(--md-sys-state-hover-opacity);
 }
@@ -565,7 +562,6 @@ hr {
 .md-copy-btn:focus-visible::before,
 .md-search-item:focus-visible::before,
 .md-docstring-source:focus-visible::before,
-.md-page-nav a:focus-visible::before,
 .md-text-btn:focus-visible::before {
   opacity: var(--md-sys-state-focus-opacity);
 }
@@ -579,7 +575,6 @@ hr {
 .md-copy-btn:active::before,
 .md-search-item:active::before,
 .md-docstring-source:active::before,
-.md-page-nav a:active::before,
 .md-text-btn:active::before {
   opacity: var(--md-sys-state-pressed-opacity);
 }
@@ -606,7 +601,6 @@ select:focus-visible,
 .md-search-item:focus-visible,
 .md-docstring-source:focus-visible,
 .md-nav-section-title:focus-visible,
-.md-page-nav a:focus-visible,
 .md-text-btn:focus-visible {
   outline: 3px solid var(--md-sys-color-secondary);
   outline-offset: 2px;
@@ -1507,49 +1501,6 @@ del { color: var(--md-sys-color-on-surface-variant); }
   margin: 0.25rem 0 0.5rem 0.5rem;
 }
 
-/* ── Previous / next page — MD3 outlined cards; state layer and focus ring
-   come from the shared rules in base.css ── */
-.md-page-nav {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-top: 3rem;
-}
-.md-page-nav a {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium);
-  color: var(--md-sys-color-on-surface);
-  text-decoration: none;
-}
-/* Keep the card shape while focused (the shared ring rule sets a small radius) */
-.md-page-nav a:focus-visible { border-radius: var(--md-sys-shape-corner-medium); }
-.md-page-nav-next {
-  grid-column: 2;
-  flex-direction: row-reverse;
-  text-align: right;
-}
-.md-page-nav-icon { color: var(--md-sys-color-primary); flex: none; }
-.md-page-nav-text { display: flex; flex-direction: column; min-width: 0; }
-.md-page-nav-label {
-  font-size: var(--md-sys-typescale-label-medium-size);
-  color: var(--md-sys-color-on-surface-variant);
-}
-.md-page-nav-title {
-  font-size: var(--md-sys-typescale-title-medium-size);
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-@media (max-width: 600px) {
-  .md-page-nav { grid-template-columns: 1fr; }
-  .md-page-nav-next { grid-column: 1; }
-}
-
 
 /* ── highlight.css ── */
 /* ── Syntax highlighting ──────────────────────────────────────────────────── */
@@ -1662,7 +1613,6 @@ del { color: var(--md-sys-color-on-surface-variant); }
   .md-toc,
   .md-footer,
   .md-outdated-banner,
-  .md-page-nav,
   .md-article-actions,
   .md-copy-btn,
   .md-theme-toggle,
