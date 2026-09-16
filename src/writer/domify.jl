@@ -6,6 +6,7 @@ renders it to semantic HTML with MD3 class names. A `DomifyContext` carries
 the shared state needed across the tree walk.
 =#
 
+import ANSIColoredPrinters
 import Base64
 import SHA
 import Documenter
@@ -462,9 +463,9 @@ function domify(ctx::DomifyContext, node, elem::Documenter.MultiOutputElement)
         elseif haskey(result, MIME"text/markdown"())
             foreach(n -> domify(ctx, n), Documenter.mdparse(result[MIME"text/markdown"()]; mode = :blocks))
         elseif haskey(result, MIME"text/plain"())
-            println(io, "<pre class=\"md-output md-output-text\"><code>")
-            print(io, _html_escape(result[MIME"text/plain"()]))
-            println(io, "</code></pre>")
+            print(io, "<pre class=\"md-output md-output-text\">")
+            print(io, _ansi_html(result[MIME"text/plain"()], "nohighlight ansi"))
+            println(io, "</pre>")
         end
     else
         # Fallback: render children if it's a node tree
@@ -523,12 +524,32 @@ function domify(ctx::DomifyContext, node, elem::Documenter.MultiCodeBlock)
     println(io, "<div class=\"md-code-block\">")
     println(io, "<button class=\"md-copy-btn\" title=\"Copy to clipboard\" aria-label=\"Copy code\">",
             "<span class=\"md-copy-icon\">⧉</span><span class=\"md-copy-feedback\">Copied!</span></button>")
-    print(io, "<pre><code class=\"language-", _html_escape(lang), "\">")
-    for code_block in elem.content
-        print(io, _html_escape(code_block.code))
+    # Documenter keeps an @repl block's inputs and outputs as child CodeBlocks,
+    # in order: `julia-repl` inputs, `documenter-ansi` outputs
+    print(io, "<pre>")
+    for child in node.children
+        block = child.element
+        block isa MarkdownAST.CodeBlock || continue
+        if block.info == "documenter-ansi"
+            print(io, _ansi_html(block.code, "nohighlight ansi md-repl-part"))
+        else
+            print(io, "<code class=\"language-", _html_escape(lang), " md-repl-part\">",
+                  _html_escape(block.code), "</code>")
+        end
     end
-    println(io, "</code></pre>")
+    println(io, "</pre>")
     println(io, "</div>")
+end
+
+"""
+    _ansi_html(text, class) → String
+
+`text` as a `<code>` element with its ANSI escape sequences turned into
+`<span class="sgrNN">` elements, styled by the `--md-ansi-*` tokens.
+"""
+function _ansi_html(text::AbstractString, class::AbstractString)
+    printer = ANSIColoredPrinters.HTMLPrinter(IOBuffer(text); root_tag = "code", root_class = class)
+    return sprint(show, MIME"text/html"(), printer)
 end
 
 function domify(ctx::DomifyContext, node, elem::Documenter.RawNode)

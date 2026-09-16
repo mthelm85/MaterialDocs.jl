@@ -80,6 +80,9 @@ struct Material3 <: Documenter.Writer
     logo::Union{String,Nothing}
     favicon::Union{String,Nothing}
     html::Documenter.HTML
+    # Mirrors html.ansicolor: Documenter reads `ansicolor` from any writer that
+    # declares ANSI support (see writer_supports_ansicolor below)
+    ansicolor::Bool
 end
 
 function Material3(;
@@ -127,7 +130,7 @@ function Material3(;
     Material3(resolved_theme, dark_mode, toc_depth, search, versions,
               logo === nothing ? nothing : String(logo),
               favicon === nothing ? nothing : String(favicon),
-              html)
+              html, html.ansicolor)
 end
 
 function Base.show(io::IO, m::Material3)
@@ -139,6 +142,9 @@ end
 # ─────────────────────────────────────────────────────────────────────────────
 # FormatSelector registration
 # ─────────────────────────────────────────────────────────────────────────────
+
+# @example and @repl output keeps its ANSI colors; MaterialDocs renders them
+Documenter.writer_supports_ansicolor(::Material3) = true
 
 abstract type MaterialFormat <: Documenter.FormatSelector end
 

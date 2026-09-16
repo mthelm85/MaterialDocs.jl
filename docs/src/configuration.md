@@ -126,7 +126,7 @@ for full details. How MaterialDocs renders each:
 | `example_size_threshold` | `@example` images at least this large are written to files beside the page; larger HTML output falls back to an image when one exists |
 | `search_size_threshold_warn` | Warns when the search index is larger |
 | `warn_outdated` | On deployed docs that aren't the newest release (or are the development version), a banner linking to the same page in the stable docs |
-| `ansicolor` | Accepted and validated; not yet applied by MaterialDocs |
+| `ansicolor` | Colored `@example` and `@repl` output, using ANSI colors toned for contrast in light and dark mode. As with `Documenter.HTML`, output is only captured in color when Julia runs with color enabled |
 | `prerender`, `node`, `highlightjs` | Accepted with a warning; they only affect Documenter's own theme |
 
 ### Custom CSS and JavaScript

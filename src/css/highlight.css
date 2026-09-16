@@ -54,3 +54,47 @@
 
 /* REPL prompt styling */
 .hljs-meta.prompt_ { color: var(--md-code-meta); user-select: none; }
+
+/* ── ANSI colors in @example / @repl output (tokens from _write_ansi_vars) ── */
+.ansi .sgr1 { font-weight: bolder; }
+.ansi .sgr2 { font-weight: lighter; }
+.ansi .sgr3 { font-style: italic; }
+.ansi .sgr4 { text-decoration: underline; }
+.ansi .sgr7 { color: var(--md-sys-color-surface); background: var(--md-sys-color-on-surface); }
+.ansi .sgr8, .ansi .sgr8 span { color: transparent; }
+.ansi .sgr9 { text-decoration: line-through; }
+.ansi .sgr30 { color: var(--md-ansi-black); }
+.ansi .sgr90 { color: var(--md-ansi-bright-black); }
+.ansi .sgr40 { background: var(--md-ansi-black); }
+.ansi .sgr100 { background: var(--md-ansi-bright-black); }
+.ansi .sgr31 { color: var(--md-ansi-red); }
+.ansi .sgr91 { color: var(--md-ansi-bright-red); }
+.ansi .sgr41 { background: var(--md-ansi-red); }
+.ansi .sgr101 { background: var(--md-ansi-bright-red); }
+.ansi .sgr32 { color: var(--md-ansi-green); }
+.ansi .sgr92 { color: var(--md-ansi-bright-green); }
+.ansi .sgr42 { background: var(--md-ansi-green); }
+.ansi .sgr102 { background: var(--md-ansi-bright-green); }
+.ansi .sgr33 { color: var(--md-ansi-yellow); }
+.ansi .sgr93 { color: var(--md-ansi-bright-yellow); }
+.ansi .sgr43 { background: var(--md-ansi-yellow); }
+.ansi .sgr103 { background: var(--md-ansi-bright-yellow); }
+.ansi .sgr34 { color: var(--md-ansi-blue); }
+.ansi .sgr94 { color: var(--md-ansi-bright-blue); }
+.ansi .sgr44 { background: var(--md-ansi-blue); }
+.ansi .sgr104 { background: var(--md-ansi-bright-blue); }
+.ansi .sgr35 { color: var(--md-ansi-magenta); }
+.ansi .sgr95 { color: var(--md-ansi-bright-magenta); }
+.ansi .sgr45 { background: var(--md-ansi-magenta); }
+.ansi .sgr105 { background: var(--md-ansi-bright-magenta); }
+.ansi .sgr36 { color: var(--md-ansi-cyan); }
+.ansi .sgr96 { color: var(--md-ansi-bright-cyan); }
+.ansi .sgr46 { background: var(--md-ansi-cyan); }
+.ansi .sgr106 { background: var(--md-ansi-bright-cyan); }
+.ansi .sgr37 { color: var(--md-ansi-white); }
+.ansi .sgr97 { color: var(--md-ansi-bright-white); }
+.ansi .sgr47 { background: var(--md-ansi-white); }
+.ansi .sgr107 { background: var(--md-ansi-bright-white); }
+
+/* @repl blocks: each input/output is its own <code>, stacked inside one <pre> */
+.md-code-block pre > code.md-repl-part { display: block; }

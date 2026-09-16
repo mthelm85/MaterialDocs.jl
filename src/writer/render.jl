@@ -148,6 +148,7 @@ function _write_css_tokens(io::IO, theme::ThemeConfig,
     _write_motion_vars(io)
     _write_state_vars(io)
     _write_highlight_vars(io, :light)
+    _write_ansi_vars(io, :light)
     println(io, "}")
 
     # ── System-preference dark ──
@@ -156,6 +157,7 @@ function _write_css_tokens(io::IO, theme::ThemeConfig,
         println(io, "  :root:not([data-theme=\"light\"]) {")
         _write_color_vars(io, dark, theme.custom_colors; indent="    ")
         _write_highlight_vars(io, :dark; indent="    ")
+        _write_ansi_vars(io, :dark; indent="    ")
         println(io, "  }")
         println(io, "}")
     end
@@ -165,6 +167,7 @@ function _write_css_tokens(io::IO, theme::ThemeConfig,
         println(io, "\n:root[data-theme=\"dark\"] {")
         _write_color_vars(io, dark, theme.custom_colors; indent="  ")
         _write_highlight_vars(io, :dark; indent="  ")
+        _write_ansi_vars(io, :dark; indent="  ")
         println(io, "}")
     end
 
@@ -299,6 +302,30 @@ function _write_motion_vars(io::IO)
 end
 
 """Write syntax highlighting color tokens (GitHub-inspired light/dark palettes)."""
+# HCT hues for the six ANSI chromatic colors
+const ANSI_HUES = ("red" => 25.0, "green" => 145.0, "yellow" => 75.0,
+                   "blue" => 263.0, "magenta" => 320.0, "cyan" => 208.0)
+
+"""
+Write `--md-ansi-*` tokens for colored @example/@repl output. Like MD3 color
+roles, each is a tone chosen for contrast against the code surface in that
+mode, rather than a fixed terminal color.
+"""
+function _write_ansi_vars(io::IO, mode::Symbol; indent::String = "  ")
+    # (normal, bright) tones: dark text on light surfaces, light text on dark ones
+    color_tones, black_tones, white_tones = mode == :light ?
+        ((30, 40), (10, 40), (40, 35)) : ((80, 90), (60, 70), (90, 100))
+    emit(name, palette, tones) = for (prefix, tone) in zip(("", "bright-"), tones)
+        println(io, indent, "--md-ansi-", prefix, name, ": ", to_hex(tone_at(palette, tone)), ";")
+    end
+    neutral = TonalPalette(0.0, 0.0)
+    emit("black", neutral, black_tones)
+    for (name, hue) in ANSI_HUES
+        emit(name, TonalPalette(hue, 56.0), color_tones)
+    end
+    emit("white", neutral, white_tones)
+end
+
 function _write_highlight_vars(io::IO, mode::Symbol; indent::String = "  ")
     # GitHub-inspired palettes that work well on both light and dark backgrounds
     palette = if mode == :light

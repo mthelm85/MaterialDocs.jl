@@ -676,6 +676,34 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         @test isfile(siteinfo) && contains(read(siteinfo, String), "documenter_version")
     end
 
+    # REQ-M7 (Must): The writer shall render an @repl block's inputs and outputs.
+    # REQ-S7 (Should): Material3 shall declare ANSI color support to Documenter,
+    #   so that where `ansicolor` is true (the default) @repl and @example output
+    #   keeps its colors, rendered with theme-aware ANSI color tokens.
+    @testset "Integration: @repl blocks and ANSI color" begin
+        index_html = read(joinpath(@__DIR__, "fixtures", "build", "index.html"), String)
+        @test contains(index_html, "<code class=\"language-julia-repl md-repl-part\">julia&gt; 1 + 1</code>")
+        @test contains(index_html, "<code class=\"nohighlight ansi md-repl-part\">2</code>")
+        # Both output paths go through the ANSI renderer. (Whether the captured
+        # output contains escapes depends on Julia's --color setting, as with
+        # Documenter.HTML, so the conversion itself is tested directly.)
+        @test contains(index_html, "<code class=\"nohighlight ansi md-repl-part\">repl-red</code>")
+        @test contains(index_html, "<pre class=\"md-output md-output-text\"><code class=\"nohighlight ansi\">example-yellow</code></pre>")
+        @test MaterialDocs._ansi_html("\e[31mred\e[39m <b>", "ansi") ==
+              "<code class=\"ansi\"><span class=\"sgr31\">red</span> &lt;b&gt;</code>"
+
+        @test Documenter.writer_supports_ansicolor(Material3())
+        @test Material3().ansicolor == true
+        @test Material3(ansicolor = false).ansicolor == false
+
+        m3 = Material3(theme = :ocean_depth, dark_mode = :toggle)
+        light, dark = hex_scheme_pair(m3.theme.seed)
+        css = MaterialDocs.build_css(m3.theme, light, dark, m3)
+        @test contains(css, "--md-ansi-red:")
+        @test contains(css, "--md-ansi-bright-cyan:")
+        @test contains(css, ".ansi .sgr31")
+    end
+
     @testset "Footer defaults" begin
         # REQ-P7: default attribution, and `nothing` removes the footer text
         @test contains(Documenter.MDFlatten.mdflatten(Material3().html.footer), "MaterialDocs.jl")
