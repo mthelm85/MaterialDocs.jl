@@ -1,3 +1,7 @@
+```@meta
+EditURL = "https://example.org/outputs-source.md"
+```
+
 # Outputs
 
 Example blocks whose results only offer one rich representation, the way real

@@ -182,10 +182,20 @@ function render_page(doc::Documenter.Document, settings::Material3,
     println(io, "    <main class=\"md-content\">")
     println(io, "      <article class=\"md-article\">")
 
+    edit = _edit_link(doc, settings, page)
+    if edit !== nothing
+        verb_title, url, icon = edit
+        println(io, "      <div class=\"md-article-actions\"><a class=\"md-icon-btn md-edit-link\" href=\"",
+                _html_escape(url), "\" title=\"", _html_escape(verb_title), "\" aria-label=\"",
+                _html_escape(verb_title), "\">", _icon(icon), "</a></div>")
+    end
+
     # Render page content via domify dispatch
     _render_article_content(io, page, doc, root_prefix, settings, state)
 
     println(io, "      </article>")
+
+    _render_page_nav(io, doc, settings, page, root_prefix)
 
     # Footer inside content column so it scrolls with the article
     println(io, "      <footer class=\"md-footer\">")
@@ -431,6 +441,9 @@ const ICON_PATHS = Dict{Symbol,String}(
     :close => "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
     :arrow_back => "M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z",
     :arrow_drop_down => "M7 10l5 5 5-5z",
+    :arrow_forward => "M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z",
+    :edit => "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 000-1.41l-2.34-2.34a.996.996 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z",
+    :code => "M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z",
     :check => "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
     :light_mode => "M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 000-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z",
     :dark_mode => "M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z",
@@ -660,4 +673,61 @@ function _find_build_asset(doc::Documenter.Document, name::AbstractString, exts)
         isfile(joinpath(doc.user.root, doc.user.build, rel)) && return rel
     end
     return nothing
+end
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Edit link and previous/next navigation
+# ─────────────────────────────────────────────────────────────────────────────
+
+"""
+    _edit_link(doc, settings, page) → (title, url, icon) or nothing
+
+The page's source link, following Documenter.HTML's rules: an absolute
+`@meta EditURL` is used as-is ("View source"); otherwise the source file is
+linked on the remote at `edit_link` ("Edit source"), or at the current commit
+for `edit_link = :commit` ("View source"), unless `edit_link = nothing` or
+`disable_git = true`.
+"""
+function _edit_link(doc::Documenter.Document, settings::Material3, page::Documenter.Page)
+    html = settings.html
+    editpath = get(page.globals.meta, :EditURL, page.source)
+    editpath === nothing && return nothing
+    editpath = string(editpath)
+    if Documenter.isabsurl(editpath)
+        host = _repo_host(editpath)
+        return ("View source" * (isempty(host) ? "" : " on $host"), editpath, :code)
+    end
+    (html.disable_git || html.edit_link === nothing) && return nothing
+    # A relative EditURL is relative to the page, while page.source is relative to the root
+    editpath == page.source || (editpath = joinpath(dirname(page.source), editpath))
+    verb, icon, rev = html.edit_link === :commit ? ("View", :code, nothing) :
+                                                    ("Edit", :edit, string(html.edit_link))
+    url = Documenter.edit_url(doc, editpath; rev)
+    url === nothing && return nothing
+    host = _repo_host(url)
+    return ("$verb source" * (isempty(host) ? "" : " on $host"), url, icon)
+end
+
+"""Links to the previous and next pages in navigation order, as Documenter shows them."""
+function _render_page_nav(io::IO, doc::Documenter.Document, settings::Material3,
+                          page::Documenter.Page, root_prefix::AbstractString)
+    src = replace(relpath(page.source, doc.user.source), '\\' => '/')
+    idx = findfirst(n -> n.page !== nothing && replace(n.page, '\\' => '/') == src, doc.internal.navlist)
+    idx === nothing && return
+    navnode = doc.internal.navlist[idx]
+    navnode.prev === nothing && navnode.next === nothing && return
+
+    println(io, "      <nav class=\"md-page-nav\" aria-label=\"Previous and next pages\">")
+    for (target, cls, label, icon) in ((navnode.prev, "md-page-nav-prev", "Previous", :arrow_back),
+                                       (navnode.next, "md-page-nav-next", "Next", :arrow_forward))
+        target === nothing && continue
+        target_page = something(target.page)
+        href = root_prefix * _nav_href(target_page, settings.html.prettyurls)
+        title = _page_title_from_page(doc.blueprint.pages[target_page])
+        println(io, "        <a class=\"$cls\" href=\"", _html_escape(href), "\">",
+                _icon(icon, "md-page-nav-icon"),
+                "<span class=\"md-page-nav-text\"><span class=\"md-page-nav-label\">$label</span>",
+                "<span class=\"md-page-nav-title\">", _html_escape(title), "</span></span></a>")
+    end
+    println(io, "      </nav>")
 end

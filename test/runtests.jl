@@ -519,6 +519,7 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
                 footer = "Maintained by [the team](https://example.org/team).",
                 highlights = ["yaml"],
                 sidebar_sitename = false,
+                edit_link = "main",
                 inventory_version = "1.2.3",
             ),
             modules = [MaterialDocs],
@@ -557,6 +558,31 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         @test contains(index_html, "highlight.js/11.9.0/languages/yaml.min.js")
         # REQ-S6
         @test !contains(index_html, "md-navbar-title")
+    end
+
+    # REQ-P9 (Must): Where the page source is in a known remote repository, and
+    #   neither `edit_link = nothing` nor `disable_git = true`, each page shall
+    #   link to its source at `edit_link` ("Edit source on <host>"), or at the
+    #   current commit for `edit_link = :commit` ("View source on <host>").
+    # REQ-P10 (Must): Where a page sets an absolute `@meta EditURL`, the page
+    #   shall link "View source" to it; where `EditURL = nothing`, no link.
+    # REQ-P11 (Must): Each page shall link to the previous and next pages in
+    #   navigation order, labelled with their titles.
+    @testset "Integration: edit links and page navigation" begin
+        build_dir = joinpath(@__DIR__, "fixtures", "build-options")
+        index_html = read(joinpath(build_dir, "index.html"), String)
+        api_html = read(joinpath(build_dir, "api", "index.html"), String)
+        out_html = read(joinpath(build_dir, "outputs", "index.html"), String)
+
+        @test contains(index_html, "href=\"https://github.com/mthelm85/MaterialDocs.jl/blob/main/test/fixtures/src/index.md\" title=\"Edit source on GitHub\"")
+        @test contains(out_html, "href=\"https://example.org/outputs-source.md\" title=\"View source\"")
+
+        @test contains(index_html, "<a class=\"md-page-nav-next\" href=\"./api/\">")
+        @test !contains(index_html, "md-page-nav-prev")
+        @test contains(api_html, "<a class=\"md-page-nav-prev\" href=\"../\">")
+        @test contains(api_html, "<a class=\"md-page-nav-next\" href=\"../outputs/\">")
+        @test contains(api_html, "<span class=\"md-page-nav-title\">Outputs</span>")
+        @test !contains(out_html, "md-page-nav-next")
     end
 
     @testset "Footer defaults" begin
