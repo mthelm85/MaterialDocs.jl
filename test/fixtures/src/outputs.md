@@ -44,6 +44,19 @@ OnlyMime{Symbol("text/latex")}("\$\$\\alpha^2 + \\beta^2\$\$")
 OnlyMime{Symbol("text/markdown")}("Rendered **markdown** output")
 ```
 
+```@example outputs
+struct HtmlWithPng end
+Base.show(io::IO, ::MIME"text/html", ::HtmlWithPng) = print(io, "<table class=\"big-html-png\">", "<tr><td>cell</td></tr>"^20, "</table>")
+Base.show(io::IO, ::MIME"image/png", ::HtmlWithPng) = write(io, UInt8[0x89, 0x50, 0x4e, 0x47])
+HtmlWithPng()
+```
+
+```@example outputs
+struct HtmlOnly end
+Base.show(io::IO, ::MIME"text/html", ::HtmlOnly) = print(io, "<table class=\"big-html-only\">", "<tr><td>cell</td></tr>"^20, "</table>")
+HtmlOnly()
+```
+
 ## Anchors and code
 
 [This sentence is a link target](@id inline-anchor).

@@ -56,9 +56,11 @@ function render(doc::Documenter.Document, settings::Material3)
 
     # 7. Render each page
     state = RenderState()
-    for (src, page) in doc.blueprint.pages
+    within_limits = map(collect(values(doc.blueprint.pages))) do page
         render_page(doc, settings, page, nav_ctx, light_scheme, dark_scheme; state)
     end
+    _warn_large_html_outputs(state, settings)
+    all(within_limits) || throw(Documenter.HTMLWriter.HTMLSizeThresholdError())
 
     # 8. Cross-project link inventory
     write_inventory(doc, settings)
@@ -66,10 +68,38 @@ function render(doc::Documenter.Document, settings::Material3)
     # 9. Build search index
     if settings.search
         search_index = build_search_index(doc)
-        write(joinpath(assets_dir, "search-index.json"), search_index)
+        index_path = joinpath(assets_dir, "search-index.json")
+        write(index_path, search_index)
+        limit = settings.html.search_size_threshold_warn
+        if filesize(index_path) > limit
+            fmt = Documenter.HTMLWriter.format_units
+            @warn """
+            Generated search index over search_size_threshold_warn limit:
+                Generated file size:        $(fmt(filesize(index_path)))
+                search_size_threshold_warn: $(fmt(limit))
+                Search index file:          $index_path"""
+        end
     end
 
     @info "MaterialDocs: build complete ($(length(doc.blueprint.pages)) pages)"
+end
+
+"""One warning for all @example HTML outputs over `example_size_threshold`, as Documenter gives."""
+function _warn_large_html_outputs(state::RenderState, settings::Material3)
+    outputs = state.large_html_outputs
+    isempty(outputs) && return
+    msg = """
+    For $(length(outputs)) @example blocks, the 'text/html' representation of the resulting
+    object is above the threshold (example_size_threshold: $(settings.html.example_size_threshold) bytes).
+    """
+    for fallback in unique(last.(outputs))
+        group = filter(o -> o[3] == fallback, outputs)
+        msg *= fallback === nothing ?
+            "- $(length(group)) blocks had no image MIME show() method representation as an alternative.\n  Sticking to the 'text/html' representation (largest block is $(maximum(o -> o[2], group)) bytes).\n" :
+            "- $(length(group)) blocks had '$fallback' fallback image representation available, using that.\n"
+        msg *= "  On pages: $(join(sort(unique(first.(group))), ", "))\n"
+    end
+    @warn msg
 end
 
 # ─────────────────────────────────────────────────────────────────────────────

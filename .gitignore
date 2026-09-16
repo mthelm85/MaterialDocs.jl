@@ -7,3 +7,4 @@ dev/
 .vscode/
 /test/fixtures/build-html/
 /test/fixtures/build-options/
+/test/fixtures/build-size/

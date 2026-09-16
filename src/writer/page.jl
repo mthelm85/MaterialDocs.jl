@@ -248,7 +248,38 @@ function render_page(doc::Documenter.Document, settings::Material3,
     println(io, "</html>")
 
     # Write the file
-    Base.write(out_file, String(take!(io)))
+    bytes = take!(io)
+    Base.write(out_file, bytes)
+    return _check_page_size(settings, _normpath(relpath(page.source, doc.user.source)),
+                            length(bytes), out_file)
+end
+
+"""
+    _check_page_size(settings, src, nbytes, path) → Bool
+
+Apply Documenter.HTML's page size limits: log a warning over
+`size_threshold_warn`, an error over `size_threshold` (returning `false` so the
+build fails), and nothing for pages in `size_threshold_ignore`.
+"""
+function _check_page_size(settings::Material3, src::AbstractString, nbytes::Integer,
+                          path::AbstractString)
+    html = settings.html
+    fmt = Documenter.HTMLWriter.format_units
+    msg(var) = """
+    Generated HTML over $(var) limit: $src
+        Generated file size: $(fmt(nbytes))
+        size_threshold_warn: $(fmt(html.size_threshold_warn))
+        size_threshold:      $(fmt(html.size_threshold))
+        HTML file:           $path"""
+    if src in _normpath.(html.size_threshold_ignore)
+        return true
+    elseif nbytes > html.size_threshold
+        @error msg(:size_threshold)
+        return false
+    elseif nbytes > html.size_threshold_warn
+        @warn msg(:size_threshold_warn)
+    end
+    return true
 end
 
 # ─────────────────────────────────────────────────────────────────────────────

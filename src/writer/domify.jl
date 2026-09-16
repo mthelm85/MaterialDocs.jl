@@ -7,6 +7,7 @@ the shared state needed across the tree walk.
 =#
 
 import Base64
+import SHA
 import Documenter
 import MarkdownAST
 
@@ -18,15 +19,18 @@ import MarkdownAST
     RenderState
 
 Mutable state gathered while rendering. `math` records whether the current page
-contains math, so KaTeX is only loaded where it is needed. `warned` holds the
-element types already reported as unsupported, shared across a whole build so
+contains math, so the math engine is only loaded where it is needed. `warned`
+holds the element types already reported as unsupported, and
+`large_html_outputs` the @example HTML outputs over `example_size_threshold`
+(page, bytes, fallback MIME or `nothing`) — both shared across a whole build so
 each is reported once.
 """
 mutable struct RenderState
     math::Bool
     warned::Set{DataType}
+    large_html_outputs::Vector{Tuple{String,Int,Union{String,Nothing}}}
 end
-RenderState() = RenderState(false, Set{DataType}())
+RenderState() = RenderState(false, Set{DataType}(), Tuple{String,Int,Union{String,Nothing}}[])
 
 """
     DomifyContext
@@ -417,26 +421,38 @@ function domify(ctx::DomifyContext, node, elem::Documenter.MultiOutputElement)
     result = elem.element
     if result isa Dict
         # MIME-dispatched output from @example blocks, richest representation
-        # first — the same order Documenter's HTML writer uses
+        # first — the same order and size rules Documenter's HTML writer uses
+        threshold = ctx.settings.html.example_size_threshold
         binary = findfirst(t -> haskey(result, MIME("image/$t")), _BINARY_IMAGE_TYPES)
-        if haskey(result, MIME"text/html"())
+        has_image = binary !== nothing || haskey(result, MIME"image/svg+xml"())
+        html = get(result, MIME"text/html"(), nothing)
+        if html !== nothing && (length(html) < threshold || !has_image)
+            if length(html) >= threshold
+                push!(ctx.state.large_html_outputs, (ctx.page.source, length(html), nothing))
+            end
             println(io, "<div class=\"md-output md-output-html\">")
-            println(io, result[MIME"text/html"()])
+            println(io, html)
             println(io, "</div>")
-        elseif haskey(result, MIME"image/svg+xml"())
-            # Embedded as an image rather than inline, so ids inside one plot
-            # (clip paths, gradients) cannot collide with another's on the page
-            svg = _with_svg_xmlns(result[MIME"image/svg+xml"()])
+        elseif has_image
+            if html !== nothing
+                fallback = binary === nothing ? "image/svg+xml" : "image/$(_BINARY_IMAGE_TYPES[binary])"
+                push!(ctx.state.large_html_outputs, (ctx.page.source, length(html), fallback))
+            end
+            src = if haskey(result, MIME"image/svg+xml"())
+                # An image rather than inline SVG, so ids inside one plot (clip
+                # paths, gradients) cannot collide with another's on the page
+                svg = _with_svg_xmlns(result[MIME"image/svg+xml"()])
+                something(_example_data_file(ctx, svg, "svg"),
+                          "data:image/svg+xml;base64," * Base64.base64encode(svg))
+            else
+                # Documenter has already base64-encoded binary representations
+                t = _BINARY_IMAGE_TYPES[something(binary)]
+                data = result[MIME("image/$t")]
+                something(_example_data_file(ctx, Base64.base64decode(data), t),
+                          "data:image/$t;base64,$data")
+            end
             println(io, "<div class=\"md-output md-output-img\">")
-            println(io, "<img src=\"data:image/svg+xml;base64,", Base64.base64encode(svg),
-                    "\" alt=\"Example block output\">")
-            println(io, "</div>")
-        elseif binary !== nothing
-            # Documenter has already base64-encoded binary representations
-            t = _BINARY_IMAGE_TYPES[binary]
-            println(io, "<div class=\"md-output md-output-img\">")
-            println(io, "<img src=\"data:image/", t, ";base64,", result[MIME("image/$t")],
-                    "\" alt=\"Example block output\">")
+            println(io, "<img src=\"", src, "\" alt=\"Example block output\">")
             println(io, "</div>")
         elseif haskey(result, MIME"text/latex"())
             has_math, latex = _strip_latex_math_delimiters(result[MIME"text/latex"()])
@@ -457,6 +473,30 @@ function domify(ctx::DomifyContext, node, elem::Documenter.MultiOutputElement)
 end
 
 const _BINARY_IMAGE_TYPES = ("png", "webp", "gif", "jpeg")
+
+"""
+    _example_data_file(ctx, data, ext) → filename or nothing
+
+When `data` is at least `example_size_threshold` bytes, write it beside the
+page's HTML file, named by content hash as Documenter.HTML names them, and
+return the file name (a valid href from the page). Otherwise `nothing`: embed it.
+"""
+function _example_data_file(ctx::DomifyContext, data, ext::AbstractString)
+    length(data) < ctx.settings.html.example_size_threshold && return nothing
+    src = _normpath(relpath(ctx.page.source, ctx.doc.user.source))
+    page_url = _page_url(ctx.settings, src)
+    slug = first(bytes2hex(SHA.sha1(data)), 8)
+    pagename = first(splitext(basename(src)))
+    filename = if ctx.settings.html.prettyurls
+        pagename == "index" ? "index-$slug.$ext" : "$slug.$ext"
+    else
+        "$pagename-$slug.$ext"
+    end
+    dir = joinpath(ctx.doc.user.root, ctx.doc.user.build, dirname(page_url))
+    mkpath(dir)
+    write(joinpath(dir, filename), data)
+    return filename
+end
 
 """Add the `xmlns` attribute an SVG needs to load from a data URI, if missing."""
 function _with_svg_xmlns(svg::AbstractString)

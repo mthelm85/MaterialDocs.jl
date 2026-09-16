@@ -521,6 +521,7 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
                 sidebar_sitename = false,
                 edit_link = "main",
                 collapselevel = 1,
+                example_size_threshold = 64,
                 mathengine = Documenter.KaTeX(Dict(:macros => Dict("\\RR" => "\\mathbb{R}"))),
                 inventory_version = "1.2.3",
             ),
@@ -604,6 +605,54 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         api_html = read(joinpath(@__DIR__, "fixtures", "build", "api", "index.html"), String)
         @test contains(api_html, "<a href=\"../api/\" class=\"md-nav-active\">API</a>")
         @test count("md-nav-active", api_html) == 1
+    end
+
+    # REQ-P14 (Must): When an @example image representation is at least
+    #   `example_size_threshold` bytes, the writer shall write it to a file beside
+    #   the page and link it, instead of embedding it.
+    # REQ-P15 (Must): When an @example text/html representation is at least
+    #   `example_size_threshold` bytes, the writer shall use an image
+    #   representation if one exists, otherwise the HTML, and warn once per build.
+    @testset "Integration: example_size_threshold" begin
+        build_dir = joinpath(@__DIR__, "fixtures", "build-options")
+        out_html = read(joinpath(build_dir, "outputs", "index.html"), String)
+
+        # The 4-byte JPEG stays inline; the ~90-byte SVG goes to a file
+        @test contains(out_html, "<img src=\"data:image/jpeg;base64,")
+        svg = match(r"<img src=\"([0-9a-f]{8}\.svg)\"", out_html)
+        @test svg !== nothing
+        @test svg !== nothing && isfile(joinpath(build_dir, "outputs", svg[1]))
+        # Large HTML with a PNG alternative uses the PNG; HTML-only stays HTML
+        @test !contains(out_html, "<table class=\"big-html-png\">")
+        @test contains(out_html, "<img src=\"data:image/png;base64,")
+        @test contains(out_html, "<table class=\"big-html-only\">")
+
+        # Main build uses the 8 KiB default: everything inline
+        main_html = read(joinpath(@__DIR__, "fixtures", "build", "outputs", "index.html"), String)
+        @test contains(main_html, "<table class=\"big-html-png\">")
+        @test contains(main_html, "data:image/svg+xml;base64,")
+    end
+
+    # REQ-P16 (Must): When a page's HTML exceeds `size_threshold_warn`, the build
+    #   shall warn; when it exceeds `size_threshold`, the build shall fail with
+    #   Documenter's HTMLSizeThresholdError, unless the page is listed in
+    #   `size_threshold_ignore`.
+    # REQ-P17 (Must): When the search index exceeds `search_size_threshold_warn`,
+    #   the build shall warn.
+    @testset "Integration: size thresholds" begin
+        fixtures_dir = joinpath(@__DIR__, "fixtures")
+        build_small(; kw...) = makedocs(;
+            sitename = "TestPackage.jl", format = Material3(; edit_link = nothing, kw...),
+            modules = [MaterialDocs], pages = ["Home" => "index.md"],
+            root = fixtures_dir, source = "src", build = "build-size",
+            warnonly = true, checkdocs = :none, doctest = false,
+        )
+        # Every .md file in src/ is rendered, not only those listed in `pages`
+        @test_throws Documenter.HTMLWriter.HTMLSizeThresholdError build_small(size_threshold = 2048, size_threshold_warn = 1024)
+        @test_logs (:warn, r"size_threshold_warn") match_mode = :any build_small(size_threshold_warn = 1024)
+        @test (build_small(size_threshold = 2048, size_threshold_warn = 1024, size_threshold_ignore = ["index.md", "api.md", "outputs.md"]); true)
+        @test_logs (:warn, r"search_size_threshold_warn") match_mode = :any build_small(search_size_threshold_warn = 16)
+        rm(joinpath(fixtures_dir, "build-size"); recursive = true, force = true)
     end
 
     @testset "Footer defaults" begin
