@@ -687,8 +687,12 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         # Both output paths go through the ANSI renderer. (Whether the captured
         # output contains escapes depends on Julia's --color setting, as with
         # Documenter.HTML, so the conversion itself is tested directly.)
-        @test contains(index_html, "<code class=\"nohighlight ansi md-repl-part\">repl-red</code>")
-        @test contains(index_html, "<pre class=\"md-output md-output-text\"><code class=\"nohighlight ansi\">example-yellow</code></pre>")
+        # With `julia --color=yes` (as on CI) the text arrives wrapped in a color span
+        @test occursin(r"<code class=\"nohighlight ansi md-repl-part\">(<span class=\"sgr31\">)?repl-red", index_html)
+        @test occursin(r"<pre class=\"md-output md-output-text\"><code class=\"nohighlight ansi\">(<span class=\"sgr33\">)?example-yellow", index_html)
+        if Base.get_have_color()
+            @test contains(index_html, "<span class=\"sgr31\">repl-red</span>")
+        end
         @test MaterialDocs._ansi_html("\e[31mred\e[39m <b>", "ansi") ==
               "<code class=\"ansi\"><span class=\"sgr31\">red</span> &lt;b&gt;</code>"
 
