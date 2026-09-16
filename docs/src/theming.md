@@ -48,8 +48,10 @@ format = Material3(theme = ThemeConfig(
 ))
 ```
 
-Fonts are [Google Fonts](https://fonts.google.com) family names, requested
-automatically at build time.
+Fonts are [Google Fonts](https://fonts.google.com) family names. Every page links
+the Google Fonts stylesheet for them, so they load in the reader's browser; each
+font stack ends in system fonts, which readers without network access see
+instead.
 
 ### Corner radius
 
@@ -87,14 +89,18 @@ ThemeConfig(
     seed = "#1565C0",
     custom_colors = Dict(
         "surface" => "#FAFAFA",
-        "primary" => "#0D47A1",
+        "on-primary-container" => "#0D47A1",
     ),
 )
 ```
 
-!!! warning "Overrides bypass contrast guarantees"
-    Generated roles are placed at tones chosen to meet WCAG AA against their
-    pairings. An override is used verbatim, so check it yourself with
+Role names use the CSS token spelling, with hyphens — `on-primary-container`
+overrides `--md-sys-color-on-primary-container`. A name that matches no role,
+including one written with underscores, is silently ignored.
+
+!!! warning "Overrides bypass contrast checks"
+    Generated roles sit at tones chosen to meet WCAG AA against their pairings.
+    An override is used verbatim, so check it yourself with
     [`MaterialDesignColors.meets_aa`](https://mthelm85.github.io/MaterialDesignColors.jl/dev/).
 
 ## Configuration files
@@ -119,11 +125,14 @@ corner_radius = "default"    # sharp | default | rounded | pill
 surface = "#FAFAFA"
 ```
 
-**This file is picked up automatically.** When you call `Material3()` without a
-`theme` argument, MaterialDocs looks for `docs/.materialdocs.toml` and loads it
-if present. Passing `theme` explicitly takes precedence.
+**This file is picked up automatically.** When `Material3()` is called without a
+`theme` argument, or with `theme = :default`, MaterialDocs looks for
+`docs/.materialdocs.toml` (or `docs/materialdocs.toml`) and loads it if present.
+The path is relative to the directory the build runs from, so run
+`julia --project=docs docs/make.jl` from your package root. Passing any other
+theme — a built-in name or a `ThemeConfig` — takes precedence over the file.
 
-This is the format the [Theme Editor](@ref) exports, so the usual workflow is to
+This is the format the [Theme Editor](@ref) produces, so the usual workflow is to
 design a theme visually, save the file, and never touch `make.jl` at all.
 
 Read and write these files directly with [`load_theme`](@ref) and

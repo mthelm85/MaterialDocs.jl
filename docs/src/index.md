@@ -40,20 +40,21 @@ That is the whole integration. MaterialDocs registers itself through Documenter'
 
 ## What you get
 
-- **Perceptually uniform color.** A port of Google's
-  [material-color-utilities](https://github.com/material-foundation/material-color-utilities)
-  to pure Julia. One seed hex generates 34 MD3 color roles with guaranteed
-  contrast ratios. See [Color Engine](@ref).
+- **A full palette from one color.**
+  [MaterialDesignColors.jl](https://github.com/mthelm85/MaterialDesignColors.jl)
+  turns a single seed into all 34 MD3 color roles, in light and dark. Every
+  text-on-container pairing in the twelve built-in themes clears WCAG AA
+  contrast. See [Color Engine](@ref).
 - **Twelve built-in themes**, or your own via [`ThemeConfig`](@ref). See [Theming](@ref).
 - **A live theme editor.** [`editor`](@ref) serves your real documentation with a
-  panel that re-themes it as you drag a color picker, then exports a config file.
-  See [Theme Editor](@ref).
+  panel that re-themes it as you drag a color picker, then gives you the theme as
+  TOML to save. See [Theme Editor](@ref).
 - **Light and dark modes**, following the system preference or a toggle.
 - **MD3 search.** A search bar that expands into a docked search view on wide
   windows and a full-screen view on narrow ones.
 - **Version selector and repository link** in the navbar, wired to the metadata
   `deploydocs` already writes.
-- **No Node.js.** Pure Julia, and the output is a self-contained static site.
+- **No Node.js.** Pure Julia, producing a static site you can host anywhere.
 
 ## How it fits together
 
@@ -64,6 +65,9 @@ so existing documentation works without edits.
 Because every stylesheet references `var(--md-sys-*)` custom properties and never
 a literal color, changing the tokens re-themes the entire site. That is what makes
 the live editor possible.
+
+Pages load their fonts from Google Fonts and syntax highlighting from a CDN, so
+readers without network access see system fonts and unhighlighted code.
 
 ## Where to go next
 

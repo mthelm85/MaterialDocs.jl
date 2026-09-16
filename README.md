@@ -11,8 +11,10 @@ Pass `Material3()` as your format and every page is rendered against a full MD3
 token system — colors, typography, shape, elevation, and motion — generated at
 build time from a single seed color.
 
-No Node.js, no build step, no external toolchain. Pure Julia, and the output is
-a self-contained static site.
+Pure Julia, with no Node.js or JavaScript toolchain. The output is a static site
+you can host anywhere. Pages load their fonts from Google Fonts and syntax
+highlighting from a CDN, so readers without network access see system fonts and
+unhighlighted code.
 
 **[MaterialDocs' own documentation](https://mthelm85.github.io/MaterialDocs.jl/dev/) is built with MaterialDocs** — the site is the demo.
 
@@ -53,14 +55,15 @@ without edits.
 
 ## Features
 
-- **Perceptually uniform color.** A pure-Julia port of Google's
-  [material-color-utilities](https://github.com/material-foundation/material-color-utilities):
-  CAM16, HCT, and tonal palettes. One seed hex generates 34 MD3 color roles in
-  light and dark, placed at tones chosen to meet WCAG AA.
+- **A full palette from one color.**
+  [MaterialDesignColors.jl](https://github.com/mthelm85/MaterialDesignColors.jl)
+  turns a single seed into all 34 MD3 color roles, in light and dark. Every
+  text-on-container pairing in the twelve built-in themes clears WCAG AA
+  contrast.
 - **Twelve built-in themes**, or your own from a seed color and three fonts.
 - **A live theme editor.** `MaterialDocs.editor()` rebuilds your docs, serves
-  them, and injects a panel that re-themes the real pages as you drag a color
-  picker — then exports a config file.
+  them locally, and injects a panel that re-themes the real pages as you drag a
+  color picker — then gives you the theme as TOML to save.
 - **Light and dark modes**, following the system preference or an explicit toggle.
 - **MD3 search.** A search bar that expands into a docked search view on wide
   windows and a full-screen view on narrow ones. Entirely client-side.
@@ -93,7 +96,7 @@ format = Material3(theme = ThemeConfig(
 
 A theme can also live in `docs/.materialdocs.toml`, which is picked up
 automatically — no `make.jl` change needed. That is the format the theme editor
-exports, so the usual workflow is to design a theme visually and save the file.
+produces, so the usual workflow is to design a theme visually and save the file.
 
 ## Theme editor
 
@@ -102,23 +105,26 @@ using MaterialDocs
 MaterialDocs.editor()
 ```
 
-Rebuilds your documentation, serves it locally, and injects a floating panel.
-Adjust the seed color, fonts, and shape and the real pages re-theme instantly —
-because every rule references a `var(--md-sys-*)` custom property and never a
-literal color. Click **Copy TOML** and save the result as
+Rebuilds your documentation, serves it on `127.0.0.1`, and injects a floating
+panel. Adjust the seed color, fonts, and shape and the real pages re-theme
+instantly — because every rule references a `var(--md-sys-*)` custom property
+and never a literal color. Click **Copy TOML** and save the result as
 `docs/.materialdocs.toml`.
 
 ## Documentation
 
 Full manual at **[mthelm85.github.io/MaterialDocs.jl/dev](https://mthelm85.github.io/MaterialDocs.jl/dev/)** —
-getting started, every `Material3` option, theming, the editor, and the color
-engine API.
+getting started, every `Material3` option, theming, the editor, and how colors
+are generated.
 
 ## Acknowledgements
 
-The color engine is a port of Google's
+Color generation comes from
+[MaterialDesignColors.jl](https://github.com/mthelm85/MaterialDesignColors.jl),
+a port of Google's
 [material-color-utilities](https://github.com/material-foundation/material-color-utilities)
-(Apache 2.0). See [LICENSES_THIRD_PARTY.md](LICENSES_THIRD_PARTY.md).
+(Apache 2.0). MaterialDocs itself contains no third-party code; see
+[LICENSES_THIRD_PARTY.md](LICENSES_THIRD_PARTY.md).
 
 Material Design is a trademark of Google. This project is not affiliated with
 or endorsed by Google.

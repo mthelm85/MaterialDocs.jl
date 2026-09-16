@@ -30,13 +30,15 @@ custom CSS has the complete set available. See [Theming](@ref) for choosing a
 seed and [Configuration](@ref) for referencing these tokens from your own
 stylesheets.
 
-## Why the tokens are trustworthy
+## Contrast
 
 HCT combines CAM16 hue and chroma with CIELAB lightness, which makes **tone map
-directly to contrast**. Roles are placed at the tones the MD3 specification
-assigns, so pairings such as `primary` / `on_primary` meet WCAG AA by
-construction rather than by hand-checking. MaterialDocs' test suite asserts this
-for every role pair, in both light and dark.
+directly to contrast**. Each role sits at the tone the MD3 specification assigns
+it, so text roles land far enough from their containers to stay readable.
 
-If you override a role through `custom_colors`, that guarantee no longer holds
-for the overridden value — check it yourself with `MaterialDesignColors.meets_aa`.
+For the twelve built-in themes this holds in practice: every text-on-container
+pairing — `on_primary` on `primary`, `on_surface` on `surface`, and so on —
+clears WCAG AA (4.5:1) in both light and dark, and the lowest is 6.4:1.
+
+If you use your own seed, or override a role through `custom_colors`, check the
+pairings you rely on with `MaterialDesignColors.meets_aa`.

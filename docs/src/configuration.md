@@ -21,7 +21,8 @@ format = Material3(
 ### `theme`
 
 A built-in theme name (`Symbol`) or a [`ThemeConfig`](@ref). Defaults to
-`:default`, which first checks for `docs/.materialdocs.toml` — see [Theming](@ref).
+`:default`, which first checks for `docs/.materialdocs.toml` relative to the
+directory the build runs from — see [Theming](@ref).
 
 ### `dark_mode`
 
@@ -43,7 +44,7 @@ Material3(logo = "assets/logo.svg", favicon = "assets/favicon.ico")
 ```
 
 The logo appears in the navbar at 32px tall. SVG is recommended so it stays
-sharp in both themes.
+sharp at any display density.
 
 ### `footer`
 
@@ -75,8 +76,9 @@ The repository link in the navbar. Default `:auto`.
 | a `String` | Used as the URL verbatim |
 | `nothing` | No link |
 
-The icon and label follow the host — GitHub, GitLab, Bitbucket, and Azure DevOps
-are recognised, with a generic git icon otherwise.
+The label names the host when it is GitHub, GitLab, Bitbucket, or Azure DevOps.
+GitHub and GitLab also get their own icon; every other host shows a generic git
+icon.
 
 ```julia
 Material3(repolink = "https://codeberg.org/you/MyPackage.jl")
@@ -84,8 +86,8 @@ Material3(repolink = "https://codeberg.org/you/MyPackage.jl")
 
 ### `versions`
 
-Show the version selector when the site has been deployed with more than one
-version. Default `true`.
+Show the version selector once the site has been deployed with `deploydocs`.
+Default `true`.
 
 It reads `DOCUMENTER_CURRENT_VERSION` from `siteinfo.js` and `DOC_VERSIONS` from
 `../versions.js` — both written by `deploydocs`. On a local build neither exists,
@@ -112,8 +114,8 @@ disk — see [Getting Started](@ref).
 
 ### `custom_css` and `custom_js`
 
-Extra files, relative to `docs/src`, copied in and linked after the generated
-assets:
+Extra files, relative to `docs/src`, copied into the build's `assets` folder and
+linked after the generated assets:
 
 ```julia
 Material3(
@@ -121,6 +123,9 @@ Material3(
     custom_js  = ["assets/extra.js"],
 )
 ```
+
+Files are copied by name alone, so two files with the same name in different
+folders overwrite each other.
 
 Because all styling is driven by `--md-sys-*` custom properties, custom CSS
 should reference those tokens rather than literal colors. That way it keeps

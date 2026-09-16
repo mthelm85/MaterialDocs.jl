@@ -28,6 +28,7 @@ MyPackage = {path = ".."}
 
 [compat]
 Documenter = "1"
+MaterialDocs = "0.1"
 ```
 
 ## Switch the format
@@ -50,7 +51,7 @@ makedocs(
 deploydocs(repo = "github.com/you/MyPackage.jl")
 ```
 
-Build it:
+Build it from the root of your package:
 
 ```julia
 julia --project=docs docs/make.jl
@@ -98,11 +99,12 @@ deploydocs(
 )
 ```
 
-Once `deploydocs` has published more than one version, the navbar version
-selector appears automatically. It reads the `versions.js` and `siteinfo.js`
-files that `deploydocs` writes, so there is nothing extra to configure. On local
-builds those files do not exist and the selector stays hidden.
+Once `deploydocs` has published your docs, the navbar version selector appears
+automatically. It reads the `versions.js` and `siteinfo.js` files that
+`deploydocs` writes, so there is nothing extra to configure. On local builds
+those files do not exist and the selector stays hidden.
 
 !!! note "`devbranch` must match your default branch"
-    The PkgTemplates default is `master`. If your repository uses `main`,
-    set `devbranch = "main"` or deployment will silently never happen.
+    Some package templates still set `devbranch = "master"`. If your repository
+    uses `main`, set `devbranch = "main"` or deployment will silently never
+    happen.
