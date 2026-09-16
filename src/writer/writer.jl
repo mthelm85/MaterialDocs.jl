@@ -17,12 +17,24 @@ Usage:
 
 import Documenter
 
+const DEFAULT_FOOTER = "Built with [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) and [MaterialDocs.jl](https://github.com/mthelm85/MaterialDocs.jl)."
+
+# Documenter.HTML keywords that only affect Documenter's own theme
+const IGNORED_HTML_KEYWORDS = (:prerender, :node, :highlightjs)
+
 """
     Material3 <: Documenter.Writer
 
 A Documenter.jl writer that generates Material Design 3 documentation sites.
 
-# Keywords
+`Material3` accepts every keyword [`Documenter.HTML`](https://documenter.juliadocs.org/stable/lib/public/#Documenter.HTML)
+does, with the same meaning and defaults, so switching writers is a rename:
+`format = Documenter.HTML(...)` becomes `format = Material3(...)`. Those
+keywords are validated by constructing a `Documenter.HTML`, available as the
+`html` field. `prerender`, `node` and `highlightjs` are accepted but have no
+effect.
+
+# MaterialDocs keywords
 - `theme = :default`: Built-in theme name (`Symbol`) or a [`ThemeConfig`](@ref).
   When `:default`, automatically loads `docs/.materialdocs.toml` if present.
 - `dark_mode = :auto`: Dark mode behavior. One of:
@@ -32,20 +44,14 @@ A Documenter.jl writer that generates Material Design 3 documentation sites.
   - `:toggle` — adds a light/dark toggle button
 - `toc_depth = 3`: Right-rail table-of-contents heading depth (2–4).
 - `search = true`: Enable the search bar.
-- `repolink = :auto`: Link to the source repository in the navbar. One of:
-  - `:auto` — derive from Documenter's configured remote (`makedocs(repo = ...)`)
-  - a `String` — an explicit URL
-  - `nothing` — omit the link
 - `versions = true`: Show a version selector when `deploydocs` has generated
   `versions.js` / `siteinfo.js`. Hidden automatically on non-deployed builds.
-- `logo = nothing`: Path to logo image (relative to docs/src).
-- `favicon = nothing`: Path to favicon (relative to docs/src).
-- `footer = nothing`: Custom footer HTML string.
-- `custom_css = String[]`: Additional CSS files to include.
-- `custom_js = String[]`: Additional JS files to include.
-- `prettyurls = true`: Use clean URLs (`page/index.html` instead of `page.html`).
-- `inventory_version = nothing`: Version written to the `objects.inv` inventory header.
-  When `nothing`, read from the `Project.toml` in the parent of the docs root.
+- `logo = nothing`: Path to a logo image (relative to docs/src). When `nothing`,
+  `assets/logo.{svg,png,webp,gif,jpg,jpeg}` is used if present, as in Documenter.
+- `favicon = nothing`: Path to a favicon (relative to docs/src). An `.ico` in
+  `assets` works too, as in Documenter.
+
+`repolink` additionally accepts `:auto`, the same as leaving it unset.
 
 # Examples
 ```julia
@@ -55,12 +61,12 @@ format = Material3(theme = :ocean_depth)
 # Use a custom theme
 format = Material3(theme = ThemeConfig(seed = "#E65100", display_font = "Space Grotesk"))
 
-# Full configuration
+# Documenter.HTML options carry over unchanged
 format = Material3(
     theme = :midnight,
     dark_mode = :toggle,
-    toc_depth = 4,
-    logo = "assets/logo.svg",
+    canonical = "https://you.github.io/MyPackage.jl/stable",
+    assets = ["assets/extra.css"],
     footer = "Made with ❤️ and Julia",
 )
 ```
@@ -70,15 +76,10 @@ struct Material3 <: Documenter.Writer
     dark_mode::Symbol
     toc_depth::Int
     search::Bool
-    repolink::Union{String,Nothing,Symbol}
     versions::Bool
     logo::Union{String,Nothing}
     favicon::Union{String,Nothing}
-    footer::Union{String,Nothing}
-    custom_css::Vector{String}
-    custom_js::Vector{String}
-    prettyurls::Bool
-    inventory_version::Union{String,Nothing}
+    html::Documenter.HTML
 end
 
 function Material3(;
@@ -86,15 +87,12 @@ function Material3(;
     dark_mode::Symbol = :auto,
     toc_depth::Int = 3,
     search::Bool = true,
-    repolink::Union{AbstractString,Nothing,Symbol} = :auto,
     versions::Bool = true,
     logo::Union{AbstractString,Nothing} = nothing,
     favicon::Union{AbstractString,Nothing} = nothing,
-    footer::Union{AbstractString,Nothing} = nothing,
-    custom_css::Vector{String} = String[],
-    custom_js::Vector{String} = String[],
-    prettyurls::Bool = true,
-    inventory_version = nothing,
+    repolink::Union{AbstractString,Nothing,Symbol} = :auto,
+    footer::Union{AbstractString,Nothing} = DEFAULT_FOOTER,
+    html_kwargs...,
 )
     dark_mode in (:auto, :light, :dark, :toggle) ||
         throw(ArgumentError("dark_mode must be :auto, :light, :dark, or :toggle"))
@@ -102,6 +100,16 @@ function Material3(;
         throw(ArgumentError("toc_depth must be between 2 and 4"))
     repolink isa Symbol && repolink !== :auto &&
         throw(ArgumentError("repolink must be :auto, a URL string, or nothing"))
+
+    for kw in IGNORED_HTML_KEYWORDS
+        haskey(html_kwargs, kw) &&
+            @warn "MaterialDocs: `$kw` only applies to Documenter's own theme and has no effect with Material3."
+    end
+    # Not forwarded: `prerender = true` would make Documenter look for Node.js
+    forwarded = (k => v for (k, v) in pairs(html_kwargs) if !(k in IGNORED_HTML_KEYWORDS))
+    html = repolink === :auto ?
+        Documenter.HTML(; footer, forwarded...) :
+        Documenter.HTML(; footer, repolink, forwarded...)
 
     # Auto-detect .materialdocs.toml when no explicit theme is provided
     resolved_theme = if theme === :default
@@ -116,15 +124,10 @@ function Material3(;
         resolve_theme(theme)
     end
 
-    Material3(resolved_theme, dark_mode, toc_depth,
-              search,
-              repolink isa AbstractString ? String(repolink) : repolink,
-              versions,
+    Material3(resolved_theme, dark_mode, toc_depth, search, versions,
               logo === nothing ? nothing : String(logo),
               favicon === nothing ? nothing : String(favicon),
-              footer === nothing ? nothing : String(footer),
-              custom_css, custom_js, prettyurls,
-              inventory_version === nothing ? nothing : string(inventory_version))
+              html)
 end
 
 function Base.show(io::IO, m::Material3)

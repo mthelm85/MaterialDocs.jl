@@ -15,7 +15,7 @@ import TOML
 Write `objects.inv` to the build directory.
 """
 function write_inventory(doc::Documenter.Document, settings::Material3)
-    version = settings.inventory_version
+    version = settings.html.inventory_version
     if version === nothing
         version = _inventory_version(joinpath(dirname(doc.user.root), "Project.toml"))
     end
@@ -69,14 +69,14 @@ end
 
 """The output path of a source page, as Documenter.HTML names it."""
 function _page_url(settings::Material3, path::AbstractString)
-    settings.prettyurls || return string(splitext(path)[1], ".html")
+    settings.html.prettyurls || return string(splitext(path)[1], ".html")
     d = basename(path) == "index.md" ? dirname(path) : first(splitext(path))
     return isempty(d) ? "index.html" : "$d/index.html"
 end
 
 """The link form of an output path: `dir/index.html` becomes `dir/` with pretty URLs."""
 function _pretty_url(settings::Material3, path::AbstractString)
-    if settings.prettyurls
+    if settings.html.prettyurls
         dir, file = splitdir(path)
         file == "index.html" && return isempty(dir) ? "" : "$dir/"
     end

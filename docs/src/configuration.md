@@ -4,7 +4,10 @@ CurrentModule = MaterialDocs
 
 # Configuration
 
-Every option is a keyword to [`Material3`](@ref).
+Every option is a keyword to [`Material3`](@ref). It accepts **every keyword
+`Documenter.HTML` does**, with the same meaning and defaults, so switching
+writers is a rename — see [Documenter.HTML options](@ref).
+The options below are the ones MaterialDocs adds.
 
 ```julia
 format = Material3(
@@ -43,16 +46,13 @@ Paths relative to `docs/src`, copied into the build:
 Material3(logo = "assets/logo.svg", favicon = "assets/favicon.ico")
 ```
 
+Neither is required. As with `Documenter.HTML`, a `docs/src/assets/logo.svg`
+(or `.png`, `.webp`, `.gif`, `.jpg`, `.jpeg`) is used automatically, together
+with `assets/logo-dark.*` for dark mode when present, and an `.ico` listed in
+`assets` sets the favicon.
+
 The logo appears in the navbar at 32px tall. SVG is recommended so it stays
 sharp at any display density.
-
-### `footer`
-
-Extra HTML placed above the generated attribution line:
-
-```julia
-Material3(footer = "Made with ❤️ and Julia")
-```
 
 ## Navigation
 
@@ -63,11 +63,12 @@ default `3`.
 
 ### `repolink`
 
-The repository link in the navbar. Default `:auto`.
+The repository link in the navbar. By default it is derived from Documenter's
+configured remote.
 
 | Value | Behavior |
 |---|---|
-| `:auto` | Derived from Documenter's configured remote |
+| unset, or `:auto` | Derived from Documenter's configured remote |
 | a `String` | Used as the URL verbatim |
 | `nothing` | No link |
 
@@ -98,38 +99,36 @@ Enable the search bar and index. Default `true`.
 Search is entirely client-side: a JSON index is generated at build time and
 loaded on first use. Ctrl/Cmd+K opens it from anywhere.
 
-## Output
+## Documenter.HTML options
 
-### `prettyurls`
+`Material3` passes these to a real `Documenter.HTML`, so names, defaults and
+validation are Documenter's own — see the
+[`Documenter.HTML` reference](https://documenter.juliadocs.org/stable/lib/public/#Documenter.HTML)
+for full details. How MaterialDocs renders each:
 
-Directory-style URLs (`page/index.html`, linked as `./page/`). Default `true`.
+| Keyword | In MaterialDocs |
+|---|---|
+| `prettyurls` | Directory-style URLs (`page/index.html`, linked as `./page/`). Set it to `false`, or condition it on CI, to open a build from disk — see [Getting Started](@ref) |
+| `repolink` | The navbar repository link, as above |
+| `canonical` | Canonical link and `og:url` tags; with `assets/preview.*`, preview-image tags |
+| `description` | Description meta tags. A page's `@meta Description` overrides it |
+| `lang` | The `lang` attribute of every page |
+| `analytics` | Google Analytics |
+| `assets` | Local CSS, JS and ICO files, remote [`asset`](https://documenter.juliadocs.org/stable/lib/public/#Documenter.asset)s and `RawHTMLHeadContent`, in order, after MaterialDocs' stylesheet |
+| `footer` | Markdown in the page footer, replacing the default attribution; `nothing` removes it |
+| `highlights` | Extra highlight.js languages |
+| `sidebar_sitename` | `false` hides the site name in the navbar |
+| `inventory_version` | The version recorded in `objects.inv` (see below) |
+| `disable_git`, `edit_link`, `edit_branch`, `collapselevel`, `mathengine`, `ansicolor`, `warn_outdated`, `size_threshold`, `size_threshold_warn`, `size_threshold_ignore`, `example_size_threshold`, `search_size_threshold_warn` | Accepted and validated; not yet applied by MaterialDocs |
+| `prerender`, `node`, `highlightjs` | Accepted with a warning; they only affect Documenter's own theme |
 
-Set it to `false`, or condition it on CI, when the build needs to be opened from
-disk — see [Getting Started](@ref).
+### Custom CSS and JavaScript
 
-### `inventory_version`
-
-Every build writes `objects.inv`, the same cross-reference inventory
-`Documenter.HTML` writes, so packages using
-[DocumenterInterLinks](https://github.com/JuliaDocs/DocumenterInterLinks.jl) can
-link into your documentation. `inventory_version` sets the version recorded in
-it. Default `nothing`, which reads `version` from the `Project.toml` one level
-above the docs root.
-
-### `custom_css` and `custom_js`
-
-Extra files, relative to `docs/src`, copied into the build's `assets` folder and
-linked after the generated assets:
+Add them through `assets`, with paths relative to `docs/src`:
 
 ```julia
-Material3(
-    custom_css = ["assets/extra.css"],
-    custom_js  = ["assets/extra.js"],
-)
+Material3(assets = ["assets/extra.css", "assets/extra.js"])
 ```
-
-Files are copied by name alone, so two files with the same name in different
-folders overwrite each other.
 
 Because all styling is driven by `--md-sys-*` custom properties, custom CSS
 should reference those tokens rather than literal colors. That way it keeps
@@ -142,3 +141,11 @@ working in both light and dark mode:
   border-radius: var(--md-sys-shape-corner-medium);
 }
 ```
+
+### Cross-project links
+
+Every build writes `objects.inv`, the same cross-reference inventory
+`Documenter.HTML` writes, so packages using
+[DocumenterInterLinks](https://github.com/JuliaDocs/DocumenterInterLinks.jl) can
+link into your documentation. `inventory_version` sets the version recorded in
+it; by default it is read from the `Project.toml` one level above the docs root.

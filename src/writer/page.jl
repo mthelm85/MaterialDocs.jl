@@ -38,7 +38,7 @@ function render_page(doc::Documenter.Document, settings::Material3,
     page_rel = startswith(page_build_norm, build_prefix) ?
         page_build_norm[length(build_prefix)+1:end] : page_build_norm
 
-    if settings.prettyurls && page_rel != "index.html"
+    if settings.html.prettyurls && page_rel != "index.html"
         # "api.html" → "api/index.html"
         out_name = replace(page_rel, r"\.html$" => "")
         out_file = joinpath(root_dir, doc.user.build, out_name, "index.html")
@@ -65,17 +65,22 @@ function render_page(doc::Documenter.Document, settings::Material3,
     # Cache-busting hash based on build time
     _cache_v = string(hash(time()), base=16)[1:8]
 
+    html = settings.html
+    full_title = "$page_title — $sitename"
+
     # ── HTML Head ──
     print(io, """
     <!doctype html>
-    <html lang="en"$theme_attr>
+    <html lang="$(_html_escape(html.lang))"$theme_attr>
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>$page_title — $sitename</title>
+      <title>$full_title</title>
       <link rel="stylesheet" href="$(root_prefix)assets/materialdocs.css?v=$(_cache_v)">
       $fonts_link
     """)
+
+    _render_head_metadata(io, doc, settings, page, full_title)
 
     # Favicon
     if settings.favicon !== nothing
@@ -83,10 +88,8 @@ function render_page(doc::Documenter.Document, settings::Material3,
         println(io, "  <link rel=\"icon\" href=\"$(root_prefix)assets/$fav_name\">")
     end
 
-    # Custom CSS
-    for css in settings.custom_css
-        println(io, "  <link rel=\"stylesheet\" href=\"$(root_prefix)assets/$(basename(css))\">")
-    end
+    # User assets, in the order given — after our stylesheet so they can override it
+    _render_assets(io, html.assets, root_prefix)
 
     # Inline script to prevent FOUC: restore theme + suppress transitions during load
     println(io, "  <script>")
@@ -109,11 +112,10 @@ function render_page(doc::Documenter.Document, settings::Material3,
     println(io, "    <button id=\"md-hamburger\" class=\"md-icon-btn md-hamburger\" aria-label=\"Toggle navigation\" aria-expanded=\"false\">",
                 _icon(:menu), "</button>")
 
-    if settings.logo !== nothing
-        logo_name = basename(settings.logo)
-        println(io, "    <img class=\"md-navbar-logo\" src=\"$(root_prefix)assets/$logo_name\" alt=\"$sitename logo\" height=\"32\">")
+    _render_logo(io, doc, settings, root_prefix)
+    if html.sidebar_sitename
+        println(io, "    <span class=\"md-navbar-title\">$(_html_escape(sitename))</span>")
     end
-    println(io, "    <span class=\"md-navbar-title\">$(_html_escape(sitename))</span>")
     println(io, "    <span class=\"md-navbar-spacer\"></span>")
 
     # ── MD3 search bar — morphs into a search view on activation ──
@@ -187,10 +189,11 @@ function render_page(doc::Documenter.Document, settings::Material3,
 
     # Footer inside content column so it scrolls with the article
     println(io, "      <footer class=\"md-footer\">")
-    if settings.footer !== nothing
-        println(io, "        <p>", settings.footer, "</p>")
+    if html.footer !== nothing
+        footer_ctx = DomifyContext(IOBuffer(), doc, page, root_prefix, settings, state)
+        domify(footer_ctx, html.footer)
+        write(io, take!(footer_ctx.io))
     end
-    println(io, "        <p>Built with <a href=\"https://github.com/JuliaDocs/Documenter.jl\">Documenter.jl</a> and <a href=\"https://github.com/mthelm85/MaterialDocs.jl\">MaterialDocs.jl</a></p>")
     println(io, "      </footer>")
 
     println(io, "    </main>")
@@ -209,6 +212,9 @@ function render_page(doc::Documenter.Document, settings::Material3,
     println(io, "  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js\"></script>")
     println(io, "  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/julia.min.js\"></script>")
     println(io, "  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/julia-repl.min.js\"></script>")
+    for lang in html.highlights
+        println(io, "  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/$(_html_escape(lang)).min.js\"></script>")
+    end
     println(io, "  <script>hljs.highlightAll();</script>")
 
     # Math typesetting, only on pages that contain math. Each element holds
@@ -227,9 +233,6 @@ function render_page(doc::Documenter.Document, settings::Material3,
     end
 
     println(io, "  <script src=\"$(root_prefix)assets/materialdocs.js?v=$(_cache_v)\"></script>")
-    for js in settings.custom_js
-        println(io, "  <script src=\"$(root_prefix)assets/$(basename(js))\"></script>")
-    end
 
     println(io, "</body>")
     println(io, "</html>")
@@ -328,7 +331,7 @@ function _render_nav_item(io::IO, item::NavItem, current_page::String,
     if item.path !== nothing
         is_active = item.path == current_page
         active_class = is_active ? " class=\"md-nav-active\"" : ""
-        href = root_prefix * _nav_href(item.path, settings.prettyurls)
+        href = root_prefix * _nav_href(item.path, settings.html.prettyurls)
         println(io, indent, "<a href=\"", href, "\"", active_class, ">", _html_escape(item.title), "</a>")
     elseif !isempty(item.children)
         # Section header
@@ -480,15 +483,16 @@ end
     _repo_link(doc, settings) → (url, host) or nothing
 
 Resolve the source-repository URL for the navbar link. Honours an explicit
-`repolink` string, `nothing` to disable, or `:auto` to derive the URL from
+`repolink` string, `nothing` to disable, or (when unset) derives the URL from
 Documenter's configured remote.
 """
 function _repo_link(doc::Documenter.Document, settings::Material3)
-    settings.repolink === nothing && return nothing
+    repolink = settings.html.repolink
+    repolink === nothing && return nothing
 
-    url = if settings.repolink isa String
-        settings.repolink
-    else  # :auto — derive from the Documenter remote
+    url = if repolink isa String
+        repolink
+    else  # unset — derive from the Documenter remote
         remote = doc.user.remote
         remote === nothing && return nothing
         derived = try
@@ -551,4 +555,109 @@ function _slugify(text::AbstractString)::String
     s = replace(s, r"[\s_]+" => "-")
     s = strip(s, '-')
     s
+end
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Documenter.HTML head options
+# ─────────────────────────────────────────────────────────────────────────────
+
+"""
+Description, canonical-URL, preview-image and analytics tags, matching the ones
+Documenter.HTML writes.
+"""
+function _render_head_metadata(io::IO, doc::Documenter.Document, settings::Material3,
+                               page::Documenter.Page, full_title::AbstractString)
+    html = settings.html
+    esc = _html_escape
+    default_description = something(html.description, "Documentation for $(doc.user.sitename).")
+    description = string(get(page.globals.meta, :Description, default_description))
+
+    println(io, "  <meta name=\"title\" content=\"", esc(full_title), "\">")
+    println(io, "  <meta property=\"og:title\" content=\"", esc(full_title), "\">")
+    println(io, "  <meta property=\"twitter:title\" content=\"", esc(full_title), "\">")
+    println(io, "  <meta name=\"description\" content=\"", esc(description), "\">")
+    println(io, "  <meta property=\"og:description\" content=\"", esc(description), "\">")
+    println(io, "  <meta property=\"twitter:description\" content=\"", esc(description), "\">")
+
+    if html.canonical !== nothing
+        base = rstrip(html.canonical, '/')
+        src = replace(relpath(page.source, doc.user.source), '\\' => '/')
+        url = "$base/" * _pretty_url(settings, _page_url(settings, src))
+        println(io, "  <meta property=\"og:url\" content=\"", esc(url), "\">")
+        println(io, "  <meta property=\"twitter:url\" content=\"", esc(url), "\">")
+        println(io, "  <link rel=\"canonical\" href=\"", esc(url), "\">")
+
+        preview = _find_build_asset(doc, "preview", ("png", "webp", "gif", "jpg", "jpeg"))
+        if preview !== nothing
+            image = "$base/$preview"
+            println(io, "  <meta property=\"og:image\" content=\"", esc(image), "\">")
+            println(io, "  <meta property=\"twitter:image\" content=\"", esc(image), "\">")
+            println(io, "  <meta property=\"twitter:card\" content=\"summary_large_image\">")
+        end
+    end
+
+    if !isempty(html.analytics)
+        id = esc(html.analytics)
+        println(io, "  <script async src=\"https://www.googletagmanager.com/gtag/js?id=$id\"></script>")
+        println(io, """
+          <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '$id', {'page_path': location.pathname + location.search + location.hash});
+          </script>""")
+    end
+end
+
+"""Link `assets` entries: local files relative to the site root, remote URLs and raw HTML verbatim."""
+function _render_assets(io::IO, assets, root_prefix::AbstractString)
+    for a in assets
+        if a isa Documenter.HTMLWriter.RawHTMLHeadContent
+            println(io, "  ", a.content)
+            continue
+        end
+        a isa Documenter.HTMLWriter.HTMLAsset || continue
+        url = _html_escape(a.islocal ? root_prefix * a.uri : a.uri)
+        attrs = join(" $(k)=\"$(_html_escape(v))\"" for (k, v) in sort(collect(a.attributes)))
+        if a.class === :css
+            println(io, "  <link rel=\"stylesheet\" href=\"$url\"$attrs>")
+        elseif a.class === :js
+            println(io, "  <script src=\"$url\"$attrs></script>")
+        elseif a.class === :ico
+            println(io, "  <link rel=\"icon\" type=\"image/x-icon\" href=\"$url\"$attrs>")
+        end
+    end
+end
+
+"""
+The navbar logo: the `logo` keyword, else `assets/logo.*` as Documenter finds it,
+with `assets/logo-dark.*` swapped in for dark mode when present.
+"""
+function _render_logo(io::IO, doc::Documenter.Document, settings::Material3,
+                      root_prefix::AbstractString)
+    alt = _html_escape("$(doc.user.sitename) logo")
+    if settings.logo !== nothing
+        src = "$(root_prefix)assets/$(basename(settings.logo))"
+        println(io, "    <img class=\"md-navbar-logo\" src=\"$src\" alt=\"$alt\" height=\"32\">")
+        return
+    end
+    exts = ("svg", "png", "webp", "gif", "jpg", "jpeg")
+    light = _find_build_asset(doc, "logo", exts)
+    light === nothing && return
+    dark = _find_build_asset(doc, "logo-dark", exts)
+    if dark === nothing
+        println(io, "    <img class=\"md-navbar-logo\" src=\"$(root_prefix)$light\" alt=\"$alt\" height=\"32\">")
+    else
+        println(io, "    <img class=\"md-navbar-logo md-logo-light\" src=\"$(root_prefix)$light\" alt=\"$alt\" height=\"32\">")
+        println(io, "    <img class=\"md-navbar-logo md-logo-dark\" src=\"$(root_prefix)$dark\" alt=\"$alt\" height=\"32\">")
+    end
+end
+
+"""The first `assets/<name>.<ext>` present in the build, as a site-relative path."""
+function _find_build_asset(doc::Documenter.Document, name::AbstractString, exts)
+    for ext in exts
+        rel = "assets/$name.$ext"
+        isfile(joinpath(doc.user.root, doc.user.build, rel)) && return rel
+    end
+    return nothing
 end

@@ -120,23 +120,23 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         @test m3.dark_mode == :auto
         @test m3.toc_depth == 3
         @test m3.search == true
-        @test m3.repolink === :auto
+        @test !(m3.html.repolink isa Union{String,Nothing})  # unset: derived from the remote
+        @test Material3(repolink = :auto).html.repolink == m3.html.repolink
         @test m3.versions == true
         @test m3.logo === nothing
         @test m3.favicon === nothing
-        @test m3.footer === nothing
-        @test isempty(m3.custom_css)
-        @test isempty(m3.custom_js)
-        @test m3.prettyurls == true
+        @test m3.html.prettyurls == true
+        @test isempty(m3.html.assets)
     end
 
-    # REQ: The Material3 constructor shall not accept the unimplemented
-    # `sidebar_collapsed` or `analytics` keywords.
+    # REQ: The Material3 constructor shall not accept `sidebar_collapsed`
+    # (Documenter's `collapselevel` replaces it) or `custom_css`/`custom_js`
+    # (Documenter's `assets` replaces them).
     @testset "Material3 rejects removed options" begin
         @test !hasfield(Material3, :sidebar_collapsed)
-        @test !hasfield(Material3, :analytics)
         @test_throws MethodError Material3(sidebar_collapsed = true)
-        @test_throws MethodError Material3(analytics = "G-XXXXXXXXXX")
+        @test_throws MethodError Material3(custom_css = ["a.css"])
+        @test_throws MethodError Material3(custom_js = ["a.js"])
     end
 
     @testset "Material3 with symbol theme" begin
@@ -436,6 +436,133 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         @test isfile(joinpath(build_dir, "api", "index.html"))
         @test isfile(joinpath(build_dir, "assets", "materialdocs.css"))
         @test isfile(joinpath(build_dir, "assets", "materialdocs.js"))
+    end
+
+    # ── Documenter.HTML keyword parity ─────────────────────────────────
+    #
+    # REQ-P1 (Must): The Material3 constructor shall accept every keyword that
+    #   Documenter.HTML accepts, with the same defaults and validation.
+    # REQ-P2 (Must): When `lang` is set, each page's <html> element shall carry it.
+    # REQ-P3 (Must): Each page shall carry description meta tags, taken from the
+    #   page's `@meta Description` if present, else `description`, else
+    #   "Documentation for <sitename>.".
+    # REQ-P4 (Must): Where `canonical` is set, each page shall link its canonical
+    #   URL, and where `assets/preview.*` exists, shall carry preview-image tags.
+    # REQ-P5 (Must): Where `analytics` is set, each page shall load Google Analytics.
+    # REQ-P6 (Must): Each page shall include `assets` in order: local CSS/JS/ICO
+    #   relative to the site root, remote `asset(...)` URLs verbatim, and
+    #   RawHTMLHeadContent verbatim.
+    # REQ-P7 (Must): The footer shall render `footer` as Markdown, replacing the
+    #   default attribution; `footer = nothing` shall omit it.
+    # REQ-P8 (Must): Where no `logo` is given and `assets/logo.*` exists, the
+    #   navbar shall show it, using `assets/logo-dark.*` in dark mode if present.
+    # REQ-S5 (Should): Each page shall load highlight.js grammars for `highlights`.
+    # REQ-S6 (Should): Where `sidebar_sitename = false`, the navbar shall omit the
+    #   site name.
+
+    @testset "Material3 accepts Documenter.HTML keywords" begin
+        m3 = Material3(canonical = "https://example.org/pkg", analytics = "G-TEST",
+                       collapselevel = 1, lang = "de", edit_link = nothing,
+                       size_threshold = nothing, highlights = ["yaml"],
+                       mathengine = Documenter.MathJax3())
+        @test m3.html isa Documenter.HTML
+        @test m3.html.canonical == "https://example.org/pkg"
+        @test m3.html.analytics == "G-TEST"
+        @test m3.html.collapselevel == 1
+        @test m3.html.lang == "de"
+        @test m3.html.mathengine isa Documenter.MathJax3
+        # Documenter's own validation applies
+        @test_throws ArgumentError Material3(collapselevel = 0)
+        # Keywords neither writer knows are still rejected
+        @test_throws MethodError Material3(not_a_keyword = 1)
+        # Every keyword Documenter.HTML declares is accepted. A keyword added in a
+        # future Documenter release fails the coverage check until sampled here.
+        samples = Dict{Symbol,Any}(
+            :prettyurls => false, :disable_git => true, :repolink => "https://example.org/r",
+            :edit_link => nothing, :edit_branch => "main", :canonical => "https://example.org",
+            :assets => String[], :analytics => "G-X", :collapselevel => 1,
+            :sidebar_sitename => false, :highlights => ["yaml"],
+            :mathengine => Documenter.KaTeX(), :description => "d", :footer => "f",
+            :ansicolor => false, :lang => "de", :warn_outdated => false,
+            :prerender => false, :node => nothing, :highlightjs => nothing,
+            :size_threshold => nothing, :size_threshold_warn => nothing,
+            :size_threshold_ignore => String[], :example_size_threshold => nothing,
+            :search_size_threshold_warn => nothing, :inventory_version => "1.0",
+        )
+        declared = Base.kwarg_decl(only(methods(Documenter.HTML)))
+        @test setdiff(declared, keys(samples)) == Symbol[]
+        for kw in declared
+            # edit_branch is Documenter's deprecated spelling of edit_link; they can't be combined
+            base = kw in (:edit_link, :edit_branch) ? (;) : (; edit_link = nothing)
+            @test (Material3(; base..., kw => samples[kw]) isa Material3)
+        end
+        @test Material3(; edit_link = nothing, prettyurls = false).html.prettyurls == false
+    end
+
+    @testset "Integration: Documenter.HTML options render" begin
+        fixtures_dir = joinpath(@__DIR__, "fixtures")
+        build_dir = joinpath(fixtures_dir, "build-options")
+        isdir(build_dir) && rm(build_dir; recursive = true)
+        makedocs(;
+            sitename = "TestPackage.jl",
+            format = Material3(
+                theme = :ocean_depth, dark_mode = :toggle,
+                lang = "en-GB",
+                description = "A package for testing.",
+                canonical = "https://example.org/TestPackage.jl/stable/",
+                analytics = "G-TEST123",
+                assets = [
+                    "assets/extra.css",
+                    asset("https://cdn.example.org/lib.js", class = :js),
+                    Documenter.RawHTMLHeadContent("<meta name=\"x-test\" content=\"raw\">"),
+                ],
+                footer = "Maintained by [the team](https://example.org/team).",
+                highlights = ["yaml"],
+                sidebar_sitename = false,
+                inventory_version = "1.2.3",
+            ),
+            modules = [MaterialDocs],
+            pages = ["Home" => "index.md", "API" => "api.md", "Outputs" => "outputs.md"],
+            root = fixtures_dir, source = "src", build = "build-options",
+            warnonly = true,
+        )
+        index_html = read(joinpath(build_dir, "index.html"), String)
+        api_html = read(joinpath(build_dir, "api", "index.html"), String)
+
+        # REQ-P2
+        @test contains(index_html, "<html lang=\"en-GB\"")
+        # REQ-P3
+        @test contains(index_html, "<meta name=\"description\" content=\"A package for testing.\">")
+        @test contains(index_html, "<meta property=\"og:description\" content=\"A package for testing.\">")
+        # REQ-P4
+        @test contains(index_html, "<link rel=\"canonical\" href=\"https://example.org/TestPackage.jl/stable/\">")
+        @test contains(api_html, "<link rel=\"canonical\" href=\"https://example.org/TestPackage.jl/stable/api/\">")
+        @test contains(index_html, "<meta property=\"og:image\" content=\"https://example.org/TestPackage.jl/stable/assets/preview.png\">")
+        # REQ-P5
+        @test contains(index_html, "https://www.googletagmanager.com/gtag/js?id=G-TEST123")
+        @test contains(index_html, "gtag('config', 'G-TEST123'")
+        # REQ-P6: order preserved, local paths relative to the page
+        css_at = findfirst("<link rel=\"stylesheet\" href=\"../assets/extra.css\">", api_html)
+        js_at = findfirst("<script src=\"https://cdn.example.org/lib.js\"></script>", api_html)
+        raw_at = findfirst("<meta name=\"x-test\" content=\"raw\">", api_html)
+        @test css_at !== nothing && js_at !== nothing && raw_at !== nothing
+        @test first(css_at) < first(js_at) < first(raw_at)
+        # REQ-P7
+        @test contains(index_html, "Maintained by <a href=\"https://example.org/team\">the team</a>.")
+        @test !contains(index_html, "Built with")
+        # REQ-P8
+        @test contains(api_html, "<img class=\"md-navbar-logo md-logo-light\" src=\"../assets/logo.svg\"")
+        @test contains(api_html, "<img class=\"md-navbar-logo md-logo-dark\" src=\"../assets/logo-dark.svg\"")
+        # REQ-S5
+        @test contains(index_html, "highlight.js/11.9.0/languages/yaml.min.js")
+        # REQ-S6
+        @test !contains(index_html, "md-navbar-title")
+    end
+
+    @testset "Footer defaults" begin
+        # REQ-P7: default attribution, and `nothing` removes the footer text
+        @test contains(Documenter.MDFlatten.mdflatten(Material3().html.footer), "MaterialDocs.jl")
+        @test Material3(footer = nothing).html.footer === nothing
     end
 
     # REQ-M5 (Must): When a build completes, the writer shall write an

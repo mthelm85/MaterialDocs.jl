@@ -6,3 +6,4 @@ dev/
 .claude/
 .vscode/
 /test/fixtures/build-html/
+/test/fixtures/build-options/

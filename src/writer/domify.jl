@@ -547,7 +547,7 @@ function _xref_href(ctx::DomifyContext, page::AbstractString, fragment::Abstract
     src = replace(ctx.page.source, '\\' => '/')
     tgt = replace(String(page), '\\' => '/')
     endswith(src, tgt) && return string("#", fragment)
-    string(ctx.root_prefix, _nav_href(tgt, ctx.settings.prettyurls), "#", fragment)
+    string(ctx.root_prefix, _nav_href(tgt, ctx.settings.html.prettyurls), "#", fragment)
 end
 
 function domify(ctx::DomifyContext, node, ::Documenter.EvalNode)
@@ -578,7 +578,7 @@ function domify(ctx::DomifyContext, node, elem::Documenter.PageLink)
     if startswith(page_path, build_prefix)
         page_path = page_path[length(build_prefix)+1:end]
     end
-    href = ctx.root_prefix * _nav_href(page_path, ctx.settings.prettyurls)
+    href = ctx.root_prefix * _nav_href(page_path, ctx.settings.html.prettyurls)
     if !isempty(elem.fragment)
         href *= "#" * elem.fragment
     end

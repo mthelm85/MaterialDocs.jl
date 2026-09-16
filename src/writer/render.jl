@@ -152,6 +152,19 @@ function _write_css_tokens(io::IO, theme::ThemeConfig,
         println(io, ":root[data-theme=\"light\"] .md-icon-light { display: none; }")
         println(io, ":root[data-theme=\"light\"] .md-icon-dark { display: block; }")
     end
+
+    # ── Light/dark logo swap (assets/logo-dark.*) ──
+    println(io, "\n.md-logo-dark { display: none; }")
+    if settings.dark_mode in (:auto, :toggle)
+        println(io, "@media (prefers-color-scheme: dark) {")
+        println(io, "  :root:not([data-theme=\"light\"]) .md-logo-light { display: none; }")
+        println(io, "  :root:not([data-theme=\"light\"]) .md-logo-dark { display: inline-block; }")
+        println(io, "}")
+    end
+    if settings.dark_mode != :light
+        println(io, ":root[data-theme=\"dark\"] .md-logo-light { display: none; }")
+        println(io, ":root[data-theme=\"dark\"] .md-logo-dark { display: inline-block; }")
+    end
 end
 
 """Write color role CSS custom properties."""
@@ -370,7 +383,7 @@ end
 # Asset copying
 # ─────────────────────────────────────────────────────────────────────────────
 
-"""Copy user-specified assets (logo, favicon, custom CSS/JS) to build dir."""
+"""Copy the `logo` and `favicon` files to the build's assets directory."""
 function copy_assets(doc::Documenter.Document, settings::Material3,
                      assets_dir::String)
     src_dir = joinpath(doc.user.root, doc.user.source)
@@ -395,25 +408,6 @@ function copy_assets(doc::Documenter.Document, settings::Material3,
         end
     end
 
-    # Copy custom CSS files
-    for css_file in settings.custom_css
-        css_src = joinpath(src_dir, css_file)
-        if isfile(css_src)
-            cp(css_src, joinpath(assets_dir, basename(css_file)); force=true)
-        else
-            @warn "MaterialDocs: custom CSS file not found: $css_src"
-        end
-    end
-
-    # Copy custom JS files
-    for js_file in settings.custom_js
-        js_src = joinpath(src_dir, js_file)
-        if isfile(js_src)
-            cp(js_src, joinpath(assets_dir, basename(js_file)); force=true)
-        else
-            @warn "MaterialDocs: custom JS file not found: $js_src"
-        end
-    end
 end
 
 # ─────────────────────────────────────────────────────────────────────────────
