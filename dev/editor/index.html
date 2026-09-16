@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Theme Editor — MaterialDocs.jl</title>
-  <link rel="stylesheet" href="../assets/materialdocs.css?v=919b721f">
+  <link rel="stylesheet" href="../assets/materialdocs.css?v=17cff1bc">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
   <script>
     (function(){
@@ -53,22 +53,23 @@
 <pre><code class="language-julia">using MaterialDocs
 MaterialDocs.editor()</code></pre>
 </div>
-<p>That builds <code class="md-code-inline">docs/make.jl</code>, starts a server, and opens a browser.</p>
+<p>That runs <code class="md-code-inline">docs/make.jl</code>, starts a server on <code class="md-code-inline">127.0.0.1</code>, and opens a browser.</p>
 <h2 id="Workflow" class="md-heading">Workflow<a href="#Workflow" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
 <ol class="md-list-tight">
 <li><p>Adjust the seed color, fonts, and shape in the panel. The page re-themes live.</p>
 </li>
 <li><p>Navigate around your real docs to check the theme against actual content.</p>
 </li>
-<li><p>Click <strong>Copy TOML</strong>.</p>
+<li><p>Click <strong>Copy TOML</strong> to copy the theme to your clipboard.</p>
 </li>
 <li><p>Save it as <code class="md-code-inline">docs/.materialdocs.toml</code>.</p>
 </li>
 </ol>
 <p>That file is picked up automatically on the next build — no <code class="md-code-inline">make.jl</code> change needed. See <a href="../theming/#Theming">Theming</a>.</p>
 <h2 id="Why-it-works" class="md-heading">Why it works<a href="#Why-it-works" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
-<p>Every stylesheet rule references a <code class="md-code-inline">var(--md-sys-*)</code> custom property and never a literal color. The editor sets those properties on <code class="md-code-inline">:root</code>, so one assignment re-themes every component at once. The same HCT engine that runs at build time is ported into the panel, so what you see matches what Julia will generate.</p>
-<p>Your choices are kept in <code class="md-code-inline">sessionStorage</code> and survive navigation, including the light/dark selection — even on a site built without a navbar toggle.</p>
+<p>Every stylesheet rule references a <code class="md-code-inline">var(--md-sys-*)</code> custom property and never a literal color. The editor sets those properties on <code class="md-code-inline">:root</code>, so one assignment re-themes every component at once.</p>
+<p>The panel has no color engine of its own. Each time you change a color it asks the editor&#39;s server for a new scheme, and the server generates it with the same code the build uses — so what you see is what your built site will get.</p>
+<p>Your color, font, and shape choices are kept in <code class="md-code-inline">sessionStorage</code>, and the light/dark choice in <code class="md-code-inline">localStorage</code>, so both survive navigation — even on a site built without a navbar toggle.</p>
 <h2 id="Options" class="md-heading">Options<a href="#Options" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
 <div class="md-code-block">
 <button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
@@ -85,6 +86,8 @@ MaterialDocs.editor()</code></pre>
 <li><p><strong><code class="md-code-inline">build</code></strong> — the directory to serve.</p>
 </li>
 <li><p><strong><code class="md-code-inline">port</code></strong> — <code class="md-code-inline">0</code> (the default) picks a free port.</p>
+</li>
+<li><p><strong><code class="md-code-inline">host</code></strong> — the interface to listen on. The default, <code class="md-code-inline">127.0.0.1</code>, keeps the preview reachable only from your machine. Pass <code class="md-code-inline">Sockets.IPv4(0)</code> to open it to your network, for example to check a build on a phone; the editor logs a warning when you do.</p>
 </li>
 <li><p><strong><code class="md-code-inline">theme</code></strong> — the config the panel opens with.</p>
 </li>
@@ -131,7 +134,7 @@ MaterialDocs.editor()</code></pre>
 <div class="md-admonition md-admonition-note">
 <p class="md-admonition-title">The editor is a development tool</p>
 <div class="md-admonition-body">
-<p>It changes nothing on disk except through <strong>Copy TOML</strong>. Closing it without exporting discards your changes.</p>
+<p>Apart from rebuilding <code class="md-code-inline">docs/build</code> when it starts, it writes nothing to disk. <strong>Copy TOML</strong> only puts the theme on your clipboard, so closing the editor without saving that TOML discards your changes.</p>
 </div>
 </div>
       </article>
@@ -155,6 +158,6 @@ MaterialDocs.editor()</code></pre>
   <script>hljs.highlightAll();</script>
   <script src="../siteinfo.js"></script>
   <script src="../../versions.js"></script>
-  <script src="../assets/materialdocs.js?v=919b721f"></script>
+  <script src="../assets/materialdocs.js?v=17cff1bc"></script>
 </body>
 </html>

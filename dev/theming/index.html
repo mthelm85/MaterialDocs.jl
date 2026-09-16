@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Theming — MaterialDocs.jl</title>
-  <link rel="stylesheet" href="../assets/materialdocs.css?v=e4810951">
+  <link rel="stylesheet" href="../assets/materialdocs.css?v=ab807621">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
   <script>
     (function(){
@@ -153,7 +153,7 @@
     corner_radius = :rounded,
 ))</code></pre>
 </div>
-<p>Fonts are <a href="https://fonts.google.com">Google Fonts</a> family names, requested automatically at build time.</p>
+<p>Fonts are <a href="https://fonts.google.com">Google Fonts</a> family names. Every page links the Google Fonts stylesheet for them, so they load in the reader&#39;s browser; each font stack ends in system fonts, which readers without network access see instead.</p>
 <h3 id="Corner-radius" class="md-heading">Corner radius<a href="#Corner-radius" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
 <p><code class="md-code-inline">corner_radius</code> selects a shape scale. Values are the extra-small through full radii in pixels:</p>
 <div class="md-table-wrap">
@@ -202,14 +202,15 @@
     seed = &quot;#1565C0&quot;,
     custom_colors = Dict(
         &quot;surface&quot; =&gt; &quot;#FAFAFA&quot;,
-        &quot;primary&quot; =&gt; &quot;#0D47A1&quot;,
+        &quot;on-primary-container&quot; =&gt; &quot;#0D47A1&quot;,
     ),
 )</code></pre>
 </div>
+<p>Role names use the CSS token spelling, with hyphens — <code class="md-code-inline">on-primary-container</code> overrides <code class="md-code-inline">--md-sys-color-on-primary-container</code>. A name that matches no role, including one written with underscores, is silently ignored.</p>
 <div class="md-admonition md-admonition-warning">
-<p class="md-admonition-title">Overrides bypass contrast guarantees</p>
+<p class="md-admonition-title">Overrides bypass contrast checks</p>
 <div class="md-admonition-body">
-<p>Generated roles are placed at tones chosen to meet WCAG AA against their pairings. An override is used verbatim, so check it yourself with <a href="https://mthelm85.github.io/MaterialDesignColors.jl/dev/"><code class="md-code-inline">MaterialDesignColors.meets_aa</code></a>.</p>
+<p>Generated roles sit at tones chosen to meet WCAG AA against their pairings. An override is used verbatim, so check it yourself with <a href="https://mthelm85.github.io/MaterialDesignColors.jl/dev/"><code class="md-code-inline">MaterialDesignColors.meets_aa</code></a>.</p>
 </div>
 </div>
 <h2 id="Configuration-files" class="md-heading">Configuration files<a href="#Configuration-files" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
@@ -232,8 +233,8 @@ corner_radius = &quot;default&quot;    # sharp | default | rounded | pill
 [theme.custom_colors]
 surface = &quot;#FAFAFA&quot;</code></pre>
 </div>
-<p><strong>This file is picked up automatically.</strong> When you call <code class="md-code-inline">Material3()</code> without a <code class="md-code-inline">theme</code> argument, MaterialDocs looks for <code class="md-code-inline">docs/.materialdocs.toml</code> and loads it if present. Passing <code class="md-code-inline">theme</code> explicitly takes precedence.</p>
-<p>This is the format the <a href="../editor/#Theme-Editor">Theme Editor</a> exports, so the usual workflow is to design a theme visually, save the file, and never touch <code class="md-code-inline">make.jl</code> at all.</p>
+<p><strong>This file is picked up automatically.</strong> When <code class="md-code-inline">Material3()</code> is called without a <code class="md-code-inline">theme</code> argument, or with <code class="md-code-inline">theme = :default</code>, MaterialDocs looks for <code class="md-code-inline">docs/.materialdocs.toml</code> (or <code class="md-code-inline">docs/materialdocs.toml</code>) and loads it if present. The path is relative to the directory the build runs from, so run <code class="md-code-inline">julia --project=docs docs/make.jl</code> from your package root. Passing any other theme — a built-in name or a <code class="md-code-inline">ThemeConfig</code> — takes precedence over the file.</p>
+<p>This is the format the <a href="../editor/#Theme-Editor">Theme Editor</a> produces, so the usual workflow is to design a theme visually, save the file, and never touch <code class="md-code-inline">make.jl</code> at all.</p>
 <p>Read and write these files directly with <a href="../api/#MaterialDocs.load_theme"><code class="md-code-inline">load_theme</code></a> and <a href="../api/#MaterialDocs.save_theme"><code class="md-code-inline">save_theme</code></a>; <a href="../api/#MaterialDocs.find_theme_toml"><code class="md-code-inline">find_theme_toml</code></a> performs the search.</p>
       </article>
       <footer class="md-footer">
@@ -258,6 +259,6 @@ surface = &quot;#FAFAFA&quot;</code></pre>
   <script>hljs.highlightAll();</script>
   <script src="../siteinfo.js"></script>
   <script src="../../versions.js"></script>
-  <script src="../assets/materialdocs.js?v=e4810951"></script>
+  <script src="../assets/materialdocs.js?v=ab807621"></script>
 </body>
 </html>

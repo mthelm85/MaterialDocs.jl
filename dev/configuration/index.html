@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Configuration — MaterialDocs.jl</title>
-  <link rel="stylesheet" href="../assets/materialdocs.css?v=2e546a45">
+  <link rel="stylesheet" href="../assets/materialdocs.css?v=12193ece">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
   <script>
     (function(){
@@ -60,7 +60,7 @@
 </div>
 <h2 id="Appearance" class="md-heading">Appearance<a href="#Appearance" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
 <h3 id="theme" class="md-heading"><code class="md-code-inline">theme</code><a href="#theme" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
-<p>A built-in theme name (<code class="md-code-inline">Symbol</code>) or a <a href="../api/#MaterialDocs.ThemeConfig"><code class="md-code-inline">ThemeConfig</code></a>. Defaults to <code class="md-code-inline">:default</code>, which first checks for <code class="md-code-inline">docs/.materialdocs.toml</code> — see <a href="../theming/#Theming">Theming</a>.</p>
+<p>A built-in theme name (<code class="md-code-inline">Symbol</code>) or a <a href="../api/#MaterialDocs.ThemeConfig"><code class="md-code-inline">ThemeConfig</code></a>. Defaults to <code class="md-code-inline">:default</code>, which first checks for <code class="md-code-inline">docs/.materialdocs.toml</code> relative to the directory the build runs from — see <a href="../theming/#Theming">Theming</a>.</p>
 <h3 id="dark_mode" class="md-heading"><code class="md-code-inline">dark_mode</code><a href="#dark_mode" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
 <p>How light and dark are chosen. Default <code class="md-code-inline">:auto</code>.</p>
 <div class="md-table-wrap">
@@ -97,7 +97,7 @@
 <button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
 <pre><code class="language-julia">Material3(logo = &quot;assets/logo.svg&quot;, favicon = &quot;assets/favicon.ico&quot;)</code></pre>
 </div>
-<p>The logo appears in the navbar at 32px tall. SVG is recommended so it stays sharp in both themes.</p>
+<p>The logo appears in the navbar at 32px tall. SVG is recommended so it stays sharp at any display density.</p>
 <h3 id="footer" class="md-heading"><code class="md-code-inline">footer</code><a href="#footer" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
 <p>Extra HTML placed above the generated attribution line:</p>
 <div class="md-code-block">
@@ -135,13 +135,13 @@
 </tbody>
 </table>
 </div>
-<p>The icon and label follow the host — GitHub, GitLab, Bitbucket, and Azure DevOps are recognised, with a generic git icon otherwise.</p>
+<p>The label names the host when it is GitHub, GitLab, Bitbucket, or Azure DevOps. GitHub and GitLab also get their own icon; every other host shows a generic git icon.</p>
 <div class="md-code-block">
 <button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
 <pre><code class="language-julia">Material3(repolink = &quot;https://codeberg.org/you/MyPackage.jl&quot;)</code></pre>
 </div>
 <h3 id="versions" class="md-heading"><code class="md-code-inline">versions</code><a href="#versions" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
-<p>Show the version selector when the site has been deployed with more than one version. Default <code class="md-code-inline">true</code>.</p>
+<p>Show the version selector once the site has been deployed with <code class="md-code-inline">deploydocs</code>. Default <code class="md-code-inline">true</code>.</p>
 <p>It reads <code class="md-code-inline">DOCUMENTER_CURRENT_VERSION</code> from <code class="md-code-inline">siteinfo.js</code> and <code class="md-code-inline">DOC_VERSIONS</code> from <code class="md-code-inline">../versions.js</code> — both written by <code class="md-code-inline">deploydocs</code>. On a local build neither exists, so the selector stays hidden and the two missing files are harmless.</p>
 <p>Switching versions keeps you on the same page where that page exists in the target version, and falls back to its home page where it does not.</p>
 <h3 id="search" class="md-heading"><code class="md-code-inline">search</code><a href="#search" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
@@ -152,7 +152,7 @@
 <p>Directory-style URLs (<code class="md-code-inline">page/index.html</code>, linked as <code class="md-code-inline">./page/</code>). Default <code class="md-code-inline">true</code>.</p>
 <p>Set it to <code class="md-code-inline">false</code>, or condition it on CI, when the build needs to be opened from disk — see <a href="../getting-started/#Getting-Started">Getting Started</a>.</p>
 <h3 id="custom_css-and-custom_js" class="md-heading"><code class="md-code-inline">custom_css</code> and <code class="md-code-inline">custom_js</code><a href="#custom_css-and-custom_js" class="md-heading-anchor" aria-label="Link to this section">#</a></h3>
-<p>Extra files, relative to <code class="md-code-inline">docs/src</code>, copied in and linked after the generated assets:</p>
+<p>Extra files, relative to <code class="md-code-inline">docs/src</code>, copied into the build&#39;s <code class="md-code-inline">assets</code> folder and linked after the generated assets:</p>
 <div class="md-code-block">
 <button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
 <pre><code class="language-julia">Material3(
@@ -160,6 +160,7 @@
     custom_js  = [&quot;assets/extra.js&quot;],
 )</code></pre>
 </div>
+<p>Files are copied by name alone, so two files with the same name in different folders overwrite each other.</p>
 <p>Because all styling is driven by <code class="md-code-inline">--md-sys-*</code> custom properties, custom CSS should reference those tokens rather than literal colors. That way it keeps working in both light and dark mode:</p>
 <div class="md-code-block">
 <button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
@@ -207,6 +208,6 @@
   <script>hljs.highlightAll();</script>
   <script src="../siteinfo.js"></script>
   <script src="../../versions.js"></script>
-  <script src="../assets/materialdocs.js?v=2e546a45"></script>
+  <script src="../assets/materialdocs.js?v=12193ece"></script>
 </body>
 </html>

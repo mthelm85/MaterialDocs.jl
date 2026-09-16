@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Getting Started — MaterialDocs.jl</title>
-  <link rel="stylesheet" href="../assets/materialdocs.css?v=f10a31f6">
+  <link rel="stylesheet" href="../assets/materialdocs.css?v=f7a2f3ae">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
   <script>
     (function(){
@@ -67,7 +67,8 @@ MyPackage = &quot;...&quot;
 MyPackage = {path = &quot;..&quot;}
 
 [compat]
-Documenter = &quot;1&quot;</code></pre>
+Documenter = &quot;1&quot;
+MaterialDocs = &quot;0.1&quot;</code></pre>
 </div>
 <h2 id="Switch-the-format" class="md-heading">Switch the format<a href="#Switch-the-format" class="md-heading-anchor" aria-label="Link to this section">#</a></h2>
 <p>In <code class="md-code-inline">docs/make.jl</code>, swap <code class="md-code-inline">Documenter.HTML</code> for <a href="../api/#MaterialDocs.Material3"><code class="md-code-inline">Material3</code></a>:</p>
@@ -87,7 +88,7 @@ makedocs(
 
 deploydocs(repo = &quot;github.com/you/MyPackage.jl&quot;)</code></pre>
 </div>
-<p>Build it:</p>
+<p>Build it from the root of your package:</p>
 <div class="md-code-block">
 <button class="md-copy-btn" title="Copy to clipboard" aria-label="Copy code"><span class="md-copy-icon">⧉</span><span class="md-copy-feedback">Copied!</span></button>
 <pre><code class="language-julia">julia --project=docs docs/make.jl</code></pre>
@@ -125,11 +126,11 @@ deploydocs(repo = &quot;github.com/you/MyPackage.jl&quot;)</code></pre>
     devbranch = &quot;main&quot;,
 )</code></pre>
 </div>
-<p>Once <code class="md-code-inline">deploydocs</code> has published more than one version, the navbar version selector appears automatically. It reads the <code class="md-code-inline">versions.js</code> and <code class="md-code-inline">siteinfo.js</code> files that <code class="md-code-inline">deploydocs</code> writes, so there is nothing extra to configure. On local builds those files do not exist and the selector stays hidden.</p>
+<p>Once <code class="md-code-inline">deploydocs</code> has published your docs, the navbar version selector appears automatically. It reads the <code class="md-code-inline">versions.js</code> and <code class="md-code-inline">siteinfo.js</code> files that <code class="md-code-inline">deploydocs</code> writes, so there is nothing extra to configure. On local builds those files do not exist and the selector stays hidden.</p>
 <div class="md-admonition md-admonition-note">
 <p class="md-admonition-title">`devbranch` must match your default branch</p>
 <div class="md-admonition-body">
-<p>The PkgTemplates default is <code class="md-code-inline">master</code>. If your repository uses <code class="md-code-inline">main</code>, set <code class="md-code-inline">devbranch = &quot;main&quot;</code> or deployment will silently never happen.</p>
+<p>Some package templates still set <code class="md-code-inline">devbranch = &quot;master&quot;</code>. If your repository uses <code class="md-code-inline">main</code>, set <code class="md-code-inline">devbranch = &quot;main&quot;</code> or deployment will silently never happen.</p>
 </div>
 </div>
       </article>
@@ -154,6 +155,6 @@ deploydocs(repo = &quot;github.com/you/MyPackage.jl&quot;)</code></pre>
   <script>hljs.highlightAll();</script>
   <script src="../siteinfo.js"></script>
   <script src="../../versions.js"></script>
-  <script src="../assets/materialdocs.js?v=f10a31f6"></script>
+  <script src="../assets/materialdocs.js?v=f7a2f3ae"></script>
 </body>
 </html>
