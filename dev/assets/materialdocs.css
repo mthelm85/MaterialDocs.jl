@@ -1496,9 +1496,13 @@ del { color: var(--md-sys-color-on-surface-variant); }
 .md-footer a { color: var(--md-sys-color-primary); }
 
 /* ── Edit link ── */
+/* Stacked above the page's H1, whose box runs underneath the float and is
+   positioned (for its anchor link) — without this it covers the button. */
 .md-article-actions {
   float: right;
   margin: 0.25rem 0 0.5rem 0.5rem;
+  position: relative;
+  z-index: 1;
 }
 
 
