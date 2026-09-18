@@ -28,7 +28,7 @@ MyPackage = {path = ".."}
 
 [compat]
 Documenter = "1"
-MaterialDocs = "0.1"
+MaterialDocs = "0.2"
 ```
 
 ## Switch the format
