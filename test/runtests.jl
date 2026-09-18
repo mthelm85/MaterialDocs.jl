@@ -586,6 +586,13 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         end
         css = read(joinpath(build_dir, "assets", "materialdocs.css"), String)
         @test !contains(css, "md-page-nav")
+
+        # The edit button floats beside the page's H1, which is positioned (for
+        # its anchor link) and would otherwise paint over it and take its clicks
+        actions = match(r"\.md-article-actions \{[^}]*\}", css)
+        @test actions !== nothing
+        @test actions !== nothing && contains(actions.match, "position: relative")
+        @test actions !== nothing && contains(actions.match, "z-index: 1")
     end
 
     # REQ-P12 (Must): A navigation section nested at level `collapselevel` or
