@@ -147,8 +147,7 @@ function _write_css_tokens(io::IO, theme::ThemeConfig,
     _write_elevation_vars(io)
     _write_motion_vars(io)
     _write_state_vars(io)
-    _write_highlight_vars(io, :light)
-    _write_ansi_vars(io, :light)
+    _write_code_vars(io, theme, light, :light)
     println(io, "}")
 
     # ── System-preference dark ──
@@ -156,8 +155,7 @@ function _write_css_tokens(io::IO, theme::ThemeConfig,
         println(io, "\n@media (prefers-color-scheme: dark) {")
         println(io, "  :root:not([data-theme=\"light\"]) {")
         _write_color_vars(io, dark, theme.custom_colors; indent="    ")
-        _write_highlight_vars(io, :dark; indent="    ")
-        _write_ansi_vars(io, :dark; indent="    ")
+        _write_code_vars(io, theme, dark, :dark; indent="    ")
         println(io, "  }")
         println(io, "}")
     end
@@ -166,8 +164,7 @@ function _write_css_tokens(io::IO, theme::ThemeConfig,
     if settings.dark_mode in (:auto, :toggle, :dark)
         println(io, "\n:root[data-theme=\"dark\"] {")
         _write_color_vars(io, dark, theme.custom_colors; indent="  ")
-        _write_highlight_vars(io, :dark; indent="  ")
-        _write_ansi_vars(io, :dark; indent="  ")
+        _write_code_vars(io, theme, dark, :dark; indent="  ")
         println(io, "}")
     end
 
@@ -301,78 +298,98 @@ function _write_motion_vars(io::IO)
     println(io, "  --md-sys-motion-duration-long2: 700ms;")
 end
 
-"""Write syntax highlighting color tokens (GitHub-inspired light/dark palettes)."""
-# HCT hues for the six ANSI chromatic colors
+# ─────────────────────────────────────────────────────────────────────────────
+# Code colors: syntax highlighting and ANSI output, generated from the seed
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Each role keeps a conventional hue (HCT degrees) so code reads the same on any
+# site; harmonizing then tints it toward the theme's seed.
+const SYNTAX_HUES = ("keyword" => 355.0, "string" => 145.0, "number" => 263.0,
+                     "type" => 55.0, "function" => 300.0, "meta" => 208.0)
 const ANSI_HUES = ("red" => 25.0, "green" => 145.0, "yellow" => 75.0,
                    "blue" => 263.0, "magenta" => 320.0, "cyan" => 208.0)
+const DIFF_HUES = ("deletion" => 25.0, "addition" => 145.0)
+const CODE_CHROMA = 48.0
 
 """
-Write `--md-ansi-*` tokens for colored @example/@repl output. Like MD3 color
-roles, each is a tone chosen for contrast against the code surface in that
-mode, rather than a fixed terminal color.
+    _harmonize_hue(hue, seed_hue) → Float64
+
+Rotate `hue` toward `seed_hue` by half the angle between them, at most 15° —
+material-color-utilities' `Blend.harmonize`, applied to a hue.
 """
-function _write_ansi_vars(io::IO, mode::Symbol; indent::String = "  ")
-    # (normal, bright) tones: dark text on light surfaces, light text on dark ones
-    color_tones, black_tones, white_tones = mode == :light ?
-        ((30, 40), (10, 40), (40, 35)) : ((80, 90), (60, 70), (90, 100))
-    emit(name, palette, tones) = for (prefix, tone) in zip(("", "bright-"), tones)
-        println(io, indent, "--md-ansi-", prefix, name, ": ", to_hex(tone_at(palette, tone)), ";")
-    end
-    neutral = TonalPalette(0.0, 0.0)
-    emit("black", neutral, black_tones)
-    for (name, hue) in ANSI_HUES
-        emit(name, TonalPalette(hue, 56.0), color_tones)
-    end
-    emit("white", neutral, white_tones)
+function _harmonize_hue(hue::Real, seed_hue::Real)
+    d = mod(seed_hue - hue + 180, 360) - 180   # signed shortest difference
+    return mod(hue + sign(d) * min(abs(d) / 2, 15), 360)
 end
 
-function _write_highlight_vars(io::IO, mode::Symbol; indent::String = "  ")
-    # GitHub-inspired palettes that work well on both light and dark backgrounds
-    palette = if mode == :light
-        Dict(
-            "keyword"      => "#cf222e",   # red — control flow, keywords
-            "string"       => "#0a3069",   # dark blue — string literals
-            "number"       => "#0550ae",   # blue — numeric constants
-            "comment"      => "#6e7781",   # grey — comments
-            "function"     => "#8250df",   # purple — function names
-            "type"         => "#953800",   # orange — type names
-            "builtin"      => "#0550ae",   # blue — built-in functions
-            "literal"      => "#0550ae",   # blue — true/false/nothing
-            "variable"     => "#24292f",   # near-black — variables
-            "operator"     => "#cf222e",   # red — operators
-            "punctuation"  => "#24292f",   # near-black — punctuation
-            "attr"         => "#116329",   # green — attributes
-            "meta"         => "#8250df",   # purple — macros/directives
-            "deletion"     => "#82071e",   # dark red — diff deletions
-            "deletion-bg"  => "#ffebe9",   # light red bg
-            "addition"     => "#116329",   # green — diff additions
-            "addition-bg"  => "#dafbe1",   # light green bg
-        )
-    else
-        Dict(
-            "keyword"      => "#ff7b72",   # salmon — control flow, keywords
-            "string"       => "#a5d6ff",   # light blue — string literals
-            "number"       => "#79c0ff",   # blue — numeric constants
-            "comment"      => "#8b949e",   # grey — comments
-            "function"     => "#d2a8ff",   # lavender — function names
-            "type"         => "#ffa657",   # orange — type names
-            "builtin"      => "#79c0ff",   # blue — built-in functions
-            "literal"      => "#79c0ff",   # blue — true/false/nothing
-            "variable"     => "#c9d1d9",   # light grey — variables
-            "operator"     => "#ff7b72",   # salmon — operators
-            "punctuation"  => "#c9d1d9",   # light grey — punctuation
-            "attr"         => "#7ee787",   # green — attributes
-            "meta"         => "#d2a8ff",   # lavender — macros/directives
-            "deletion"     => "#ffa198",   # light red — diff deletions
-            "deletion-bg"  => "#490202",   # dark red bg
-            "addition"     => "#7ee787",   # green — diff additions
-            "addition-bg"  => "#04260f",   # dark green bg
-        )
+"""
+The most vivid tone of `palette` that reaches WCAG AA against `bg`: the
+lightest passing tone at or below 45 in light mode, the darkest at or above 70
+in dark mode. Tones 0 and 100 always pass on MD3 surfaces, so this never fails.
+"""
+function _aa_tone(palette::TonalPalette, bg::AbstractString, mode::Symbol)
+    tones = mode == :light ? (45:-1:0) : (70:1:100)
+    for t in tones
+        contrast_ratio(to_hex(tone_at(palette, t)), bg) >= 4.5 && return t
+    end
+    return last(tones)
+end
+
+"""
+    code_color_tokens(seed, scheme, mode) → Vector{Pair{String,String}}
+
+The `--md-code-*` (syntax highlighting) and `--md-ansi-*` (colored output)
+custom properties for a theme, as CSS variable name ⇒ hex. Each color keeps its
+role's hue, harmonized toward the seed, at a tone that reaches AA on the code
+surface (`surface_container`) in `mode`.
+"""
+function code_color_tokens(seed::AbstractString, scheme::Dict{Symbol,String}, mode::Symbol)
+    seed_hue = hct(seed).hue
+    bg = scheme[:surface_container]
+    palette(hue) = TonalPalette(_harmonize_hue(hue, seed_hue), CODE_CHROMA)
+    color(hue; on = bg) = (p = palette(hue); to_hex(tone_at(p, _aa_tone(p, on, mode))))
+    tokens = Pair{String,String}[]
+
+    syntax = Dict(name => color(hue) for (name, hue) in SYNTAX_HUES)
+    for (name, hex) in (syntax..., "operator" => syntax["keyword"], "builtin" => syntax["number"],
+                        "literal" => syntax["number"], "attr" => syntax["string"],
+                        "comment" => scheme[:on_surface_variant],
+                        "variable" => scheme[:on_surface], "punctuation" => scheme[:on_surface])
+        push!(tokens, "--md-code-$name" => hex)
+    end
+    for (name, hue) in DIFF_HUES
+        tint = to_hex(tone_at(TonalPalette(_harmonize_hue(hue, seed_hue), 24.0), mode == :light ? 92 : 20))
+        push!(tokens, "--md-code-$name-bg" => tint, "--md-code-$name" => color(hue; on = tint))
     end
 
-    println(io, indent, "/* Syntax highlighting */")
-    for key in sort(collect(keys(palette)))
-        println(io, indent, "--md-code-", key, ": ", palette[key], ";")
+    # ANSI: "bright" is one step further from the surface than normal
+    step = mode == :light ? -8 : 10
+    neutral = TonalPalette(0.0, 0.0)
+    ansi = Pair{String,TonalPalette}["black" => neutral]
+    append!(ansi, [name => palette(hue) for (name, hue) in ANSI_HUES])
+    push!(ansi, "white" => neutral)
+    for (name, p) in ansi
+        # Black and white keep their meaning: black is the darker neutral in
+        # light mode, white the lighter one in dark mode
+        t = name == "black" ? (mode == :light ? 10 : 60) :
+            name == "white" ? (mode == :light ? 40 : 90) : _aa_tone(p, bg, mode)
+        bright = clamp(t + step, 0, 100)
+        contrast_ratio(to_hex(tone_at(p, bright)), bg) >= 4.5 || (bright = t)
+        push!(tokens, "--md-ansi-$name" => to_hex(tone_at(p, t)),
+                      "--md-ansi-bright-$name" => to_hex(tone_at(p, bright)))
+    end
+    return tokens
+end
+
+"""Write the code color tokens for `mode`, honoring a `surface-container` override."""
+function _write_code_vars(io::IO, theme::ThemeConfig, scheme::Dict{Symbol,String},
+                          mode::Symbol; indent::String = "  ")
+    if haskey(theme.custom_colors, "surface-container")
+        scheme = merge(scheme, Dict(:surface_container => theme.custom_colors["surface-container"]))
+    end
+    println(io, indent, "/* Syntax highlighting and ANSI output, generated from the seed */")
+    for (var, hex) in code_color_tokens(theme.seed, scheme, mode)
+        println(io, indent, var, ": ", hex, ";")
     end
 end
 

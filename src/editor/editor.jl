@@ -302,7 +302,11 @@ function _scheme_json(query::AbstractString, theme::ThemeConfig)::String
         secondary = isempty(sec) ? nothing : sec,
         tertiary = isempty(ter) ? nothing : ter,
     )
-    _scheme_to_js_object(scheme)
+    # Color roles by name, then the code colors under their full --md-* names
+    roles = _scheme_to_js_object(scheme)
+    code = join(("\"$var\":\"$hex\"" for (var, hex) in
+                 code_color_tokens(seed, scheme, dark ? :dark : :light)), ",")
+    string(chop(roles), isempty(code) ? "" : ",", code, "}")
 end
 
 """URL-decode a path string."""
@@ -729,13 +733,13 @@ function _editor_panel_js(theme::ThemeConfig)::String
       var CSS_KEY = '__md_editor_css__';
       var root = document.documentElement;
 
-      // Record every --md-sys-* property currently set inline on <html>
+      // Record every --md-sys-*, --md-code-* and --md-ansi-* property set inline on <html>
       function cacheCSS() {
         try {
           var vars = {}, s = root.style;
           for (var i = 0; i < s.length; i++) {
             var n = s[i];
-            if (n.indexOf('--md-sys-') === 0) vars[n] = s.getPropertyValue(n);
+            if (/^--md-(sys|code|ansi)-/.test(n)) vars[n] = s.getPropertyValue(n);
           }
           sessionStorage.setItem(CSS_KEY, JSON.stringify({
             mode: isDarkFromDOM() ? 'dark' : 'light',
@@ -1007,8 +1011,10 @@ function _editor_panel_js(theme::ThemeConfig)::String
         colorTimer = setTimeout(function() {
           colorTimer = null;
           fetchScheme(isDarkFromDOM(), function(scheme) {
+            // Color roles arrive by name; code colors by their full --md-* name
             for (var key in scheme) {
-              root.style.setProperty('--md-sys-color-' + key, scheme[key]);
+              var prop = key.indexOf('--') === 0 ? key : '--md-sys-color-' + key;
+              root.style.setProperty(prop, scheme[key]);
             }
             renderPalette(scheme);
             updateTOML();

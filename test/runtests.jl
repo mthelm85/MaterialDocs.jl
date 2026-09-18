@@ -711,6 +711,58 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         @test contains(css, ".ansi .sgr31")
     end
 
+    # REQ-S8 (Should): The writer shall generate syntax and ANSI colors from the
+    #   theme's seed: fixed hues per token role, harmonized toward the seed hue
+    #   (rotated by half the difference, at most 15°, as MD3 prescribes).
+    # REQ-S9 (Must): Every generated syntax and ANSI text color shall reach WCAG
+    #   AA (4.5:1) on the code background, in light and dark, for any seed.
+    # REQ-S10 (Should): The theme editor shall return these colors with each
+    #   scheme, so code re-colors live.
+    @testset "Harmonize" begin
+        h = MaterialDocs._harmonize_hue
+        @test h(355.0, 10.0) ≈ 2.5          # half of a 15° gap
+        @test h(0.0, 90.0) ≈ 15.0           # capped at 15°
+        @test h(0.0, 270.0) ≈ 345.0         # the short way round
+        @test h(120.0, 120.0) ≈ 120.0
+    end
+
+    @testset "Generated code colors" begin
+        seeds = vcat([t.seed for t in values(BUILTIN_THEMES)],
+                     ["#000000", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#808080"])
+        for seed in seeds, dark in (false, true)
+            scheme = hex_scheme(seed; dark)
+            tokens = Dict(MaterialDocs.code_color_tokens(seed, scheme, dark ? :dark : :light))
+            bg = scheme[:surface_container]
+            for (var, hex) in tokens
+                endswith(var, "-bg") && continue
+                ground = var == "--md-code-deletion" ? tokens["--md-code-deletion-bg"] :
+                         var == "--md-code-addition" ? tokens["--md-code-addition-bg"] : bg
+                @test contrast_ratio(hex, ground) >= 4.5
+            end
+            @test haskey(tokens, "--md-code-keyword") && haskey(tokens, "--md-ansi-bright-cyan")
+        end
+
+        # Different seeds give different code colors
+        f = Dict(MaterialDocs.code_color_tokens("#2E7D32", hex_scheme("#2E7D32"), :light))
+        l = Dict(MaterialDocs.code_color_tokens("#7B1FA2", hex_scheme("#7B1FA2"), :light))
+        @test f["--md-code-keyword"] != l["--md-code-keyword"]
+
+        # The stylesheet carries them, and no fixed GitHub colors remain
+        m3 = Material3(theme = :forest, dark_mode = :toggle, edit_link = nothing)
+        light, dark = hex_scheme_pair(m3.theme.seed)
+        css = MaterialDocs.build_css(m3.theme, light, dark, m3)
+        @test contains(css, "--md-code-keyword: " * f["--md-code-keyword"])
+        @test !contains(lowercase(css), "#cf222e")
+    end
+
+    @testset "Editor scheme includes code colors" begin
+        theme = resolve_theme(:ocean_depth)
+        json = MaterialDocs._scheme_json("seed=%236750A4", theme)
+        expected = Dict(MaterialDocs.code_color_tokens("#6750A4", hex_scheme("#6750A4"), :light))
+        @test contains(json, "\"--md-code-keyword\":\"$(expected["--md-code-keyword"])\"")
+        @test contains(json, "\"--md-ansi-red\":\"$(expected["--md-ansi-red"])\"")
+    end
+
     @testset "Footer defaults" begin
         # REQ-P7: default attribution, and `nothing` removes the footer text
         @test contains(Documenter.MDFlatten.mdflatten(Material3().html.footer), "MaterialDocs.jl")
@@ -1372,8 +1424,8 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
             @test contains(json, "\"$css\":\"$hex\"")
         end
 
-        # All 34 roles, not the 31 the old JS knew about
-        @test length(collect(eachmatch(r"\"[a-z-]+\":", json))) == length(expected)
+        # All 34 roles, not the 31 the old JS knew about (plus --md-* code tokens)
+        @test length(collect(eachmatch(r"\"[a-z][a-z-]*\":", json))) == length(expected)
 
         # dark differs, and overrides are honoured
         @test MaterialDocs._scheme_json("seed=%236750A4&dark=true", theme) != json

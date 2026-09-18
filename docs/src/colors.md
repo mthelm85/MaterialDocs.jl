@@ -30,6 +30,20 @@ custom CSS has the complete set available. See [Theming](@ref) for choosing a
 seed and [Configuration](@ref) for referencing these tokens from your own
 stylesheets.
 
+## Code colors
+
+Syntax highlighting and colored `@example`/`@repl` output are generated from the
+same seed. Each kind of token keeps a conventional hue — keywords reddish,
+strings green, numbers blue, types orange — so code reads the same on any site,
+and that hue is then *harmonized* toward the seed: rotated by half the angle
+between them, at most 15°, as MD3 prescribes for fixed-meaning colors. Each
+color's tone is then chosen so it reaches WCAG AA against the code background,
+in light and dark mode. Comments, variables and punctuation use the theme's own
+`on_surface_variant` and `on_surface`.
+
+They are written as `--md-code-*` and `--md-ansi-*` custom properties, and the
+[Theme Editor](@ref) updates them live as the seed changes.
+
 ## Contrast
 
 HCT combines CAM16 hue and chroma with CIELAB lightness, which makes **tone map
