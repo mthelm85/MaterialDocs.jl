@@ -2,6 +2,7 @@
 
 **A [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) writer that generates [Material Design 3](https://m3.material.io) documentation sites.**
 
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://mthelm85.github.io/MaterialDocs.jl/stable/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://mthelm85.github.io/MaterialDocs.jl/dev/)
 [![Build Status](https://github.com/mthelm85/MaterialDocs.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/mthelm85/MaterialDocs.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Aqua](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
@@ -16,7 +17,7 @@ you can host anywhere. Pages load their fonts from Google Fonts, and syntax
 highlighting and math typesetting from a CDN, so readers without network access
 see system fonts, unhighlighted code, and raw LaTeX.
 
-**[MaterialDocs' own documentation](https://mthelm85.github.io/MaterialDocs.jl/dev/) is built with MaterialDocs** — the site is the demo.
+**[MaterialDocs' own documentation](https://mthelm85.github.io/MaterialDocs.jl/stable/) is built with MaterialDocs** — the site is the demo.
 
 ## Installation
 
@@ -121,7 +122,7 @@ and never a literal color. Click **Copy TOML** and save the result as
 
 ## Documentation
 
-Full manual at **[mthelm85.github.io/MaterialDocs.jl/dev](https://mthelm85.github.io/MaterialDocs.jl/dev/)** —
+Full manual at **[mthelm85.github.io/MaterialDocs.jl/stable](https://mthelm85.github.io/MaterialDocs.jl/stable/)** —
 getting started, every `Material3` option, theming, the editor, and how colors
 are generated.
 
