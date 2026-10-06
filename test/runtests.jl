@@ -231,6 +231,18 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         @test contains(css, ".md-footer")
         @test contains(css, ".md-heading-anchor")
 
+        # Example output: the writer puts .md-output-text on the <pre> itself,
+        # so the rule must target that element, and wide output must scroll
+        @test !contains(css, ".md-output-text pre")
+        text_rule = match(r"\.md-output-text \{([^}]*)\}", css)
+        @test text_rule !== nothing
+        @test contains(text_rule.captures[1], "background: var(--md-sys-color-surface-container)")
+        @test contains(text_rule.captures[1], "overflow-x: auto")
+        @test contains(css, ".md-output-text code {")
+        html_rule = match(r"\.md-output-html \{([^}]*)\}", css)
+        @test html_rule !== nothing
+        @test contains(html_rule.captures[1], "overflow-x: auto")
+
         # Print styles
         @test contains(css, "@media print")
 
