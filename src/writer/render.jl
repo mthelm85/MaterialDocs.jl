@@ -683,7 +683,8 @@ function _collect_plain_text(io::IO, node)
     elseif elem isa Documenter.MultiOutputElement
         result = elem.element
         if result isa Dict && haskey(result, MIME"text/plain"())
-            print(io, result[MIME"text/plain"()], ' ')
+            # Colored output carries ANSI codes, which are noise in search text
+            print(io, _strip_ansi(result[MIME"text/plain"()]), ' ')
         else
             for child in node.children
                 _collect_plain_text(io, child)
@@ -726,13 +727,29 @@ function _entries_to_json(entries::Vector{Dict{String,Any}})::String
     String(take!(io))
 end
 
-"""Escape a string for JSON output."""
+"""Escape a string for JSON output. JSON forbids raw control characters
+(U+0000–U+001F), so any not covered by a short escape become `\\u00XX`."""
 function _json_escape(s::AbstractString)::String
-    replace(s,
-        '\\' => "\\\\",
-        '"' => "\\\"",
-        '\n' => "\\n",
-        '\r' => "\\r",
-        '\t' => "\\t",
-    )
+    io = IOBuffer()
+    for c in s
+        if c == '\\'
+            print(io, "\\\\")
+        elseif c == '"'
+            print(io, "\\\"")
+        elseif c == '\n'
+            print(io, "\\n")
+        elseif c == '\r'
+            print(io, "\\r")
+        elseif c == '\t'
+            print(io, "\\t")
+        elseif c < ' '
+            print(io, "\\u", string(UInt32(c), base = 16, pad = 4))
+        else
+            print(io, c)
+        end
+    end
+    String(take!(io))
 end
+
+"""Remove ANSI escape sequences (e.g. colors from `@example` output) from `s`."""
+_strip_ansi(s::AbstractString) = replace(s, r"\e\[[0-9;:?]*[ -/]*[@-~]" => "")
