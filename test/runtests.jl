@@ -1106,12 +1106,26 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
 
         # Hrefs should use prettyurl format
         @test contains(index_json, "api/")
+
+        # Raw control characters make the whole file invalid JSON, which
+        # silently empties client-side search
+        @test !any(c -> c < ' ', index_json)
+        @test !contains(index_json, "\\u001b")  # ANSI codes stripped, not just escaped
     end
 
     @testset "JSON escaping" begin
         escaped = MaterialDocs._json_escape("hello \"world\"\nnewline\\slash")
         @test escaped == "hello \\\"world\\\"\\nnewline\\\\slash"
         @test !contains(escaped, "\n")  # actual newline
+        @test MaterialDocs._json_escape("a\e[1mb\x00c\x1f") == "a\\u001b[1mb\\u0000c\\u001f"
+        @test MaterialDocs._json_escape("tab\there") == "tab\\there"
+        @test MaterialDocs._json_escape("ünïcødé ✓") == "ünïcødé ✓"
+    end
+
+    @testset "ANSI stripping" begin
+        @test MaterialDocs._strip_ansi("\e[1m4×7 DataFrame\e[0m") == "4×7 DataFrame"
+        @test MaterialDocs._strip_ansi("\e[38;5;244mgrey\e[39m plain") == "grey plain"
+        @test MaterialDocs._strip_ansi("no codes") == "no codes"
     end
 
     @testset "Text truncation" begin
