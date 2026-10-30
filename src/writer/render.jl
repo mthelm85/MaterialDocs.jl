@@ -530,7 +530,9 @@ function build_search_index(doc::Documenter.Document)::String
             title = isempty(sec.title) ? page_title : sec.title
             section_label = (i == 1 || isempty(sec.title)) ? "" : page_title
 
-            text = _truncate_text(sec.text, 300)
+            # Strip ANSI codes here rather than per node: colored output reaches the
+            # text through several paths (@example results, @repl code blocks)
+            text = _truncate_text(_strip_ansi(sec.text), 300)
             push!(entries, Dict{String,Any}(
                 "title" => title,
                 "text" => text,
@@ -683,8 +685,7 @@ function _collect_plain_text(io::IO, node)
     elseif elem isa Documenter.MultiOutputElement
         result = elem.element
         if result isa Dict && haskey(result, MIME"text/plain"())
-            # Colored output carries ANSI codes, which are noise in search text
-            print(io, _strip_ansi(result[MIME"text/plain"()]), ' ')
+            print(io, result[MIME"text/plain"()], ' ')
         else
             for child in node.children
                 _collect_plain_text(io, child)
