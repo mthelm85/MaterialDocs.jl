@@ -3,6 +3,7 @@ using MaterialDesignColors
 using Documenter
 using Test
 using Sockets
+import Markdown
 using Aqua
 using JET
 using CodecZlib
@@ -10,12 +11,25 @@ using CodecZlib
 struct UnknownFixtureElement <: Documenter.MarkdownAST.AbstractInline end
 Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
 
+# Julia 1.14's Markdown stdlib marks a list as loose when a blank line follows it,
+# so tight lists parse as loose (fix: JuliaLang/julia#64455).
+const STDLIB_MARKS_TIGHT_LISTS_LOOSE = Markdown.parse("- a
+- b
+
+Text").content[1].loose
+
 @testset "MaterialDocs.jl" begin
     @testset "Code quality (Aqua.jl)" begin
         Aqua.test_all(MaterialDocs)
     end
     @testset "Code linting (JET.jl)" begin
-        JET.test_package(MaterialDocs; target_modules = (MaterialDocs,))
+        # JET loads as empty stubs on Julia versions it doesn't support. Versions
+        # that predate this flag (used on older Julia) are always functional.
+        if !isdefined(JET, :JET_AVAILABLE) || JET.JET_AVAILABLE
+            JET.test_package(MaterialDocs; target_modules = (MaterialDocs,))
+        else
+            @test_skip "JET does not support this Julia version"
+        end
     end
 
     # ─────────────────────────────────────────────────────────────────
@@ -874,7 +888,7 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         @test contains(index_html, "class=\"md-hr\"")
 
         # Lists
-        @test contains(index_html, "class=\"md-list-tight\"")
+        @test contains(index_html, "class=\"md-list-tight\"") broken = STDLIB_MARKS_TIGHT_LISTS_LOOSE
         @test contains(index_html, "<ol")
         @test contains(index_html, "<ul")
 
@@ -1024,6 +1038,23 @@ Documenter.MarkdownAST.iscontainer(::UnknownFixtureElement) = true
         @test contains(out_html, "<span id=\"inline-anchor\">This sentence is a link target</span>")
         @test contains(out_html, "<code class=\"language-julia\">")
         @test !contains(out_html, "language-julia filter")
+    end
+
+    @testset "Tight and loose lists" begin
+        fixtures_dir = joinpath(@__DIR__, "fixtures")
+        doc = Documenter.Document(; root = fixtures_dir, source = "src", build = "build",
+                                  format = [Material3()], remotes = nothing)
+        page = Documenter.Page(joinpath(fixtures_dir, "src", "index.md"),
+                               joinpath(fixtures_dir, "build", "index.html"), fixtures_dir)
+        # Built by hand, so this doesn't depend on how the Markdown stdlib parses lists
+        render_list(tight) = begin
+            ctx = MaterialDocs.DomifyContext(IOBuffer(), doc, page, "", Material3())
+            MaterialDocs.domify(ctx, Documenter.MarkdownAST.Node(Documenter.MarkdownAST.List(:bullet, tight)))
+            String(take!(ctx.io))
+        end
+
+        @test contains(render_list(true), "<ul class=\"md-list-tight\">")
+        @test contains(render_list(false), "<ul>")
     end
 
     @testset "Unsupported elements warn once and keep their content" begin
